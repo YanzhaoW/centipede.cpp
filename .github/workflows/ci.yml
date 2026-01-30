@@ -1,0 +1,15 @@
+name: ci
+on:
+  pull_request:
+    branches:
+      - master
+permissions: write-all
+
+jobs:
+  linux-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: 'true'
