@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
 
-project(centipede LANGUAGES CXX VERSION 0.0.1)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+include(check_submodules)
+
+project(centipede LANGUAGES CXX C VERSION 0.0.1)
+
+include(load_dependencies)
 
 add_subdirectory(source)
+add_subdirectory(doc)
+add_subdirectory(example)
+add_subdirectory(test)

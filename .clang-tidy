@@ -1,0 +1,4 @@
+# vi: ft=yaml
+Checks: '-*'
+FormatStyle: 'file'
+HeaderFilterRegex: '.*'
