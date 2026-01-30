@@ -1,15 +1,103 @@
-name: ci
+name: CI
 on:
+  schedule:
+  # trigger the workflow on the every 2 am UTC
+  - cron: '00 02 * * *'
   pull_request:
+    branches:
+      - master
+  push:
     branches:
       - master
 permissions: write-all
 
 jobs:
-  linux-test:
+  linux-build-test:
     runs-on: ubuntu-latest
+    container:
+      image: yanzhaowang/centipede:env
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang, libc++]
+    name: build-test-${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
           submodules: 'true'
+
+      - name: pre-build
+        uses: './.github/actions/pre_build_config'
+
+      # Be very careful about CTEST_BUILD_NAME. It shouldn't contain additional double quotations
+      - name: build-test-submit
+        run: |
+          ctest -S cmake/ctest_dashboard.cmake -VV\
+            -DTEST_MODEL=${TEST_MODEL}\
+            -DCTEST_CONFIGURATION_TYPE=Debug\
+            -DCTEST_BUILD_NAME="${{ matrix.compiler }} ${{ env.NAME_SUFFIX }}"\
+            -DCTEST_SITE="Github CI/CD"\
+            -DCONFIGURE_PRESET="debug-${{ matrix.compiler }}"\
+            --output-on-failure
+
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: yanzhaowang/centipede:env
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+
+      - name: pre-build
+        uses: './.github/actions/pre_build_config'
+
+      - name: build-test-submit
+        run: |
+          ctest -S cmake/ctest_coverage.cmake \
+            -DTEST_MODEL=${TEST_MODEL}\
+            -DCTEST_CONFIGURATION_TYPE=Debug\
+            -DCTEST_BUILD_NAME="coverage ${{ env.NAME_SUFFIX }}"\
+            -DCTEST_SITE="Github CI/CD"\
+            --output-on-failure
+
+  sanitizer-build-test:
+    runs-on: ubuntu-latest
+    container:
+      image: yanzhaowang/centipede:env
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer-type:
+          - thread
+          - address
+          - undefined
+        include:
+          - sanitizer-type: thread
+            check-type: 'ThreadSanitizer'
+          - sanitizer-type: address
+            check-type: 'AddressSanitizer'
+          - sanitizer-type: undefined
+            check-type: 'UndefinedBehaviorSanitizer'
+    name: sanitizer-${{ matrix.sanitizer-type }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+
+      - name: pre-build
+        uses: './.github/actions/pre_build_config'
+
+      - name: build-test-submit
+        run: |
+          ctest -S cmake/ctest_sanitizer.cmake -VV \
+            -DTEST_MODEL=${TEST_MODEL}\
+            -DCTEST_BUILD_NAME="${{ matrix.sanitizer-type }} sanitizer ${{ env.NAME_SUFFIX }}"\
+            -DCTEST_SITE="Github CI/CD"\
+            -DCTEST_MEMORYCHECK_TYPE=${{ matrix.check-type }}\
+            -DENABLE_SAN=${{ matrix.sanitizer-type }}\
+            --output-on-failure

@@ -1,0 +1,30 @@
+name: pre build config
+description: 'steps before the build'
+
+runs:
+  using: composite
+  steps:
+    - name: install and env vars
+      run: |
+        dnf upgrade -y
+        dnf install -y conan hostname
+        cd $GITHUB_WORKSPACE/..
+        echo "PARENT_DIR=$PWD" >> $GITHUB_ENV
+        echo "CONAN_HOME=$PWD/.conan2" >> $GITHUB_ENV
+        echo "GTEST_COLOR=1" >> $GITHUB_ENV
+      shell: bash
+
+    - name: set env variables for cdash
+      run: |
+        if [[ $GITHUB_EVENT_NAME == "push" ]]; then
+          echo "TEST_MODEL=Continuous" >> $GITHUB_ENV
+          echo "NAME_SUFFIX=(master)" >> $GITHUB_ENV
+        elif [[ $GITHUB_EVENT_NAME == "schedule" ]]; then
+          echo "TEST_MODEL=Nightly" >> $GITHUB_ENV
+          echo "NAME_SUFFIX=(master)" >> $GITHUB_ENV
+        else
+          echo "TEST_MODEL=Experimental" >> $GITHUB_ENV
+          export PULL_NR=${{ github.event.number }}
+          echo "NAME_SUFFIX=(pr.${PULL_NR} from ${{ github.event.pull_request.head.repo.owner.login }})" >> $GITHUB_ENV
+        fi
+      shell: bash

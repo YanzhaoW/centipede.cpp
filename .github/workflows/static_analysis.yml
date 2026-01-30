@@ -1,0 +1,56 @@
+name: static_analysis
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        base-image: [fedora-42]
+    container:
+      image: yanzhaowang/srs-env:${{ matrix.base-image }}
+    name: clang-tidy checks
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+
+      - name: install and env vars
+        run: |
+          dnf upgrade -y
+          dnf install -y conan hostname
+          cd $GITHUB_WORKSPACE/..
+          echo "PARENT_DIR=$PWD" >> $GITHUB_ENV
+          echo "CONAN_HOME=$PWD/.conan2" >> $GITHUB_ENV
+
+      - name: restore cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.PARENT_DIR }}/.conan2
+          key: ${{ matrix.base-image }}-clang-Debug
+
+      - name: build-test-submit
+        run: |
+          cmake --preset debug-clang -DENABLE_CLANG_TIDY=ON -GNinja
+          cmake --build build -- -j4 -k0
+
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format style check for C/C++/Protobuf programs.
+        uses: jidicula/clang-format-action@v4.16.0
+        with:
+          clang-format-version: '21'
+          exclude-regex: '(.*LinkDef.hpp$|./*\.proto$)'
+

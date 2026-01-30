@@ -8,7 +8,7 @@
   "configurePresets": [
     {
       "name": "default",
-      "displayName": "Default config",
+      "displayName": "Default build",
       "description": "Default build",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
@@ -17,7 +17,41 @@
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_EXTENSIONS": "ON",
+        "ENABLE_TEST": "ON",
         "CMAKE_CXX_SCAN_FOR_MODULES": "OFF"
+      }
+    },
+    {
+      "name": "debug-gcc",
+      "inherits": "default",
+      "displayName": "debug gcc build",
+      "description": "debug build using gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "gcc"
+      }
+    },
+    {
+      "name": "debug-clang",
+      "inherits": "default",
+      "displayName": "debug clang build",
+      "description": "debug build using clang",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_FLAGS": "-stdlib=libstdc++"
+      }
+    },
+    {
+      "name": "debug-libc++",
+      "inherits": "debug-clang",
+      "displayName": "debug libc++ build",
+      "description": "debug build using clang and libc++",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+        "CMAKE_EXE_LINKER_FLAGS": "-lc++abi"
       }
     }
   ]
