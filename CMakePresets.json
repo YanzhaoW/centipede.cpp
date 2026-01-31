@@ -53,6 +53,41 @@
         "CMAKE_CXX_FLAGS": "-stdlib=libc++",
         "CMAKE_EXE_LINKER_FLAGS": "-lc++abi"
       }
+    },
+    {
+      "name": "doxygen",
+      "displayName": "Doxygen build",
+      "description": "Doxygen build",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_EXTENSIONS": "ON",
+        "ENABLE_TEST": "ON",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "BUILD_DOC_ONLY": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "default"
+        },
+        {
+          "type": "build",
+          "name": "default"
+        }
+      ]
     }
   ]
 }

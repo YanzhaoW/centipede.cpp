@@ -1,0 +1,56 @@
+name: publish-doc
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  build-doxygen:
+    runs-on: macos-15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+      - name: install dependencies
+        run: |
+          brew upgrade
+          brew install doxygen graphviz ninja ghostscript
+          export PATH="/opt/homebrew/bin:$PATH"
+          export FC="gfortran-14"
+
+          cmake --preset doxygen
+
+      - name: run doxygen
+        run: |
+          cmake --build ./build --target doxygen
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
+        with:
+          path: build/doc/html
+          retention-days: 1
+
+  publish-doxygen:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: build-doxygen
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

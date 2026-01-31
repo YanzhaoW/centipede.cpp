@@ -1,6 +1,10 @@
 name: static_analysis
 on:
   pull_request:
+    paths:
+      - '**.cpp'
+      - '**.hpp'
+      - '**.cmake'
     branches:
       - master
   workflow_dispatch:
