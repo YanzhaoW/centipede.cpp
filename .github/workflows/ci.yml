@@ -4,9 +4,18 @@ on:
   # trigger the workflow on the every 2 am UTC
   - cron: '00 02 * * *'
   pull_request:
+    paths:
+      - '**.cpp'
+      - '**.hpp'
+      - '**/CMakeLists.txt'
+      - '**.cmake'
     branches:
       - master
   push:
+    paths:
+      - '**.cpp'
+      - '**.hpp'
+      - '**.cmake'
     branches:
       - master
 permissions: write-all
