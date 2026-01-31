@@ -8,7 +8,7 @@ on:
 
 jobs:
   docker-build:
-    environment: docke_deploy
+    environment: docker_deploy
     runs-on: ubuntu-latest
 
     steps:
