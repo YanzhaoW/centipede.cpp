@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  artifact-gen:
+  build-doxygen:
     runs-on: macos-15
     defaults:
       run:
@@ -26,7 +26,7 @@ jobs:
           export PATH="/opt/homebrew/bin:$PATH"
           export FC="gfortran-14"
 
-          cmake --preset default -DBUILD_DOC=ON
+          cmake --preset doxygen
           cmake --build ./build --target doxygen | grep "FAILED\|error"
 
       - uses: actions/upload-pages-artifact@v3

@@ -7,6 +7,11 @@ include(project_options)
 
 project(centipede LANGUAGES CXX C VERSION 0.0.1)
 
+if(BUILD_DOC_ONLY)
+    add_subdirectory(doc)
+    return()
+endif()
+
 include(load_dependencies)
 include(project_config)
 

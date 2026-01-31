@@ -7,6 +7,7 @@ on:
     paths:
       - '**.cpp'
       - '**.hpp'
+      - '**/CMakeLists.txt'
       - '**.cmake'
     branches:
       - master
