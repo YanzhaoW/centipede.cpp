@@ -8,18 +8,31 @@ set(CONFIGURE_OPTIONS
     "-DENABLE_COVERAGE=ON"
     ${ADDITIONAL_CONFIGURE_OPTIONS}
 )
-set(CTEST_COVERAGE_EXTRA_FLAGS
-    "--object-directory ${CTEST_BINARY_DIRECTORY}/source"
-)
 
-ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}")
+ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}" RETURN_VALUE _return)
 ctest_submit(PARTS Configure)
 
-ctest_build()
+if(_return)
+    message(FATAL_ERROR "Configuration failed!")
+endif()
+
+ctest_build(RETURN_VALUE _return)
 ctest_submit(PARTS Build)
 
-ctest_test()
+if(_return)
+    message(FATAL_ERROR "Build failed!")
+endif()
+
+ctest_test(RETURN_VALUE _return)
 ctest_submit(PARTS Test)
 
-ctest_coverage(QUIET)
+if(_return)
+    message(FATAL_ERROR "Test failed!")
+endif()
+
+ctest_coverage(QUIET RETURN_VALUE _return)
 ctest_submit(PARTS Coverage)
+
+if(_return)
+    message(FATAL_ERROR "Coverage failed!")
+endif()

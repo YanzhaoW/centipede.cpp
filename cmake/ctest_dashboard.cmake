@@ -7,17 +7,23 @@ set(CONFIGURE_OPTIONS
     ${ADDITIONAL_CONFIGURE_OPTIONS}
 )
 
-ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}")
-
+ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}" RETURN_VALUE _return)
 ctest_submit(PARTS Configure)
 
-ctest_build()
+if(_return)
+    message(FATAL_ERROR "Configuration failed!")
+endif()
 
+ctest_build(RETURN_VALUE _return)
 ctest_submit(PARTS Build)
 
-ctest_test(RETURN_VALUE _ctest_test_ret_val)
+if(_return)
+    message(FATAL_ERROR "Build failed!")
+endif()
 
+ctest_test(RETURN_VALUE _ctest_test_ret_val)
 ctest_submit(PARTS Test)
+
 
 if(_ctest_test_ret_val)
     message(FATAL_ERROR "Some tests failed!")

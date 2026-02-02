@@ -15,13 +15,16 @@ target_compile_options(
 
 target_sources(
     core
-    PRIVATE centipede.cpp
     PUBLIC
         FILE_SET publicHeaders
             TYPE HEADERS
             BASE_DIRS ${CMAKE_SOURCE_DIR}/source
             FILES centipede.hpp
 )
+
+add_subdirectory(core)
+add_subdirectory(writer)
+add_subdirectory(reader)
 
 target_link_libraries(core PRIVATE spdlog::spdlog)
 
