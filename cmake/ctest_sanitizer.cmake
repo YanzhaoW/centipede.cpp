@@ -8,16 +8,21 @@ include(ctest_common)
 
 set(CONFIGURE_OPTIONS "--preset debug-clang" "-DENABLE_SAN=${ENABLE_SAN}")
 
-ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}")
-
+ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}" RETURN_VALUE _return)
 ctest_submit(PARTS Configure)
 
-ctest_build()
+if(_return)
+    message(FATAL_ERROR "Configuration failed!")
+endif()
 
+ctest_build(RETURN_VALUE _return)
 ctest_submit(PARTS Build)
 
-ctest_memcheck(RETURN_VALUE _ctest_test_ret_val)
+if(_return)
+    message(FATAL_ERROR "Build failed!")
+endif()
 
+ctest_memcheck(RETURN_VALUE _ctest_test_ret_val)
 ctest_submit(PARTS MemCheck)
 
 if(_ctest_test_ret_val)

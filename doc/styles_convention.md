@@ -10,6 +10,18 @@ Tests written for a class, should only be oriented towards its public interfaces
 
 The test coverage, which is automatically calculated from one of the CI pipelines, should be 100\%.
 
+## Naming convention
+
+|        Categories        | Conventions                 | Examples          |
+| :----------------------: | :-------------------------- | :---------------- |
+|          class           | PascalCase                  | `MyClass`         |
+|         concept          | PascalCase                  | `MyConcept`       |
+|    (member) function     | snake_case                  | `my_function`     |
+| (struct member) variable | snake_case                  | `my_variable`     |
+|  class member variable   | snake*case\_ (trailing `*`) | `member_var_`     |
+|        file name         | snake_case                  | `source_file.cpp` |
+|        namespace         | snake_case                  | `centipede`       |
+
 ## Following the best practice
 
 Following the best practice of C++ is the best way to make sure the program is reliable, fast and easy to maintain in the long term. During the CI process, all code in the program is automatically checked by the static analyzers, namely clang-tidy and clang-format, and the pull request can only be accepted when these static analyzers emit no errors or warnings. For an easier recognition of some bad practice, it's highly recommended to utilize Clangd in your IDE during the development.
@@ -49,12 +61,6 @@ auto my_func_return_int() -> int;
 
 void my_func_return_void();
 ```
-
-### Naming convention
-
-- Classes: pascal case, e.g. `MyClass`
-- Functions, member functions and non-member variables: snake case, e.g. `local_var` or `execute_on()`
-- Member variables: snake case with a suffix underscore, e.g. `member_var_`
 
 ### OOP related convention
 
