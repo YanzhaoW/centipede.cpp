@@ -9,6 +9,8 @@ set(CONFIGURE_OPTIONS
     ${ADDITIONAL_CONFIGURE_OPTIONS}
 )
 
+set(CTEST_COVERAGE_COMMAND "gcovr")
+
 ctest_configure(OPTIONS "${CONFIGURE_OPTIONS}" RETURN_VALUE _return)
 ctest_submit(PARTS Configure)
 

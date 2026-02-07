@@ -17,11 +17,11 @@ There are 5 major components regarding the infrastructure of this project:
 Documentation in this project is done via Doxygen, a very popular documentation tool for C and C++ projects. It is then modified by [Doxygen-awesome](https://github.com/jothepro/doxygen-awesome-css) to improve the aesthetic of the documentation. The main configuration file for the doxygen is in this [CMakeLists.txt](https://github.com/YanzhaoW/centipede.cpp/blob/master/doc/CMakeLists.txt), where all CMake variables with the prefix `DOXYGEN_` will be used as the doxygen configuration options. To build the documentation, enable `-DBUILD_DOC` during the CMake configuration and build the target named "doxygen":
 
 ```bash
-$ cmake --preset default -DBUILD_DOC=ON
+cmake --preset default -DBUILD_DOC=ON
 
-$ cd build
+cd build
 
-$ ninja doxygen
+ninja doxygen
 ```
 
 The `index.html` will be in `build/doc/html` folder.

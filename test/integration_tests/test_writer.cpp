@@ -1,6 +1,5 @@
 #include "centipede/data/entry.hpp"
 #include "centipede/writer/binary.hpp"
-#include <algorithm>
 #include <cstdio> // IWYU pragma: keep
 #include <cstdlib>
 #include <print>
@@ -35,24 +34,16 @@ auto main() -> int
     auto rnd_int_dst = std::uniform_int_distribution<int>{ 1, MAX_N_ENTRYPOINTS };
     auto generate_int_rnd = [&rnd_int_dst, &rnd_engine]() -> int { return rnd_int_dst(rnd_engine); };
     auto generate_float_rnd = [&rnd_float_dst, &rnd_engine]() -> float { return rnd_float_dst(rnd_engine); };
-    auto randomize_locals = [&generate_float_rnd](NewEntryPoint::LocalDerivs& local_derivs) -> void
-    { std::ranges::generate(local_derivs, generate_float_rnd); };
-    auto randomize_globals = [&generate_float_rnd,
-                              &generate_int_rnd](NewEntryPoint::GlobalDerivs& global_derivs) -> void
-    {
-        std::ranges::generate(global_derivs | std::views::values, generate_float_rnd);
-        std::ranges::generate(global_derivs | std::views::keys, generate_int_rnd);
-    };
 
     for ([[maybe_unused]] auto entry_idx : std::views::iota(0, N_ENTRIES))
     {
         auto n_entrypoints = generate_int_rnd();
         for ([[maybe_unused]] auto entrypoint_idx : std::views::iota(0, n_entrypoints))
         {
-            randomize_locals(entry_point.local_derivs);
-            randomize_globals(entry_point.global_derivs);
-            entry_point.measurement = generate_float_rnd();
-            entry_point.sigma = generate_float_rnd();
+            entry_point.set_locals(generate_float_rnd)
+                .set_globals(generate_int_rnd, generate_float_rnd)
+                .set_measurement(generate_float_rnd())
+                .set_sigma(generate_float_rnd());
             auto err = writer.add_entrypoint(entry_point);
             if (not err.has_value())
             {

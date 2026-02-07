@@ -55,6 +55,15 @@
       }
     },
     {
+      "name": "coverage",
+      "inherits": "debug-gcc",
+      "displayName": "coverage build",
+      "description": "debug build using clang and libc++",
+      "cacheVariables": {
+        "ENABLE_COVERAGE": "ON"
+      }
+    },
+    {
       "name": "doxygen",
       "displayName": "Doxygen build",
       "description": "Doxygen build",
@@ -73,6 +82,24 @@
     {
       "name": "default",
       "configurePreset": "default"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": true }
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": true }
     }
   ],
   "workflowPresets": [
@@ -86,6 +113,27 @@
         {
           "type": "build",
           "name": "default"
+        },
+        {
+          "type": "test",
+          "name": "default"
+        }
+      ]
+    },
+    {
+      "name": "coverage",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage"
+        },
+        {
+          "type": "test",
+          "name": "coverage"
         }
       ]
     }
