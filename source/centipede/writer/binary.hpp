@@ -184,7 +184,7 @@ namespace centipede::writer
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
 
-        if (entry_point.sigma <= 0.)
+        if (entry_point.get_sigma() <= 0.)
         {
             return std::unexpected{ ErrorCode::writer_neg_or_zero_sigma };
         }
@@ -200,18 +200,18 @@ namespace centipede::writer
         auto old_size = data_buffer_.first.size();
         auto has_entry = false;
 
-        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.measurement });
+        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_measurement() });
 
         // NOTE: Can be changed to concat in C++26
 
-        for (const auto& [idx, local_deriv] : std::views::zip(std::views::iota(0), entry_point.local_derivs))
+        for (const auto& [idx, local_deriv] : std::views::zip(std::views::iota(0), entry_point.get_locals()))
         {
             has_entry |= fill_entrypoint_to_buffer(BufferPoint{ idx + 1, local_deriv }, true);
         }
 
-        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.sigma });
+        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_sigma() });
 
-        for (const auto& [idx, global_deriv] : entry_point.global_derivs)
+        for (const auto& [idx, global_deriv] : entry_point.get_globals())
         {
             has_entry |= fill_entrypoint_to_buffer(BufferPoint{ idx + 1, global_deriv }, true);
         }

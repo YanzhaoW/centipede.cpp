@@ -11,6 +11,7 @@ using Config = centipede::writer::Binary::Config;
 using centipede::ErrorCode;
 namespace fs = std::filesystem;
 
+// NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers)
 TEST(writer, constructor)
 {
     auto writer = Binary{ Config{ .out_filename = "binary_writer_constructor.bin" } };
@@ -42,14 +43,13 @@ TEST(writer, init_error)
 
 namespace
 {
-    const auto valid_local_derivs = std::array{ 1.F, 2.F, 3.F };
-    const auto valid_global_derivs = std::array{ std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F } };
     const auto valid_meas = 1.F;
     const auto valid_sigma = 1.F;
-    const auto valid_entry_point = centipede::EntryPoint{ .local_derivs = valid_local_derivs,
-                                                          .global_derivs = valid_global_derivs,
-                                                          .measurement = valid_meas,
-                                                          .sigma = valid_sigma };
+    const auto valid_entry_point = centipede::EntryPoint<3, 2>{}
+                                       .set_locals(1.F, 2.F, 3.F)
+                                       .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
+                                       .set_measurement(valid_meas)
+                                       .set_sigma(valid_sigma);
 } // namespace
 TEST(writer, read_entrypoint_normal)
 {
@@ -71,13 +71,11 @@ TEST(writer, read_entrypoint_reject)
     auto writer = Binary{ Config{} };
     [[maybe_unused]] auto init_err = writer.init();
 
-    const auto local_derivs = std::array{ 0.F };
-    const auto global_derivs = std::array{ std::pair{ 10U, 0.F }, std::pair{ 11U, 0.F } };
-    const auto meas = 1.F;
-    const auto sigma = 1.F;
-    auto entry_point = centipede::EntryPoint{
-        .local_derivs = local_derivs, .global_derivs = global_derivs, .measurement = meas, .sigma = sigma
-    };
+    auto entry_point = centipede::EntryPoint<1, 2>{};
+    entry_point.set_locals(0.)
+        .set_globals(std::pair{ 10U, 0.F }, std::pair{ 11U, 0.F })
+        .set_measurement(1.F)
+        .set_sigma(1.F);
     auto err = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(err.has_value());
     EXPECT_TRUE(err.error() == ErrorCode::writer_entrypoint_rejected);
@@ -109,11 +107,12 @@ TEST(writer, read_entrypoint_zero_sigma)
 
     const auto local_derivs = std::array{ 1.F, 2.F, 3.F };
     const auto global_derivs = std::array{ std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F } };
-    const auto meas = 1.F;
-    const auto sigma = -1.F;
-    auto entry_point = centipede::EntryPoint{
-        .local_derivs = local_derivs, .global_derivs = global_derivs, .measurement = meas, .sigma = sigma
-    };
+    auto entry_point = centipede::EntryPoint<3, 2>{}
+                           .set_locals(1.F, 2.F, 3.F)
+                           .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
+                           .set_measurement(1.F)
+                           .set_sigma(-1.F);
+
     auto err = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(err.has_value());
     EXPECT_TRUE(err.error() == ErrorCode::writer_neg_or_zero_sigma);
@@ -154,4 +153,5 @@ TEST(writer, write_current_entry)
     ASSERT_TRUE(fs::exists(filename));
     EXPECT_GT(fs::file_size(filename), 0);
 }
+// NOLINTEND (cppcoreguidelines-avoid-magic-numbers)
 // TEST(writer, format) {}
