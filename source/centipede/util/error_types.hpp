@@ -13,10 +13,11 @@ namespace centipede
      */
     enum class ErrorCode : uint8_t
     {
-        writer_neg_or_zero_sigma,   //!< Zero or negative sigma occurs. See @ref writer::Binary
-        writer_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref writer::Binary
+        invalid,                    //!< An invalid error.
+        writer_neg_or_zero_sigma,   //!< Zero or negative sigma occurs. See @ref writer::Binary.
+        writer_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref writer::Binary.
         writer_entrypoint_rejected, //!< Entrypoint is rejected due to absence of non-zero derivs. See @ref
-                                    //!< writer::Binary
+                                    //!< writer::Binary.
         writer_file_fail_to_open,   //!< File failed to be open.
         writer_uninitialized,       //!< Write is not initialized.
     };
@@ -48,6 +49,8 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Writer: Failed to open the file.");
             case writer_uninitialized:
                 return std::format_to(ctx.out(), "Writer: Must be initialized beforehand!");
+            case invalid:
+            default:
         }
         return std::format_to(ctx.out(), "invalid error code");
     }

@@ -3,6 +3,7 @@
 #include <format>
 #include <gtest/gtest.h>
 #include <utility>
+#include <vector>
 
 TEST(static_entrypoint, constructor) { auto entry = centipede::EntryPoint<1, 1>{}; }
 
