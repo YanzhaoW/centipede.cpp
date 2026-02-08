@@ -23,14 +23,15 @@ target_sources(
 )
 
 add_subdirectory(core)
+add_subdirectory(util)
 add_subdirectory(writer)
 add_subdirectory(reader)
 
 target_link_libraries(core PRIVATE spdlog::spdlog)
 
 if(ENABLE_COVERAGE)
-    target_compile_options(core PRIVATE --coverage)
-    target_link_options(core PRIVATE --coverage)
+    target_compile_options(core PUBLIC --coverage)
+    target_link_options(core PUBLIC --coverage)
 endif()
 
 if(ENABLE_SAN STREQUAL "none")
