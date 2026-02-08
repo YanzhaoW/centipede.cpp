@@ -4,7 +4,12 @@
 #include <gtest/gtest.h>
 #include <utility>
 
-TEST(entrypoint, constructor) { auto entry = centipede::EntryPoint<1, 1>{}; }
+TEST(entrypoint, constructor)
+{
+    auto entry = centipede::EntryPoint<1, 1>{};
+    EXPECT_EQ(decltype(entry)::n_locals, 1);
+    EXPECT_EQ(decltype(entry)::n_globals, 1);
+}
 
 TEST(entrypoint, setters)
 {
