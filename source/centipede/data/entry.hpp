@@ -22,6 +22,7 @@ namespace centipede
     template <std::size_t NLocals = internal::DYNAMIC_SIZE, std::size_t NGlobals = internal::DYNAMIC_SIZE>
     class EntryPoint : public internal::EntryPointBase
     {
+      public:
         using LocalDerivs = std::vector<float>;                       //!< Data type of local deriv array.
         using GlobalDerivs = std::vector<std::pair<uint32_t, float>>; //!< Data type of global deriv array.
 
@@ -76,7 +77,7 @@ namespace centipede
         template <EntryPointGlobalIdxPair... DataTypes>
         constexpr void set_globals_imp(DataTypes... globals)
         {
-            locals_.clear();
+            globals_.clear();
             (globals_.emplace_back(static_cast<uint32_t>(globals.first), static_cast<float>(globals.second)), ...);
         }
 
