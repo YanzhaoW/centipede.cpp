@@ -68,6 +68,7 @@ jobs:
         run: |
           dnf install -y pipx
           pipx install gcovr
+          pipx ensurepath
           cmake --workflow --preset coverage
           gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
       - name: Run codacy-coverage-reporter
