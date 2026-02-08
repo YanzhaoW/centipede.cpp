@@ -1,7 +1,9 @@
 #include "centipede/centipede.hpp"
 #include <format>
 #include <gtest/gtest.h>
+#include <limits>
 #include <magic_enum/magic_enum.hpp>
+#include <type_traits>
 
 TEST(error_type, format)
 {
@@ -13,4 +15,11 @@ TEST(error_type, format)
         EXPECT_FALSE(error_str.empty());
         EXPECT_NE(error_str, "invalid error code");
     }
+}
+
+TEST(error_type, format_error)
+{
+    auto err = centipede::ErrorCode{ std::numeric_limits<std::underlying_type_t<centipede::ErrorCode>>::max() };
+    auto error_str = std::format("{}", err);
+    EXPECT_EQ(error_str, "invalid error code");
 }
