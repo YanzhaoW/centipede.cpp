@@ -69,8 +69,11 @@ jobs:
           dnf install -y pipx
           export PATH="~/.local/bin:${PATH}"
           pipx install gcovr
+          ls ~/.local/bin
+          which gcovr
           cmake --workflow --preset coverage
           gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
+        shell: bash
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
