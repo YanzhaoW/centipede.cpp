@@ -107,8 +107,6 @@ TEST(writer, read_entrypoint_zero_sigma)
 
     const auto local_derivs = std::array{ 1.F, 2.F, 3.F };
     const auto global_derivs = std::array{ std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F } };
-    const auto meas = 1.F;
-    const auto sigma = -1.F;
     auto entry_point = centipede::EntryPoint<3, 2>{}
                            .set_locals(1.F, 2.F, 3.F)
                            .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
