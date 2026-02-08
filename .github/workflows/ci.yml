@@ -66,12 +66,17 @@ jobs:
 
       - name: build-test-submit
         run: |
-          ctest -S cmake/ctest_coverage.cmake \
-            -DTEST_MODEL=${TEST_MODEL}\
-            -DCTEST_CONFIGURATION_TYPE=Debug\
-            -DCTEST_BUILD_NAME="coverage ${{ env.NAME_SUFFIX }}"\
-            -DCTEST_SITE="Github CI/CD"\
-            --output-on-failure
+          dnf install -y pipx
+          cmake --workflow --preset coverage
+          gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: clover.xml
+          # or a comma-separated list for multiple reports
+          # coverage-reports: <PATH_TO_REPORT>, <PATH_TO_REPORT>
+
 
   sanitizer-build-test:
     runs-on: ubuntu-latest
