@@ -66,11 +66,7 @@ jobs:
 
       - name: build-test-submit
         run: |
-          dnf install -y pipx
-          export PATH="~/.local/bin:${PATH}"
-          pipx install gcovr
-          ls ~/.local/bin
-          which gcovr
+          dnf install -y gcovr
           cmake --workflow --preset coverage
           gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
         shell: bash
