@@ -102,8 +102,6 @@ namespace centipede
       public:
         using LocalDerivs = std::array<float, NLocals>;                        //!< Data type of local deriv array.
         using GlobalDerivs = std::array<std::pair<uint32_t, float>, NGlobals>; //!< Data type of global deriv array.
-        static constexpr std::size_t n_locals = NLocals;                       //!< Number of the local parameters.
-        static constexpr std::size_t n_globals = NGlobals;                     //!< Number of the global parameters.
 
         /**
          * @brief Default constructor.
