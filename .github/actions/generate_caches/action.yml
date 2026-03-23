@@ -11,6 +11,7 @@ runs:
   steps:
     - name: delete old caches
       run: |
+        git config --global --add safe.directory ${{ github.workspace }}
         gh cache delete debug-${{ matrix.compiler }}  || true
       env:
         GH_TOKEN: ${{ inputs.github_token }}

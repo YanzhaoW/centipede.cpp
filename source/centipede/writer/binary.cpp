@@ -12,7 +12,6 @@
 
 namespace centipede::writer
 {
-
     namespace
     {
         template <typename T>

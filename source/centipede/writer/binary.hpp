@@ -76,8 +76,8 @@ namespace centipede::writer
          */
         struct Config
         {
-            static constexpr auto DEFAULT_BUFFER_SIZE = std::size_t{ 10000 };
-
+            static constexpr auto DEFAULT_BUFFER_SIZE =
+                std::size_t{ 10000 }; //!< Default vector capacities for both vectors in #Binary::BufferType.
             std::string out_filename = "output.bin";             //!< Output binary filename.
             uint32_t max_bufferpoint_size = DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
         };

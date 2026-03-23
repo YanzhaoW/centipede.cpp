@@ -26,3 +26,6 @@ Checks: >
   readability-*,
 FormatStyle: 'file'
 HeaderFilterRegex: '.*'
+
+CheckOptions:
+  - readability-identifier-length.IgnoredExceptionVariableNames: '^(e|_)$'

@@ -1,17 +1,17 @@
 # Introduction
 
-Centipede is a program that implements Millepede method in C++. It's designed to be fast with a flexible API, using the latest C++ standard and other modern programming techniques, such as multithreading and task scheduling. The high performance of this library is achieved by utilizing the Eigen3 library for the matrix operations.
+Centipede is a C++ implementation of the Millepede algorithm, originally introduced in Millepede-II program. It's designed for high performance and flexible APIs, utilizing the latest C++ standard and other modern programming techniques, such as multithreading and task scheduling. The core matrix operations, including multiplications, decompositions and inversions, are implemented via the Eigen library.
 
-The program provides both a library and a CLI executable for the backward compatibility to the old Millepede-II program.
+This program includes a header-only library for the direct integration of the algorithm into your applications, as well as a command-line interface (CLI) executable to maintain the backward compatibility with the original Millepede-II program.
 
-## Contents
+<h1>Contents</h1>
 
-### The Basics
+<h2> The Basics </h2>
 
 - \subpage installation "Installation"
 - \subpage basic_usages "Basic usages"
 
-### For Developers
+<h2> For Developers</h2>
 
 - \subpage program_style_conventions "Programming styles and conventions"
 - \subpage project_structure "Project structure"
