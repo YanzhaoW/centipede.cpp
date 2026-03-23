@@ -1,6 +1,6 @@
 add_library(core SHARED)
 add_library(centipede::centipede ALIAS core)
-target_compile_features(core PRIVATE cxx_std_23)
+target_compile_features(core PRIVATE cxx_std_26)
 target_compile_options(
     core
     PRIVATE
@@ -26,8 +26,6 @@ add_subdirectory(core)
 add_subdirectory(util)
 add_subdirectory(writer)
 add_subdirectory(reader)
-
-target_link_libraries(core PRIVATE spdlog::spdlog)
 
 if(ENABLE_COVERAGE)
     target_compile_options(core PUBLIC --coverage)

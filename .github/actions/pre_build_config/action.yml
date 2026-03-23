@@ -13,13 +13,14 @@ runs:
     - name: install and env vars
       run: |
         dnf upgrade -y
-        dnf install -y conan hostname
+        dnf install -y conan hostname gsl-devel
         cd $GITHUB_WORKSPACE/..
         echo "PARENT_DIR=$PWD" >> $GITHUB_ENV
         export CONAN_HOME=$PWD/.conan2
         echo "CONAN_HOME=$CONAN_HOME" >> $GITHUB_ENV
         echo "GTEST_COLOR=1" >> $GITHUB_ENV
-        conan config install --type file $GITHUB_WORKSPACE/util/conan_config/settings.yml
+        conan config clean
+        cat $GITHUB_WORKSPACE/util/conan_config/settings.yml >> $CONAN_HOME/settings.yml
       shell: bash
 
     - name: set env variables for cdash
