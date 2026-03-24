@@ -1,0 +1,3 @@
+namespace centipede::reader
+{
+}
