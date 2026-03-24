@@ -38,7 +38,7 @@ jobs:
         if: github.event_name == 'pull_request_target'
         run: |
           auth="--project-token ${{ secrets.CODACY_PROJECT_TOKEN }}"
-          commit_uuid="--commit-uuid ${{ github.event.pull_request.merge_commit_sha }}"
+          commit_uuid="--commit-uuid ${{ github.event.pull_request.head.sha }}"
           bash <(curl -Ls https://coverage.codacy.com/get.sh) report $auth $commit_uuid -r clover.xml
       - name: Run codacy-coverage-reporter
         if: github.event_name == 'push'
