@@ -97,5 +97,5 @@ jobs:
       - name: checkout
         run: |
           git log --oneline --decorate
-          echo "head sha: ${{ github.event.pull_request.head_sha }}"
+          echo "head sha: ${{ github.event.pull_request.head.sha }}"
 
