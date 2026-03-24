@@ -87,3 +87,14 @@ jobs:
             -DCTEST_MEMORYCHECK_TYPE=${{ matrix.check-type }}\
             -DENABLE_SAN=${{ matrix.sanitizer-type }}\
             --output-on-failure
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+      - name: checkout
+        run: |
+          git log --oneline --decorate
+
