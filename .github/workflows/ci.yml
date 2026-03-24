@@ -50,35 +50,6 @@ jobs:
             -DCONFIGURE_PRESET="debug-${{ matrix.compiler }}"\
             --output-on-failure
 
-  coverage:
-    runs-on: ubuntu-latest
-    container:
-      image: yanzhaowang/centipede:env
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          submodules: 'true'
-
-      - name: pre-build
-        uses: './.github/actions/pre_build_config'
-
-      - name: build-test-submit
-        run: |
-          dnf install -y gcovr
-          cmake --workflow --preset coverage
-          gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
-        shell: bash
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: clover.xml
-          # or a comma-separated list for multiple reports
-          # coverage-reports: <PATH_TO_REPORT>, <PATH_TO_REPORT>
-
-
   sanitizer-build-test:
     runs-on: ubuntu-latest
     container:

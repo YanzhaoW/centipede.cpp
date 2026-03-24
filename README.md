@@ -3,8 +3,7 @@
 [![dashboard](https://img.shields.io/badge/dashboard-centiepede-blue?labelColor=gray&style=flat)](https://my.cdash.org/index.php?project=centipede-projekt)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/dcd6886516a040d885721aabfed658f3)](https://app.codacy.com/gh/YanzhaoW/centipede.cpp/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/dcd6886516a040d885721aabfed658f3)](https://app.codacy.com/gh/YanzhaoW/centipede.cpp/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-[![CI](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/ci.yml)
-[![static_analysis](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/static_analysis.yml/badge.svg)](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/static_analysis.yml)
+[![CI](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/YanzhaoW/centipede.cpp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Documentation
