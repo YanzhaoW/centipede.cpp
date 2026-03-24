@@ -34,10 +34,16 @@ jobs:
           cmake --workflow --preset coverage
           gcovr --clover --clover-pretty --exclude ".*test.*\.cpp" --output=clover.xml
         shell: bash
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: clover.xml
-          # or a comma-separated list for multiple reports
-          # coverage-reports: <PATH_TO_REPORT>, <PATH_TO_REPORT>
+      - name: submit report
+        run: |
+          auth="--project-token ${{ secrets.CODACY_PROJECT_TOKEN }}"
+          commit_uuid="--commit-uuid ${{ github.event.pull_request.merge_commit_sha }}"
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report $auth $commit_uuid -r coverage.xml --partial &&\
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) final $auth $commit_uuid
+      # - name: Run codacy-coverage-reporter
+      #   uses: codacy/codacy-coverage-reporter-action@v1.3.0
+      #   with:
+      #     project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      #     coverage-reports: clover.xml
+      #     # or a comma-separated list for multiple reports
+      #     # coverage-reports: <PATH_TO_REPORT>, <PATH_TO_REPORT>
