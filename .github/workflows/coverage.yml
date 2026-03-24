@@ -23,6 +23,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: 'true'
+          ref: "${{ github.event.pull_request.merge_commit_sha }}"
 
       - name: pre-build
         uses: './.github/actions/pre_build_config'
