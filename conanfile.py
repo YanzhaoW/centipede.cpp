@@ -12,8 +12,9 @@ class CompressorRecipe(ConanFile):
 
     def requirements(self):
         self.requires("spdlog/1.16.0", options={"use_std_fmt": True, "no_exceptions": True})  # type: ignore
-        self.requires("magic_enum/0.9.7")  # type: ignore
-        self.requires("cli11/2.6.0")  # type: ignore
+        self.requires("magic_enum/0.9.7")   # type: ignore
+        self.requires("cli11/2.6.0")        # type: ignore
+        self.requires("eigen/5.0.1")        # type: ignore
 
         # Conditions on cmake variables set from cmake/project_options
         if os.environ["CMAKE_ENABLE_TEST"] == "ON":

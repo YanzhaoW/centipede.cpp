@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -162,6 +163,16 @@ namespace centipede
             locals_ = std::array<float, NLocals>{};
             globals_ = std::array<std::pair<uint32_t, float>, NGlobals>{};
         }
+    };
+
+    template <typename DataType>
+    struct Entry
+    {
+        using Deriv = std::pair<uint32_t, std::pair<uint32_t, DataType>>;
+        std::vector<DataType> measurements;
+        std::vector<DataType> sigmas;
+        std::vector<Deriv> local_derivs;
+        std::vector<Deriv> global_derivs;
     };
 
 }; // namespace centipede
