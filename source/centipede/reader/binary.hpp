@@ -30,9 +30,7 @@ namespace centipede::reader
          */
         struct Config
         {
-            static constexpr auto DEFAULT_BUFFER_SIZE = std::size_t{ 10000 };
-            std::string in_filename = "output.bin";              //!< Input binary filename.
-            uint32_t max_bufferpoint_size = DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
+            std::string in_filename = "output.bin"; //!< Input binary filename.
         };
 
         /**

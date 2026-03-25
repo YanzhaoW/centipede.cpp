@@ -22,7 +22,6 @@ namespace centipede::reader
 
     auto Binary::init() -> EnumError<>
     {
-        entry_buffer_.reserve(config_.max_bufferpoint_size);
         // reset();
         input_file_.open(config_.in_filename, std::ios::binary | std::ios::in);
         if (!input_file_.is_open())
