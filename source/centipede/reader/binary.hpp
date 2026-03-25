@@ -4,6 +4,7 @@
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace centipede::reader
@@ -20,8 +21,8 @@ namespace centipede::reader
       public:
         /**
          * @class Config
-         *  @brief Configuration for the class.
-         *  To be added ...
+         * @brief Configuration for the class.
+         * To be added ...
          *
          * To be added ...
          */
@@ -34,6 +35,18 @@ namespace centipede::reader
          * @brief Default constructor.
          */
         Binary() = default;
+
+        /**
+         * @brief Constructor takes an argument for  the configuration.
+         *
+         * The config argument will be moved (`std::move`) to its member variable `config_`
+         * @param config Configuration struct.
+         * @see Config
+         */
+        constexpr explicit Binary(Config config)
+            : config_{ std::move(config) }
+        {
+        }
 
         /**
          * @brief Initialization of the instance.
@@ -49,5 +62,6 @@ namespace centipede::reader
 
       private:
         std::vector<EntryPoint<>> entry_buffer_; //!< A vector containing all entrypoints of the current entry.
+        Config config_;
     };
 } // namespace centipede::reader
