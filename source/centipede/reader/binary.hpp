@@ -9,8 +9,9 @@
 namespace centipede::reader
 {
     /**
-     * @class Class for reading binary files.
-     * @brief To be added ...
+     * @class Binary
+     * @brief Class for reading binary files.
+     * To be added ...
      *
      * To be added ...
      */
@@ -18,8 +19,9 @@ namespace centipede::reader
     {
       public:
         /**
-         * @class Configuration for the class.
-         * @brief To be added ...
+         * @class Config
+         *  @brief Configuration for the class.
+         *  To be added ...
          *
          * To be added ...
          */
