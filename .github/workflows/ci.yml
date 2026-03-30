@@ -24,7 +24,7 @@ jobs:
   linux-build-test:
     runs-on: ubuntu-latest
     container:
-      image: yanzhaowang/centipede:env
+      image: ghcr.io/yanzhaow/centipede_env:latest
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +39,15 @@ jobs:
       - name: pre-build
         uses: './.github/actions/pre_build_config'
 
+      - name: restore cache
+        if: github.event_name == 'pull_request'
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.PARENT_DIR }}/.conan2
+          key: debug-${{ matrix.compiler }}
+
       # Be very careful about CTEST_BUILD_NAME. It shouldn't contain additional double quotations
       - name: build-test-submit
         run: |
@@ -50,10 +59,14 @@ jobs:
             -DCONFIGURE_PRESET="debug-${{ matrix.compiler }}"\
             --output-on-failure
 
+      - name: generate-caches
+        if: github.event_name == 'push'
+        uses: './.github/actions/generate_caches'
+
   sanitizer-build-test:
     runs-on: ubuntu-latest
     container:
-      image: yanzhaowang/centipede:env
+      image: ghcr.io/yanzhaow/centipede_env:latest
     strategy:
       fail-fast: false
       matrix:

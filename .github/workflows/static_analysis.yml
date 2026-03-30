@@ -14,12 +14,8 @@ permissions: write-all
 jobs:
   clang-tidy:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        base-image: [fedora-42]
     container:
-      image: yanzhaowang/srs-env:${{ matrix.base-image }}
+      image: ghcr.io/yanzhaow/centipede_env:latest
     name: clang-tidy checks
     steps:
       - uses: actions/checkout@v6
@@ -41,7 +37,7 @@ jobs:
         with:
           path: |
             ${{ env.PARENT_DIR }}/.conan2
-          key: ${{ matrix.base-image }}-clang-Debug
+          key: debug-clang
 
       - name: build-test-submit
         run: |

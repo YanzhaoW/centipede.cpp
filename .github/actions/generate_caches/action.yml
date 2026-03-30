@@ -1,0 +1,21 @@
+name: generate caches
+description: 'generate caches for CI workflows'
+
+runs:
+  using: composite
+  steps:
+    - name: delete old caches
+      run: |
+        gh cache delete debug-${{ matrix.compiler }}  || true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
+
+    - name: save cache
+      id: cache-save
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ env.PARENT_DIR }}/.conan2
+        key: debug-${{ matrix.compiler }}
+      shell: bash
