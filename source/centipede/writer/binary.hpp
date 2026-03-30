@@ -1,6 +1,7 @@
 #pragma once
 
 #include "centipede/data/entry.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 
@@ -76,10 +77,8 @@ namespace centipede::writer
          */
         struct Config
         {
-            static constexpr auto DEFAULT_BUFFER_SIZE = std::size_t{ 10000 };
-
-            std::string out_filename = "output.bin";             //!< Output binary filename.
-            uint32_t max_bufferpoint_size = DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
+            std::string out_filename = "output.bin";                     //!< Output binary filename.
+            uint32_t max_bufferpoint_size = common::DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
         };
 
         using BufferType = std::pair<std::vector<uint32_t>, std::vector<float>>; //!< Type of the #data_buffer_.
