@@ -23,4 +23,3 @@ runs:
         path: |
           ${{ env.PARENT_DIR }}/.conan2
         key: debug-${{ matrix.compiler }}
-      shell: bash
