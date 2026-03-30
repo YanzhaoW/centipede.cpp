@@ -66,7 +66,7 @@ namespace centipede::core::engines
 
         auto get_current_entrypoint_size() const -> auto
         {
-            assert(measurements_.size() == sigmas_);
+            assert(measurements_.size() == sigmas_.size());
             return measurements_.size();
         }
 

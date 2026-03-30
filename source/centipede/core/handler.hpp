@@ -44,7 +44,7 @@ namespace centipede::core
         auto analyze_current_entry() -> EnumError<std::size_t>;
 
       private:
-        engines::Engine<Config.engine_type, DataType> engine_;
+        engines::Master<Config.engine_type, DataType> engine_;
 
         // std::vector<>
     };

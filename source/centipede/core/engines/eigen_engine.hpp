@@ -1,9 +1,9 @@
 #pragma once
 
+#include "centipede/core/engines/base_engine.hpp"
 #include "centipede/data/entry.hpp"
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
-#include <centipede/core/engines/base_engine.hpp>
 #include <vector>
 
 namespace centipede::core::engines
@@ -18,9 +18,9 @@ namespace centipede::core::engines
 
         friend Base<DataType>;
 
-        void fill_local_derivs(const Entry<DataType>::Deriv& data) {
-            const auto entrypoint_size = 
-
+        void fill_local_derivs(const Entry<DataType>::Deriv& data)
+        {
+            const auto entrypoint_size = get_current_entrypoint_size();
         }
 
         void fill_global_derivs(const Entry<DataType>::Deriv& data) {}
