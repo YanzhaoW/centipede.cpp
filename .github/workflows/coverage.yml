@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: codacy
     container:
-      image: yanzhaowang/centipede:env
+      image: ghcr.io/yanzhaow/centipede_env:latest
 
     steps:
       - uses: actions/checkout@v6
