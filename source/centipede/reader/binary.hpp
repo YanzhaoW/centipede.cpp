@@ -1,6 +1,7 @@
 #pragma once
 
 #include "centipede/data/entry.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -30,7 +31,8 @@ namespace centipede::reader
          */
         struct Config
         {
-            std::string in_filename = "output.bin"; //!< Input binary filename.
+            std::string in_filename = "output.bin";                      //!< Input binary filename.
+            uint32_t max_bufferpoint_size = common::DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
         };
 
         /**
@@ -66,6 +68,5 @@ namespace centipede::reader
         std::vector<EntryPoint<>> entry_buffer_; //!< A vector containing all entrypoints of the current entry.
         Config config_;
         std::ifstream input_file_; //!< Input file handler
-        uint32_t total_size_{};    //!< Total amount of entrypoints in the file.
     };
 } // namespace centipede::reader
