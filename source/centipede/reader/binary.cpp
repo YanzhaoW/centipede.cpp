@@ -10,6 +10,7 @@
 #include <ios>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -17,7 +18,9 @@ namespace centipede::reader
 {
     namespace
     {
-        inline auto read_from_file(std::ifstream& input_file, uint32_t& data)
+        template <typename T>
+            requires(sizeof(T) == sizeof(uint32_t))
+        auto read_from_file(std::ifstream& input_file, T& data)
         {
             const auto read_size = sizeof(uint32_t);
             // NOLINTBEGIN (cppcoreguidelines-pro-type-reinterpret-cast)
@@ -26,25 +29,30 @@ namespace centipede::reader
             return read_size;
         }
 
+        auto read_size_from_file(std::ifstream& input_file) -> uint32_t
+        {
+            auto size = uint32_t{};
+            read_from_file(input_file, size);
+            return size;
+        }
+
+        // auto read_raw_entry(std::ifstream& input_file, ) {}
+
     } // namespace
 
     auto Binary::init() -> EnumError<>
     {
-        // reset();
+        reset();
+        entry_buffer_.reserve(config_.max_bufferpoint_size);
         input_file_.open(config_.in_filename, std::ios::binary | std::ios::in);
         if (!input_file_.is_open())
         {
             return std::unexpected{ ErrorCode::reader_file_fail_to_open };
         }
-        auto size = uint32_t{};
-        read_from_file(input_file_, size);
-        if (size == 0)
-        {
-            return std::unexpected{ ErrorCode::reader_file_fail_to_read };
-        }
-        total_size_ = size / 2U / sizeof(uint32_t);
         return {};
     }
 
-    auto Binary::read_one_entry() -> EnumError<std::size_t> {}
+    auto Binary::read_one_entry() -> EnumError<std::size_t> { auto entry_size = read_size_from_file(input_file_); }
+
+    void Binary::reset() { entry_buffer_.clear(); }
 } // namespace centipede::reader
