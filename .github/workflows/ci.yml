@@ -63,6 +63,8 @@ jobs:
       - name: generate-caches
         if: github.event_name != 'pull_request'
         uses: './.github/actions/generate_caches'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   sanitizer-build-test:
     runs-on: ubuntu-latest

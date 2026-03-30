@@ -1,6 +1,11 @@
 name: generate caches
 description: 'generate caches for CI workflows'
 
+inputs:
+  github_token:
+    description: "Github token"
+    required: true
+
 runs:
   using: composite
   steps:
@@ -8,7 +13,7 @@ runs:
       run: |
         gh cache delete debug-${{ matrix.compiler }}  || true
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ inputs.github_token }}
       shell: bash
 
     - name: save cache
