@@ -63,6 +63,8 @@ namespace centipede::reader
          */
         [[nodiscard]] auto init() -> EnumError<>;
 
+        void cloise() { input_file_.close(); }
+
         [[maybe_unused]] auto read_one_entry() -> EnumError<std::size_t>;
 
         [[nodiscard]] auto get_current_entry() const -> const auto& { return entry_buffer_; } // TODO: span it up!
