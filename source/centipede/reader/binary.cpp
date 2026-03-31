@@ -56,7 +56,7 @@ namespace centipede::reader
 
     auto Binary::read_one_entry() -> EnumError<std::size_t>
     {
-        if (entry_buffer_.empty() or !raw_entry_buffer_.empty())
+        if (entry_buffer_.empty() or !raw_entry_buffer_.empty() or size_ != 0U)
         {
             return std::unexpected{ ErrorCode::reader_uninitialized };
         }
@@ -75,12 +75,12 @@ namespace centipede::reader
         auto zero_counter = std::size_t{};
         auto entrypoint_counter = std::size_t{};
         auto at_globals = false;
-        for (auto [idx, data_index, data_value] :
-             std::views::zip(std::views::iota(std::size_t{ 0 }, half_entry_size), data_index_span, data_value_span))
+        for (auto [data_index, data_value] : std::views::zip(data_index_span, data_value_span))
         {
             if (data_index == 0)
             {
                 zero_counter++;
+                // The first element after size in the file is always zero. Skip that
                 switch (zero_counter % 3U)
                 {
                     case 0:
@@ -110,6 +110,7 @@ namespace centipede::reader
                 entry_buffer_[entrypoint_counter].add_local(static_cast<float>(data_value));
             }
         }
+        size_ = entrypoint_counter;
         return entry_size + sizeof(entry_size);
     }
 
@@ -120,5 +121,6 @@ namespace centipede::reader
             entrypoint.reset();
         }
         raw_entry_buffer_.clear();
+        size_ = 0U;
     }
 } // namespace centipede::reader

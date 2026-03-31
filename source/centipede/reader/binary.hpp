@@ -73,8 +73,9 @@ namespace centipede::reader
         std::vector<EntryPoint<>> entry_buffer_; //!< A vector containing all entrypoints of the current entry.
         std::vector<uint32_t> raw_entry_buffer_;
         std::pair<std::vector<uint32_t>, std::vector<float>> entrypoint_buffer_;
-        Config config_;
+        Config config_;            //!< Member variable for the configuration.
         std::ifstream input_file_; //!< Input file handler
+        std::size_t size_{};       //!< Number of Entrypoints in the current entry
 
         void reset();
     };
