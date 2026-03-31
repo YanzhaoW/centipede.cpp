@@ -37,19 +37,15 @@ namespace centipede::reader
             // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
             return read_size;
         }
-
-        auto read_size_from_file(std::ifstream& input_file) -> uint32_t
-        {
-            auto size = uint32_t{};
-            read_from_file(input_file, size);
-            return size;
-        }
     } // namespace
 
     auto Binary::init() -> EnumError<>
     {
-        reset();
         entry_buffer_.reserve(config_.max_bufferpoint_size);
+        for ([[maybe_unused]] auto idx : std::views::iota(std::size_t{ 0 }, config_.max_bufferpoint_size))
+        {
+            entry_buffer_.emplace_back();
+        }
         input_file_.open(config_.in_filename, std::ios::binary | std::ios::in);
         if (!input_file_.is_open())
         {
@@ -60,7 +56,16 @@ namespace centipede::reader
 
     auto Binary::read_one_entry() -> EnumError<std::size_t>
     {
-        auto entry_size = read_size_from_file(input_file_);
+        if (entry_buffer_.empty() or !raw_entry_buffer_.empty())
+        {
+            return std::unexpected{ ErrorCode::reader_uninitialized };
+        }
+        auto entry_size = uint32_t{};
+        read_from_file(input_file_, entry_size);
+        if (entry_size > config_.max_bufferpoint_size)
+        {
+            return std::unexpected{ ErrorCode::reader_buffer_overflow };
+        }
         auto half_entry_size = entry_size / 2U;
         read_from_file(input_file_, raw_entry_buffer_);
         auto data_span = std::span{ raw_entry_buffer_ };
@@ -96,7 +101,6 @@ namespace centipede::reader
                 }
                 continue;
             }
-
             if (at_globals)
             {
                 entry_buffer_[entrypoint_counter].add_global(data_index, static_cast<float>(data_value));
@@ -106,8 +110,7 @@ namespace centipede::reader
                 entry_buffer_[entrypoint_counter].add_local(static_cast<float>(data_value));
             }
         }
-
-        return {};
+        return entry_size + sizeof(entry_size);
     }
 
     void Binary::reset()
@@ -116,5 +119,6 @@ namespace centipede::reader
         {
             entrypoint.reset();
         }
+        raw_entry_buffer_.clear();
     }
 } // namespace centipede::reader

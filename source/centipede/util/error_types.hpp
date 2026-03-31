@@ -22,6 +22,8 @@ namespace centipede
         writer_uninitialized,       //!< Write is not initialized.
         reader_file_fail_to_open,   //!< Input file failed to be open.
         reader_file_fail_to_read,   //!< Input file failed to read
+        reader_uninitialized,       //!< Reader is not initialized.
+        reader_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
     };
 
 } // namespace centipede
