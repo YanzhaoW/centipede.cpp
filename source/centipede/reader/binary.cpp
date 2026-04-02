@@ -9,7 +9,6 @@
 #include <fstream>
 #include <ios>
 #include <ranges>
-#include <span>
 #include <vector>
 
 namespace centipede::reader
@@ -31,26 +30,30 @@ namespace centipede::reader
             requires(sizeof(T) == sizeof(uint32_t))
         auto read_from_file(std::ifstream& input_file, std::vector<T>& data)
         {
-            const auto read_size = sizeof(uint32_t);
+            const auto read_size = data.size() * sizeof(T);
             // NOLINTBEGIN (cppcoreguidelines-pro-type-reinterpret-cast)
             input_file.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(read_size));
             // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
             return read_size;
         }
 
-        enum ReadingState : uint8_t
+        enum class ReadingState : uint8_t
         {
             file_init,
             measurement,
             locals,
             sigma,
             globals,
+            new_entrypoint,
+            done
         };
     } // namespace
 
     auto Binary::init() -> EnumError<>
     {
         entry_buffer_.reserve(config_.max_bufferpoint_size);
+        raw_entry_buffer_.first.reserve(config_.max_bufferpoint_size);
+        raw_entry_buffer_.second.reserve(config_.max_bufferpoint_size);
         for ([[maybe_unused]] auto idx : std::views::iota(std::size_t{ 0 }, config_.max_bufferpoint_size))
         {
             entry_buffer_.emplace_back();
@@ -65,7 +68,8 @@ namespace centipede::reader
 
     auto Binary::read_one_entry() -> EnumError<std::size_t>
     {
-        if (entry_buffer_.empty() or !raw_entry_buffer_.empty() or size_ != 0U)
+        if (entry_buffer_.empty() or !raw_entry_buffer_.first.empty() or !raw_entry_buffer_.second.empty() or
+            size_ != 0U)
         {
             return std::unexpected{ ErrorCode::reader_uninitialized };
         }
@@ -75,30 +79,33 @@ namespace centipede::reader
         {
             return std::unexpected{ ErrorCode::reader_buffer_overflow };
         }
-        auto half_entry_size = entry_size / 2U;
-        read_from_file(input_file_, raw_entry_buffer_);
-        auto data_span = std::span{ raw_entry_buffer_ };
-        auto data_index_span = data_span.subspan(half_entry_size);
-        auto data_value_span = data_span.subspan(0, half_entry_size);
+        raw_entry_buffer_.first.resize(entry_size / 2U);
+        raw_entry_buffer_.second.resize(entry_size / 2U);
+        read_from_file(input_file_, raw_entry_buffer_.second);
+        read_from_file(input_file_, raw_entry_buffer_.first);
 
-        auto entrypoint_counter = std::size_t{};
+        auto entrypoint_counter = std::size_t{ 0 };
 
         auto current_state = ReadingState::file_init;
 
-        for (auto [data_index, data_value_raw] : std::views::zip(data_index_span, data_value_span))
+        for (auto [idx, data_index, data_value] : std::views::zip(std::views::iota(std::size_t{ 0 }, entry_size / 2U),
+                                                                  raw_entry_buffer_.first,
+                                                                  raw_entry_buffer_.second))
         {
-            auto data_value = static_cast<float>(data_value_raw);
+            auto next_data_index = raw_entry_buffer_.first[idx + 1U];
+            // auto data_value = static_cast<float>(data_value_raw);
             switch (current_state)
             {
                 case ReadingState::file_init:
-                    if (data_index != 0)
+                    if (data_index != 0U or next_data_index != 0U)
                     {
                         return std::unexpected{ ErrorCode::reader_file_fail_to_read };
                     }
+                    entrypoint_counter++;
                     current_state = ReadingState::measurement;
                     break;
                 case ReadingState::locals:
-                    if (data_index != 0)
+                    if (data_index != 0U)
                     {
                         entry_buffer_[entrypoint_counter].add_local(data_value);
                         break;
@@ -111,7 +118,7 @@ namespace centipede::reader
                 case ReadingState::globals:
                     if (data_index != 0)
                     {
-                        entry_buffer_[entrypoint_counter].add_global(data_index, data_value);
+                        entry_buffer_[entrypoint_counter].add_global(data_index - 1U, data_value);
                         break;
                     }
                     entrypoint_counter++;
@@ -122,6 +129,7 @@ namespace centipede::reader
                     break;
             }
         }
+        current_state = ReadingState::done;
         size_ = entrypoint_counter;
         return entry_size + sizeof(entry_size);
     }
@@ -132,7 +140,8 @@ namespace centipede::reader
         {
             entrypoint.reset();
         }
-        raw_entry_buffer_.clear();
+        raw_entry_buffer_.first.clear();
+        raw_entry_buffer_.second.clear();
         size_ = 0U;
     }
 } // namespace centipede::reader
