@@ -79,8 +79,9 @@ namespace centipede::reader
         {
             return std::unexpected{ ErrorCode::reader_buffer_overflow };
         }
-        raw_entry_buffer_.first.resize(entry_size / 2U);
-        raw_entry_buffer_.second.resize(entry_size / 2U);
+        auto half_entry_size = uint32_t{ entry_size / 2U };
+        raw_entry_buffer_.first.resize(half_entry_size);
+        raw_entry_buffer_.second.resize(half_entry_size);
         read_from_file(input_file_, raw_entry_buffer_.second);
         read_from_file(input_file_, raw_entry_buffer_.first);
 
@@ -88,12 +89,17 @@ namespace centipede::reader
 
         auto current_state = ReadingState::file_init;
 
-        for (auto [idx, data_index, data_value] : std::views::zip(std::views::iota(std::size_t{ 0 }, entry_size / 2U),
-                                                                  raw_entry_buffer_.first,
-                                                                  raw_entry_buffer_.second))
+        for (auto [idx, data_index, data_value] :
+             std::views::zip(std::views::iota(std::size_t{ 0 }, static_cast<std::size_t>(half_entry_size)),
+                             raw_entry_buffer_.first,
+                             raw_entry_buffer_.second))
         {
-            auto next_data_index = raw_entry_buffer_.first[idx + 1U];
-            // auto data_value = static_cast<float>(data_value_raw);
+            assert(idx + 1U < half_entry_size);
+            auto next_data_index = uint32_t{};
+            if (idx + 1U < half_entry_size)
+            {
+                next_data_index = raw_entry_buffer_.first[idx + 1U];
+            }
             switch (current_state)
             {
                 case ReadingState::file_init:
@@ -101,35 +107,42 @@ namespace centipede::reader
                     {
                         return std::unexpected{ ErrorCode::reader_file_fail_to_read };
                     }
-                    entrypoint_counter++;
                     current_state = ReadingState::measurement;
                     break;
-                case ReadingState::locals:
-                    if (data_index != 0U)
-                    {
-                        entry_buffer_[entrypoint_counter].add_local(data_value);
-                        break;
-                    }
+                case ReadingState::done:
                     [[fallthrough]];
+                case ReadingState::measurement:
+                    assert(entrypoint_counter <= entry_buffer_.size());
+                    entry_buffer_[entrypoint_counter].set_measurement(data_value);
+                    current_state = ReadingState::locals;
+                    break;
+                case ReadingState::locals:
+                    if (next_data_index == 0)
+                    {
+                        current_state = ReadingState::sigma;
+                    }
+                    entry_buffer_[entrypoint_counter].add_local(data_value);
+                    break;
                 case ReadingState::sigma:
+                    assert(entrypoint_counter <= entry_buffer_.size());
                     entry_buffer_[entrypoint_counter].set_sigma(data_value);
                     current_state = ReadingState::globals;
                     break;
                 case ReadingState::globals:
-                    if (data_index != 0)
+                    if (next_data_index == 0)
                     {
-                        entry_buffer_[entrypoint_counter].add_global(data_index - 1U, data_value);
-                        break;
+                        current_state = ReadingState::new_entrypoint;
                     }
+                    assert(entrypoint_counter <= entry_buffer_.size());
+                    entry_buffer_[entrypoint_counter].add_global(data_index - 1U, data_value);
+                    break;
+                case ReadingState::new_entrypoint:
+                    current_state = ReadingState::measurement;
                     entrypoint_counter++;
-                    [[fallthrough]];
-                case ReadingState::measurement:
-                    entry_buffer_[entrypoint_counter].set_measurement(data_value);
-                    current_state = ReadingState::locals;
                     break;
             }
         }
-        current_state = ReadingState::done;
+        current_state = ReadingState::done; // NOLINT(clang-analyzer-deadcode.DeadStores)
         size_ = entrypoint_counter;
         return entry_size + sizeof(entry_size);
     }
