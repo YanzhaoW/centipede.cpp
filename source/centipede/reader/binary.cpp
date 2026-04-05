@@ -82,6 +82,36 @@ namespace centipede::reader
             }
             current_entrypoint.add_global(current_frame.index - 1U, current_frame.value);
         }
+
+        auto handle_state(const ReadingFrame& current_frame,
+                          EntryPoint<>& current_entrypoint,
+                          internal::ReadingState& current_state) -> bool
+        {
+            switch (current_state)
+            {
+                case internal::ReadingState::file_init:
+                    current_state = internal::ReadingState::measurement;
+                    break;
+                case internal::ReadingState::done:
+                    [[fallthrough]];
+                case internal::ReadingState::measurement:
+                    handle_measurement(current_frame, current_entrypoint, current_state);
+                    break;
+                case internal::ReadingState::locals:
+                    handle_locals(current_frame, current_entrypoint, current_state);
+                    break;
+                case internal::ReadingState::sigma:
+                    handle_sigma(current_frame, current_entrypoint, current_state);
+                    break;
+                case internal::ReadingState::globals:
+                    handle_globals(current_frame, current_entrypoint, current_state);
+                    break;
+                case internal::ReadingState::new_entrypoint:
+                    current_state = internal::ReadingState::measurement;
+                    return true;
+            }
+            return false;
+        }
     } // namespace
 
     auto Binary::init() -> EnumError<>
@@ -129,36 +159,14 @@ namespace centipede::reader
                 next_data_index = raw_entry_buffer_.first[idx + 1U];
             }
             current_frame = ReadingFrame{ .index = data_index, .next_index = next_data_index, .value = data_value };
-            switch (current_state_)
+            if (handle_state(current_frame, entry_buffer_[entrypoint_counter], current_state_))
             {
-                case internal::ReadingState::file_init:
-                    if (data_index != 0U or next_data_index != 0U)
-                    {
-                        return std::unexpected{ ErrorCode::reader_file_fail_to_read };
-                    }
-                    current_state_ = internal::ReadingState::measurement;
-                    break;
-                case internal::ReadingState::done:
-                    [[fallthrough]];
-                case internal::ReadingState::measurement:
-                    handle_measurement(current_frame, entry_buffer_[entrypoint_counter], current_state_);
-                    break;
-                case internal::ReadingState::locals:
-                    handle_locals(current_frame, entry_buffer_[entrypoint_counter], current_state_);
-                    break;
-                case internal::ReadingState::sigma:
-                    handle_sigma(current_frame, entry_buffer_[entrypoint_counter], current_state_);
-                    break;
-                case internal::ReadingState::globals:
-                    handle_globals(current_frame, entry_buffer_[entrypoint_counter], current_state_);
-                    break;
-                case internal::ReadingState::new_entrypoint:
-                    current_state_ = internal::ReadingState::measurement;
-                    entrypoint_counter++;
-                    break;
+                entrypoint_counter++;
             }
         }
-        current_state_ = internal::ReadingState::done; // NOLINT(clang-analyzer-deadcode.DeadStores)
+        // NOLINTBEGIN(clang-analyzer-deadcode.DeadStores)
+        current_state_ = internal::ReadingState::done;
+        // NOLINTEND(clang-analyzer-deadcode.DeadStores)
         size_ = entrypoint_counter;
         return entry_size + sizeof(entry_size);
     }
