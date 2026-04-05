@@ -147,11 +147,9 @@ namespace centipede::reader
                     handle_locals(current_frame, entry_buffer_[entrypoint_counter], current_state_);
                     break;
                 case internal::ReadingState::sigma:
-                    assert(entrypoint_counter <= entry_buffer_.size());
                     handle_sigma(current_frame, entry_buffer_[entrypoint_counter], current_state_);
                     break;
                 case internal::ReadingState::globals:
-                    assert(entrypoint_counter <= entry_buffer_.size());
                     handle_globals(current_frame, entry_buffer_[entrypoint_counter], current_state_);
                     break;
                 case internal::ReadingState::new_entrypoint:
