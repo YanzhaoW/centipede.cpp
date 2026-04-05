@@ -20,6 +20,10 @@ namespace centipede
                                     //!< writer::Binary.
         writer_file_fail_to_open,   //!< File failed to be open.
         writer_uninitialized,       //!< Write is not initialized.
+        reader_file_fail_to_open,   //!< Input file failed to be open.
+        reader_file_fail_to_read,   //!< Input file failed to read
+        reader_uninitialized,       //!< Reader is not initialized.
+        reader_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
     };
 
 } // namespace centipede
@@ -49,6 +53,14 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Writer: Failed to open the file.");
             case writer_uninitialized:
                 return std::format_to(ctx.out(), "Writer: Must be initialized beforehand!");
+            case reader_file_fail_to_open:
+                return std::format_to(ctx.out(), "Reader: Failed to open the file.");
+            case reader_uninitialized:
+                return std::format_to(ctx.out(), "Reader: Must be initialized beforehand!");
+            case reader_file_fail_to_read:
+                return std::format_to(ctx.out(), "Reader: Failed to read the file.");
+            case reader_buffer_overflow:
+                return std::format_to(ctx.out(), "Reader: Cannot read the file. Buffer size will be exceeded!");
             case invalid:
             default:
                 break;
