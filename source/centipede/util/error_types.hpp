@@ -29,6 +29,7 @@ namespace centipede
  *
  */
 template <>
+// NOLINTNEXTLINE (bugprone-std-namespace-modification)
 struct std::formatter<centipede::ErrorCode>
 {
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }

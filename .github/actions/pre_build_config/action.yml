@@ -1,6 +1,12 @@
 name: pre build config
 description: 'steps before the build'
 
+inputs:
+  need_cdash:
+    description: "Configure CDash related variables"
+    required: false
+    default: 'yes'
+
 runs:
   using: composite
   steps:
@@ -10,11 +16,14 @@ runs:
         dnf install -y conan hostname
         cd $GITHUB_WORKSPACE/..
         echo "PARENT_DIR=$PWD" >> $GITHUB_ENV
-        echo "CONAN_HOME=$PWD/.conan2" >> $GITHUB_ENV
+        export CONAN_HOME=$PWD/.conan2
+        echo "CONAN_HOME=$CONAN_HOME" >> $GITHUB_ENV
         echo "GTEST_COLOR=1" >> $GITHUB_ENV
+        conan config install --type file $GITHUB_WORKSPACE/util/conan_config/settings.yml
       shell: bash
 
     - name: set env variables for cdash
+      if: ${{ inputs.need_cdash == 'yes' }}
       run: |
         if [[ $GITHUB_EVENT_NAME == "push" ]]; then
           echo "TEST_MODEL=Continuous" >> $GITHUB_ENV
