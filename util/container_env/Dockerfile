@@ -1,4 +1,4 @@
-FROM fedora:43
+FROM fedora:44
 
 ENV CMAKE_GENERATOR=Ninja
 ENV CC=clang
