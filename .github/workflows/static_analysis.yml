@@ -23,13 +23,10 @@ jobs:
           fetch-depth: 1
           submodules: 'true'
 
-      - name: install and env vars
-        run: |
-          dnf upgrade -y
-          dnf install -y conan hostname
-          cd $GITHUB_WORKSPACE/..
-          echo "PARENT_DIR=$PWD" >> $GITHUB_ENV
-          echo "CONAN_HOME=$PWD/.conan2" >> $GITHUB_ENV
+      - name: pre-build
+        uses: './.github/actions/pre_build_config'
+        with:
+          need_cdash: 'no'
 
       - name: restore cache
         id: cache-restore

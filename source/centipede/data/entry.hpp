@@ -170,6 +170,7 @@ namespace centipede
  * @brief Formatter for the class EntryPoint
  */
 template <std::size_t NLocals, std::size_t NGlobals>
+// NOLINTNEXTLINE (bugprone-std-namespace-modification)
 struct std::formatter<centipede::EntryPoint<NLocals, NGlobals>>
 {
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
