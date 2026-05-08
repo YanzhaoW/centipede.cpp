@@ -8,7 +8,7 @@ from conan.tools.cmake import CMakeToolchain
 
 class CompressorRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeDeps"
+    generators = "CMakeConfigDeps"
 
     def requirements(self):
         self.requires("spdlog/1.16.0", options={"use_std_fmt": True, "no_exceptions": True})  # type: ignore
