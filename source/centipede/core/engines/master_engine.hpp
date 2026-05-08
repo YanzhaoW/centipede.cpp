@@ -48,7 +48,7 @@ namespace centipede::core::engine
             Entry<DataType> entry;       //!< Data storing the current entry.
         };
 
-        using Result = Result<DataType>;
+        using ResultType = Result<DataType>;
         using EngineImp = Engine<opt.engine_type, DataType>;
         using DataTypeUsed = DataType;
 
@@ -153,7 +153,7 @@ namespace centipede::core::engine
 
       private:
         Config config_;
-        Result result_;
+        ResultType result_;
         State current_state_;
         EngineImp engine_imp_{};
         EngineImp::Globals globals_{};
