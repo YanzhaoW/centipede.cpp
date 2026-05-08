@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-TEST(static_entrypoint, constructor) { auto entry = centipede::EntryPoint<1, 1>{}; }
+TEST(static_entrypoint, constructor) { [[maybe_unused]] auto entry = centipede::EntryPoint<1, 1>{}; }
 
 TEST(dynamic_entrypoint, constructor) { auto entry = centipede::EntryPoint{}; }
 
@@ -28,8 +28,8 @@ TEST(dynamic_entrypoint, setters)
 {
     // NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers)
     auto entry = centipede::EntryPoint{};
-    entry.set_locals(1., 3.).set_globals(std::pair{ 3, 1. }, std::pair{ 10, 2. }, std::pair{ 11, 3. });
-    entry.set_locals(1., 3.F).set_globals(std::pair{ 3, 1.F }, std::pair{ 10, 2. }, std::pair{ 11, 3. });
+    entry.set_locals(1.F, 3.F).set_globals(std::pair{ 3, 1. }, std::pair{ 10, 2. }, std::pair{ 11, 3. });
+    entry.set_locals(1.F, 3.F).set_globals(std::pair{ 3, 1.F }, std::pair{ 10, 2. }, std::pair{ 11, 3. });
     auto is_equal = entry.get_locals() == centipede::EntryPoint<>::LocalDerivs{ 1.F, 3.F };
     EXPECT_TRUE(is_equal);
     is_equal = entry.get_globals() ==

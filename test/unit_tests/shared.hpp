@@ -1,6 +1,6 @@
 #pragma once
 
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <random>
@@ -29,7 +29,6 @@ namespace centipede::test
     {
         static auto rand_dev = std::random_device{};
         static auto engine = std::mt19937{ rand_dev() };
-        static auto global_id_gen = std::uniform_int_distribution(0, DEFAULT_MAX_GLOBAL_ID - 1);
         static auto value_gen = std::uniform_real_distribution<double>(1., MAX_VAL);
 
         auto global_ids = sv::iota(0, DEFAULT_MAX_GLOBAL_ID) | sr::to<std::vector<int>>();
@@ -44,7 +43,7 @@ namespace centipede::test
                        {
                            entrypoint.add_global(global_id, value_gen(engine));
                        }
-                       for (const auto idx : std::views::iota(0, n_locals))
+                       for (const auto _ : std::views::iota(0, n_locals))
                        {
                            entrypoint.add_local(value_gen(engine));
                        }

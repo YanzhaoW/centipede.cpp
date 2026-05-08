@@ -1,26 +1,24 @@
 #include "centipede/centipede.hpp"
-#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <utility>
 #include <vector>
 
-using centipede::writer::Binary;
-using Config = centipede::writer::Binary::Config;
 using centipede::ErrorCode;
+using centipede::writer::Binary;
 namespace fs = std::filesystem;
 
 // NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers)
 TEST(writer, constructor)
 {
-    auto writer = Binary{ Config{ .out_filename = "binary_writer_constructor.bin" } };
+    auto writer = Binary{ { .out_filename = "binary_writer_constructor.bin" } };
     EXPECT_FALSE(fs::exists(fs::path(writer.get_config().out_filename)));
 }
 
 TEST(writer, init)
 {
-    auto writer = Binary{ Config{ .out_filename = "binary_writer_init.bin" } };
+    auto writer = Binary{ { .out_filename = "binary_writer_init.bin" } };
     auto error = writer.init();
 
     EXPECT_TRUE(error.has_value());
@@ -33,7 +31,7 @@ TEST(writer, init)
 
 TEST(writer, init_error)
 {
-    auto writer = Binary{ Config{ .out_filename = "" } };
+    auto writer = Binary{ { .out_filename = "" } };
     auto error = writer.init();
 
     EXPECT_TRUE(not error.has_value());
@@ -53,7 +51,7 @@ namespace
 } // namespace
 TEST(writer, read_entrypoint_normal)
 {
-    auto writer = Binary{ Config{} };
+    auto writer = Binary{ {} };
     [[maybe_unused]] auto init_err = writer.init();
 
     auto err = writer.add_entrypoint(valid_entry_point);
@@ -68,7 +66,7 @@ TEST(writer, read_entrypoint_normal)
 
 TEST(writer, read_entrypoint_reject)
 {
-    auto writer = Binary{ Config{} };
+    auto writer = Binary{ {} };
     [[maybe_unused]] auto init_err = writer.init();
 
     auto entry_point = centipede::EntryPoint<1, 2>{};
@@ -87,7 +85,7 @@ TEST(writer, read_entrypoint_reject)
 
 TEST(writer, uninitialized)
 {
-    auto writer = Binary{ Config{} };
+    auto writer = Binary{ {} };
 
     auto err = writer.add_entrypoint(valid_entry_point);
 
@@ -101,12 +99,10 @@ TEST(writer, uninitialized)
 
 TEST(writer, read_entrypoint_zero_sigma)
 {
-    auto writer = Binary{ Config{} };
+    auto writer = Binary{ {} };
     auto init_err = writer.init();
     ASSERT_TRUE(init_err.has_value());
 
-    const auto local_derivs = std::array{ 1.F, 2.F, 3.F };
-    const auto global_derivs = std::array{ std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F } };
     auto entry_point = centipede::EntryPoint<3, 2>{}
                            .set_locals(1.F, 2.F, 3.F)
                            .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
@@ -120,7 +116,7 @@ TEST(writer, read_entrypoint_zero_sigma)
 
 TEST(writer, read_entrypoint_buffer_overflow)
 {
-    auto writer = Binary{ Config{ .max_bufferpoint_size = 1 } };
+    auto writer = Binary{ { .max_bufferpoint_size = 1 } };
     auto init_err = writer.init();
     ASSERT_TRUE(init_err.has_value());
 
@@ -131,7 +127,7 @@ TEST(writer, read_entrypoint_buffer_overflow)
 
 TEST(writer, write_current_entry)
 {
-    auto writer = Binary{ Config{} };
+    auto writer = Binary{ {} };
     auto init_err = writer.init();
     ASSERT_TRUE(init_err.has_value());
 

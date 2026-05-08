@@ -5,42 +5,30 @@
 
 namespace
 {
-    constexpr auto DEFAULT_MAX_POINT = 30;
-    using centipede::core::Handler;
+    using centipede::Handler;
 
 } // namespace
 
 namespace centipede::test
 {
-    TEST(handler, constructor) { auto handler = Handler{}; }
+    TEST(handler, constructor) { auto handler = Handler{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } }; }
 
     TEST(handler, constructor_float_eigen)
     {
         using HandlerType = Handler<float>;
-        using Config = HandlerType::Config;
-        auto handler = HandlerType{ Config{ .n_globals = DEFAULT_MAX_GLOBAL_ID } };
+        auto handler = HandlerType{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } };
     }
 
     TEST(handler, constructor_double_eigen)
     {
         using HandlerType = Handler<double>;
-        using Config = HandlerType::Config;
-        auto handler = HandlerType{ Config{ .n_globals = DEFAULT_MAX_GLOBAL_ID } };
-    }
-
-    TEST(handler, init)
-    {
-        auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
+        auto handler = HandlerType{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } };
     }
 
     // NOLINTBEGIN(readability-function-cognitive-complexity)
     TEST(handler, add_entrypoint)
     {
-        auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
+        auto handler = Handler{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } };
         constexpr auto n_points = 100;
         const auto entrypoints = generate_random_entry_points(n_points);
         EXPECT_EQ(n_points, entrypoints.size());
@@ -60,11 +48,19 @@ namespace centipede::test
     }
     // NOLINTEND(readability-function-cognitive-complexity)
 
+    TEST(handler, empty_entry)
+    {
+        using HandlerType = Handler<double>;
+        auto handler = HandlerType{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } };
+
+        auto res = handler.analyze_current_entry();
+        EXPECT_FALSE(res);
+        EXPECT_EQ(res.error(), ErrorCode::analysis_empty_entry);
+    }
+
     TEST(handler, local_derivs_incomp_numbers)
     {
-        auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
+        auto handler = Handler{ { .n_globals = DEFAULT_MAX_GLOBAL_ID } };
         constexpr auto n_points = 10;
         const auto entrypoints = generate_random_entry_points(n_points);
         for (const auto& entry_point : entrypoints)

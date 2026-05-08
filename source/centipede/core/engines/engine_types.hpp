@@ -8,7 +8,7 @@ namespace centipede::core::engine
      * @brief Engine types.
      *
      */
-    enum class MatrixEngineType : uint8_t
+    enum class MatrixEngine : uint8_t
     {
         eigen,
         xtensor,
@@ -20,7 +20,7 @@ namespace centipede::core::engine
      */
     struct MasterOpt
     {
-        MatrixEngineType engine_type = MatrixEngineType::eigen;
+        MatrixEngine engine_type = MatrixEngine::eigen;
         bool has_multi_slaves = false; //!< Use taskflow or not.
     };
 
@@ -28,5 +28,5 @@ namespace centipede::core::engine
 
 namespace centipede
 {
-    using EngineType = core::engine::MatrixEngineType;
+    using MatrixEngine = core::engine::MatrixEngine;
 }

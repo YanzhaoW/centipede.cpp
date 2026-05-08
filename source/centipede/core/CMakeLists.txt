@@ -1,6 +1,5 @@
 target_sources(
     core
-    PRIVATE handler.cpp
     PUBLIC
         FILE_SET publicHeaders
             TYPE HEADERS
@@ -10,7 +9,6 @@ target_sources(
                 engines/master_engine.hpp
                 handler.hpp
 )
-target_link_libraries(core PUBLIC Eigen3::Eigen GSL::gsl)
 target_compile_definitions(
     core
     PUBLIC

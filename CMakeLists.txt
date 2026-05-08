@@ -7,6 +7,8 @@ include(project_options)
 
 project(centipede LANGUAGES CXX C VERSION 0.0.1)
 
+include(CTest)
+
 if(BUILD_DOC_ONLY)
     add_subdirectory(doc)
     return()
@@ -17,7 +19,11 @@ include(project_config)
 
 add_subdirectory(source)
 add_subdirectory(example)
-add_subdirectory(test)
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
+
 if(BUILD_DOC)
     add_subdirectory(doc)
 endif()
