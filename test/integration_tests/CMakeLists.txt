@@ -1,23 +1,10 @@
-set(COMPILE_OPTIONS
-    -Wall
-    -Wconversion
-    -Werror
-    -Wextra
-    -Wshadow
-    -fno-exceptions
-    -fno-rtti
-)
+#===================================writer===================================
 
 add_executable(integration_test_writer test_writer.cpp)
 
 target_link_libraries(integration_test_writer PRIVATE centipede::centipede)
 
 target_compile_options(integration_test_writer PRIVATE ${COMPILE_OPTIONS})
-
-# if(ENABLE_COVERAGE)
-#     target_compile_options(integration_test_writer PRIVATE --coverage)
-#     target_link_options(integration_test_writer PRIVATE --coverage)
-# endif()
 
 add_test(NAME integration_test_writer_data_gen COMMAND integration_test_writer)
 set_tests_properties(integration_test_writer_data_gen PROPERTIES TIMEOUT 10)
@@ -34,6 +21,8 @@ set_tests_properties(
     PROPERTIES DEPENDS integration_test_writer_data_gen
 )
 
+#===================================reader===============================
+
 add_executable(integration_test_reader test_reader.cpp)
 
 add_test(NAME integration_test_reader_data_read COMMAND integration_test_reader)
@@ -46,3 +35,33 @@ set_tests_properties(
     integration_test_reader_data_read
     PROPERTIES DEPENDS integration_test_writer_data_gen
 )
+#===================================eigen core===============================
+
+find_package(mps)
+
+if(mps_FOUND)
+    message(STATUS "Testing with simulated data from mps is enabled!")
+    add_executable(test_eigen test_eigen.cpp)
+
+    target_link_libraries(
+        test_eigen
+        PRIVATE
+            centipede::centipede
+            mps::mps
+            glaze::glaze
+            cxxopts::cxxopts
+            spdlog::spdlog
+            magic_enum::magic_enum
+    )
+
+    target_compile_options(test_eigen PRIVATE ${COMPILE_OPTIONS})
+
+    target_compile_definitions(test_eigen PRIVATE CXXOPTS_NO_EXCEPTIONS)
+
+    add_test(NAME integration_test_eigen COMMAND test_eigen -n 10000)
+    set_tests_properties(integration_test_eigen PROPERTIES TIMEOUT 60)
+else()
+    message(STATUS "Testing with simulated data from mps is disabled!")
+endif()
+
+#==============================================================================

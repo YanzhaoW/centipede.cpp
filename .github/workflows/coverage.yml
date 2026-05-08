@@ -28,6 +28,8 @@ jobs:
 
       - name: pre-build
         uses: './.github/actions/pre_build_config'
+        with:
+          need_mps: 'gcc'
 
       - name: build-test-submit
         run: |

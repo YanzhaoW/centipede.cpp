@@ -26,6 +26,7 @@ jobs:
       - name: pre-build
         uses: './.github/actions/pre_build_config'
         with:
+          need_mps: 'gcc'
           need_cdash: 'no'
 
       - name: restore cache

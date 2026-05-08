@@ -41,3 +41,6 @@ build
 
 # debug information files
 *.dwo
+
+*.ipynb
+*.drawio.bkp

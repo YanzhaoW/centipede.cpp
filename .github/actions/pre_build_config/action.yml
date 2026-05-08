@@ -3,9 +3,13 @@ description: 'steps before the build'
 
 inputs:
   need_cdash:
-    description: "Configure CDash related variables"
+    description: 'Configure CDash related variables'
     required: false
     default: 'yes'
+  need_mps:
+    description: 'Configure CDash related variables'
+    required: false
+    default: 'no'
 
 runs:
   using: composite
@@ -37,4 +41,21 @@ runs:
           export PULL_NR=${{ github.event.number }}
           echo "NAME_SUFFIX=(pr.${PULL_NR} from ${{ github.event.pull_request.head.repo.owner.login }})" >> $GITHUB_ENV
         fi
+      shell: bash
+
+    - name: install mps
+      if: ${{ inputs.need_mps != 'no' }}
+      env:
+        mode: ${{ inputs.need_mps }}
+      run: |
+        cd ${PARENT_DIR}
+        git clone https://gitlab.ikp.uni-koeln.de/lflando/millepededetectorsim.git mps
+        mkdir -p mps/build
+        cd mps/build
+        if [[ "$mode" == "libc++" ]]; then
+          cmake --preset library-libc++ ..
+        else
+          cmake --preset library ..
+        fi
+        ninja install
       shell: bash

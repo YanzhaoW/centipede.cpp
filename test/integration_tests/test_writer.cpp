@@ -1,4 +1,4 @@
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include "centipede/writer/binary.hpp"
 #include <cstdio> // IWYU pragma: keep
 #include <cstdlib>

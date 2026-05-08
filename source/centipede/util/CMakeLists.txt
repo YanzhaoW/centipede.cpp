@@ -3,5 +3,9 @@ target_sources(
     PUBLIC
         FILE_SET publicHeaders
             TYPE HEADERS
-            FILES common_traits.hpp error_types.hpp return_types.hpp
+            FILES
+                common_traits.hpp
+                eigen_formatter.hpp
+                error_types.hpp
+                return_types.hpp
 )

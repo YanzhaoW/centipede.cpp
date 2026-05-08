@@ -39,6 +39,8 @@ jobs:
 
       - name: pre-build
         uses: './.github/actions/pre_build_config'
+        with:
+          need_mps: ${{ matrix.compiler }}
 
       - name: restore cache
         if: github.event_name == 'pull_request'
@@ -93,6 +95,8 @@ jobs:
 
       - name: pre-build
         uses: './.github/actions/pre_build_config'
+        with:
+          need_mps: 'gcc'
 
       - name: build-test-submit
         run: |

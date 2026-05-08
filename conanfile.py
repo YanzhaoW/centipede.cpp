@@ -8,13 +8,16 @@ from conan.tools.cmake import CMakeToolchain
 
 class CompressorRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeDeps"
+    generators = "CMakeConfigDeps"
 
     def requirements(self):
         self.requires("spdlog/1.16.0", options={"use_std_fmt": True, "no_exceptions": True})  # type: ignore
-        self.requires("magic_enum/0.9.7")   # type: ignore
-        self.requires("cli11/2.6.0")        # type: ignore
-        self.requires("eigen/5.0.1")        # type: ignore
+        self.requires("magic_enum/0.9.7")  # type: ignore
+        # self.requires("cli11/2.6.0")  # type: ignore
+        self.requires("cxxopts/3.3.1")  # type: ignore
+        self.requires("eigen/5.0.1")  # type: ignore
+        self.requires("libassert/2.2.1")  # type: ignore
+        self.requires("glaze/7.8.4")  # type: ignore
 
         # Conditions on cmake variables set from cmake/project_options
         if os.environ["CMAKE_ENABLE_TEST"] == "ON":

@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <utility>
+#include <unordered_map>
 #include <vector>
 
 namespace centipede::core::engine
@@ -15,14 +15,13 @@ namespace centipede::core::engine
     template <typename DataType>
     struct Result
     {
-        using IdxValuePair = std::pair<std::size_t, DataType>;
         ErrorCode error_status = ErrorCode::invalid;          //!< Error enum if existed.
         std::size_t rank_deficit = 0;                         //!< Rank deficit value.
         uint64_t n_entries = 0;                               //!< Total number of entries read.
         uint64_t n_entries_rejected = 0;                      //!< Total number of entries rejected.
         std::vector<DataType> eigen_values;                   //!< Eigen values of global factor matrix.
         std::vector<std::size_t> redundant_parameter_indices; //!< Indices of parameters that are linear dependent.
-        std::vector<IdxValuePair> parameters;                 //!< Resulting parameter values.
+        std::unordered_map<std::size_t, DataType> parameters; //!< Resulting parameter values.
     };
 
 } // namespace centipede::core::engine
@@ -48,8 +47,9 @@ struct std::formatter<centipede::Result<DataType>>
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
     static constexpr auto format(const Result& result, std::format_context& ctx)
     {
-        const auto percentage =
-            (result.n_entries == 0) ? 0. : result.n_entries_rejected / static_cast<double>(result.n_entries) * 100.;
+        const auto percentage = (result.n_entries == 0) ? 0.
+                                                        : static_cast<double>(result.n_entries_rejected) /
+                                                              static_cast<double>(result.n_entries) * 100.;
         if (result.error_status == centipede::ErrorCode::success)
         {
             return std::format_to(ctx.out(),

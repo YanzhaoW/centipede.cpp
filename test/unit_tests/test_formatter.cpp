@@ -1,4 +1,5 @@
 #include "centipede/centipede.hpp"
+#include <Eigen/Core>
 #include <format>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -43,5 +44,12 @@ namespace centipede::testing
         result.error_status = ErrorCode::analysis_local_fit_rank_deficit;
         const auto format_str = std::format("{}", result);
         EXPECT_THAT(format_str, ::testing::HasSubstr(std::format("{}", ErrorCode::analysis_local_fit_rank_deficit)));
+    }
+
+    TEST(format, eigen_matrices)
+    {
+        auto mat = Eigen::Matrix3d{}.eval();
+        const auto format_str = std::format("{}", mat);
+        EXPECT_FALSE(format_str.empty());
     }
 } // namespace centipede::testing

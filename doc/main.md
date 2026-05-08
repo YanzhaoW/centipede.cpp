@@ -8,10 +8,14 @@ This program includes a header-only library for the direct integration of the al
 
 <h2> The Basics </h2>
 
-- \subpage installation "Installation"
-- \subpage basic_usages "Basic usages"
+- @ref installation "Installation"
+- @ref basic_usages "Basic usages"
+
+<h2> Theories </h2>
+
+- @ref linear_reg "Linear regression"
 
 <h2> For Developers</h2>
 
-- \subpage program_style_conventions "Programming styles and conventions"
-- \subpage project_structure "Project structure"
+- @ref program_style_conventions "Programming styles and conventions"
+- @ref project_structure "Project structure"

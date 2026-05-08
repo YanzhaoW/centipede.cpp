@@ -1,6 +1,6 @@
 #pragma once
 
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
@@ -21,12 +21,12 @@ namespace centipede::writer
      * @brief Class for writing binary files.
      *
      * Data is written to the binary file via each entry, which contains different entrypoints (of the type
-     * #centipede::EntryPoint). Before any operation, the #Binary::init() function must be called, where the file
-     * handler is opened and internal buffer resetted, ready for the next data input. When adding each entrypoint, the
-     * writer doesn't write the corresponding data to the binary file, but rather pushes the data to its internal buffer
-     * (see @ref Binary::data_buffer_). Data is only written to the binary file after calling
-     * #centipede::writer::Binary::write_current_entry(). All entrypoints added before this call are grouped into the
-     * same entry.
+     * #centipede::EntryPoint). Before any operation, the @ref centipede::writer::Binary::init() "init()" function must
+     * be called, where the file handler is opened and internal buffer resetted, ready for the next data input. When
+     * adding each entrypoint, the writer doesn't write the corresponding data to the binary file, but rather pushes the
+     * data to its internal buffer (see @ref Binary::data_buffer_). Data is only written to the binary file after
+     * calling @ref centipede::writer::Binary::write_current_entry() "write_current_entry()". All entrypoints added
+     * before this call are grouped into the same entry.
      *
      * Configuration of the class is done via the Binary::Config struct.
      *
@@ -111,7 +111,7 @@ namespace centipede::writer
          * Config::out_filename.
          * @see Config
          */
-        [[nodiscard]] auto init() -> EnumError<>;
+        [[nodiscard]] auto init() -> VoidError;
 
         /**
          * @brief Add an entrypoint to the internal data buffer.
@@ -131,7 +131,7 @@ namespace centipede::writer
          * - ErrorCode::writer_entrypoint_rejected if the derivative values from the entrypoint are all zero.
          */
         template <std::size_t NLocals, std::size_t NGlobals>
-        [[nodiscard]] auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> EnumError<>;
+        [[nodiscard]] auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError;
 
         /**
          * @brief Streaming an entry data to the output file.
@@ -180,7 +180,7 @@ namespace centipede::writer
     };
 
     template <std::size_t NLocals, std::size_t NGlobals>
-    auto Binary::add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> EnumError<>
+    auto Binary::add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
 

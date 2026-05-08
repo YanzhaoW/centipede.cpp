@@ -14,7 +14,6 @@
 #include <vector>
 
 using centipede::reader::Binary;
-using Config = centipede::reader::Binary::Config;
 namespace fs = std::filesystem;
 
 namespace centipede::test
@@ -22,7 +21,7 @@ namespace centipede::test
 
     TEST(reader, constructor)
     {
-        auto reader = Binary{ Config{ .in_filename = "binary_reader_constructor.bin" } };
+        auto reader = Binary{ { .in_filename = "binary_reader_constructor.bin" } };
         EXPECT_FALSE(fs::exists(reader.get_config().in_filename));
     }
 
@@ -30,25 +29,25 @@ namespace centipede::test
     {
         auto file_name = std::string{ "binary_reader_init.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto error = reader.init();
         EXPECT_TRUE(error.has_value());
     }
 
     TEST(reader, init_empty_file_name_error)
     {
-        auto reader = Binary{ Config{ .in_filename = "" } };
+        auto reader = Binary{ { .in_filename = "" } };
         auto error = reader.init();
         EXPECT_TRUE(not error.has_value());
         EXPECT_EQ(error.error(), ErrorCode::reader_invalid_filename);
-        reader = Binary{ Config{ .in_filename = "nonexistent.bin" } };
+        reader = Binary{ { .in_filename = "nonexistent.bin" } };
         error = reader.init();
         EXPECT_EQ(error.error(), ErrorCode::reader_file_fail_to_open);
     }
 
     TEST(reader, init_nonexisting_file_error)
     {
-        auto reader = Binary{ Config{ .in_filename = "nonexistent.bin" } };
+        auto reader = Binary{ { .in_filename = "nonexistent.bin" } };
         auto error = reader.init();
         EXPECT_TRUE(not error.has_value());
         EXPECT_EQ(error.error(), ErrorCode::reader_file_fail_to_open);
@@ -59,7 +58,7 @@ namespace centipede::test
         auto file_name = std::string{ "not_init.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto read_err = reader.read_one_entry();
         EXPECT_FALSE(read_err);
         EXPECT_EQ(read_err.error(), ErrorCode::reader_uninitialized);
@@ -76,7 +75,7 @@ namespace centipede::test
         file.write(reinterpret_cast<const char*>(&dummy_data), sizeof(dummy_data));
         // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
@@ -93,7 +92,7 @@ namespace centipede::test
         file.write(reinterpret_cast<const char*>(&declared_entry_size), sizeof(declared_entry_size));
         // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
@@ -134,8 +133,10 @@ namespace centipede::test
             auto entry_size = static_cast<uint32_t>(buffer.first.size() + buffer.second.size());
             // NOLINTBEGIN (cppcoreguidelines-pro-type-reinterpret-cast)
             file.write(reinterpret_cast<const char*>(&entry_size), sizeof(entry_size));
-            file.write(reinterpret_cast<const char*>(buffer.second.data()), buffer.second.size() * sizeof(float));
-            file.write(reinterpret_cast<const char*>(buffer.first.data()), buffer.first.size() * sizeof(uint32_t));
+            file.write(reinterpret_cast<const char*>(buffer.second.data()),
+                       static_cast<std::streamsize>(buffer.second.size() * sizeof(float)));
+            file.write(reinterpret_cast<const char*>(buffer.first.data()),
+                       static_cast<std::streamsize>(buffer.first.size() * sizeof(uint32_t)));
             // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
         }
     } // namespace
@@ -150,7 +151,7 @@ namespace centipede::test
         fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for (const auto& entry : reader)
@@ -185,7 +186,7 @@ namespace centipede::test
         fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
@@ -215,7 +216,7 @@ namespace centipede::test
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -237,7 +238,7 @@ namespace centipede::test
         output_buffer.second.push_back(float{ 1 });
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -261,7 +262,7 @@ namespace centipede::test
         output_buffer.second.push_back(float{ 1 });
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -287,7 +288,7 @@ namespace centipede::test
         output_buffer.second.push_back(float{ 1 });
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -307,7 +308,7 @@ namespace centipede::test
         fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -329,7 +330,7 @@ namespace centipede::test
         output_buffer.first.at(1) = 1U;
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -366,7 +367,7 @@ namespace centipede::test
         // (cppcoreguidelines-avoid-magic-numbers)
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)
@@ -387,7 +388,7 @@ namespace centipede::test
         fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name, .max_bufferpoint_size = 1U } };
+        auto reader = Binary{ { .in_filename = file_name, .max_bufferpoint_size = 1U } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
@@ -403,7 +404,7 @@ namespace centipede::test
         fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
@@ -422,7 +423,7 @@ namespace centipede::test
         constexpr auto invalid_header = char{ 42 };
         file.write(&invalid_header, 1);
         file.close();
-        auto reader = Binary{ Config{ .in_filename = file_name } };
+        auto reader = Binary{ { .in_filename = file_name } };
         auto init_err = reader.init();
         ASSERT_TRUE(init_err);
         for ([[maybe_unused]] const auto& entry : reader)

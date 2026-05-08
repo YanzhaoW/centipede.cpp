@@ -1,6 +1,6 @@
 #pragma once
 
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
@@ -22,7 +22,7 @@ namespace centipede::reader
      *
      * Data is read from the binary file entry-wise. Each entry contains multiple
      * entrypoints of type #centipede::EntryPoint. Before reading,
-     * #centipede::reader::Binary::init() must be called to open the file and
+     * @ref centipede::reader::Binary::init() "init()" must be called to open the file and
      * initialize the internal buffers.
      *
      * The reader can be used as an input range. Each iteration reads one entry
@@ -31,11 +31,11 @@ namespace centipede::reader
      *
      * Iteration stops automatically once end-of-file is reached or a read/parsing
      * error occurs. The final reader state can be queried afterwards via
-     * #centipede::reader::Binary::get_status().
+     * @ref centipede::reader::Binary::get_status "get_status()".
      *
      * Note that manual reading via
-     * #centipede::reader::Binary::read_one_entry() and
-     * #centipede::reader::Binary::get_current_entry() is also supported.
+     * @ref centipede::reader::Binary::read_one_entry() "read_one_entry()" and
+     * @ref centipede::reader::Binary::get_current_entry() "get_current_entry()" is also supported.
      *
      * Configuration of the class is done via Binary::Config.
      *
@@ -217,7 +217,7 @@ namespace centipede::reader
          *
          * Iteration stops automatically once end-of-file is reached or a read error
          * occurs. The final reader state can be queried afterwards via
-         * #Binary::get_status().
+         * @ref centipede::reader::Binary::get_status "get_status()".
          *
          * The returned span is valid only until the iterator is incremented, because
          * incrementing reads the next entry and resets/reuses the internal buffers.

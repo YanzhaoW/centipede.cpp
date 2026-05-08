@@ -1,4 +1,3 @@
-option(ENABLE_TEST "Enable testing framework of the project." ON)
 option(BUILD_DOC "Build the documentation for this project." OFF)
 option(BUILD_DOC_ONLY "Only build the documentation for this project." OFF)
 option(ENABLE_COVERAGE "Enable coverage flags" OFF)
@@ -21,4 +20,4 @@ if(ENABLE_CLANG_TIDY)
 endif()
 
 # set the cmake variables for the communication with conan
-set(ENV{CMAKE_ENABLE_TEST} ${ENABLE_TEST})
+set(ENV{CMAKE_ENABLE_TEST} ${BUILD_TESTING})
