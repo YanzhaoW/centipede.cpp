@@ -16,7 +16,7 @@ namespace centipede::core::engine
 {
     namespace
     {
-        struct Globals
+        struct GlobalsType
         {
         };
 
@@ -25,7 +25,7 @@ namespace centipede::core::engine
         {
           public:
             MOCK_METHOD(void, construct_with, (std::size_t n_globals), ());
-            MOCK_METHOD(void, solve, (const Globals& globals, Result<DataType>& result), ());
+            MOCK_METHOD(void, solve, (const GlobalsType& globals, Result<DataType>& result), ());
         };
     } // namespace
 
@@ -36,7 +36,7 @@ namespace centipede::core::engine
     {
       public:
         Engine(std::size_t n_globals) { mock_helper->construct_with(n_globals); }
-        using Globals = Globals;
+        using Globals = GlobalsType;
 
         static void solve(const Globals& globals, Result<DataType>& result) { mock_helper->solve(globals, result); }
 
@@ -66,7 +66,7 @@ namespace centipede::test
           protected:
             using MockHelperType = core::engine::MockHelper<Master::DataTypeUsed>;
             using EngineClass = Master::EngineImp;
-            using Result = Result<Master::DataTypeUsed>;
+            using ResultType = Result<Master::DataTypeUsed>;
 
             void SetUp() override
             {
@@ -184,7 +184,7 @@ namespace centipede::test
         EXPECT_CALL(*engine_class_, add_to_result(testing::_)).Times(1);
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_))
             .Times(1)
-            .WillOnce([](const auto&, Result& result) { result.error_status = ErrorCode::success; });
+            .WillOnce([](const auto&, ResultType& result) { result.error_status = ErrorCode::success; });
 
         EXPECT_TRUE_RES(master_->solve());
     }
@@ -195,7 +195,7 @@ namespace centipede::test
         EXPECT_CALL(*engine_class_, add_to_result(testing::_)).Times(1);
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_))
             .Times(1)
-            .WillOnce([](const auto&, Result& result) { result.error_status = ErrorCode::analysis_rank_deficit; });
+            .WillOnce([](const auto&, ResultType& result) { result.error_status = ErrorCode::analysis_rank_deficit; });
 
         auto res = master_->solve();
         EXPECT_FALSE(res);
