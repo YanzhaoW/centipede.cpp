@@ -50,6 +50,9 @@ namespace centipede::core::engine
         [[nodiscard]] auto get_global_factor_matrix() const -> const auto& { return globals_.factor_matrix; };
         [[nodiscard]] auto get_global_rhs_vector() const -> const auto& { return globals_.rhs_vec; };
 
+        /**
+         * @brief solve the updates of global parameters.
+         */
         static void solve(const Globals& globals, Result<DataType>& result)
         {
             assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose()));
