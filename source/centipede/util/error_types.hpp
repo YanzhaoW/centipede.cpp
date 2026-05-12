@@ -28,6 +28,11 @@ namespace centipede
         analysis_global_negative_definite,
         analysis_factor_matrix_zero, //!< Global factor matrix is zero matrix.
         analysis_rhs_vector_zero,    //!< Global right-hand-side vector is zero vector.
+        reader_file_fail_to_open,    //!< Input file failed to be open.
+        reader_file_fail_to_read,    //!< Input file failed to read
+        reader_uninitialized,        //!< Reader is not initialized.
+        reader_buffer_overflow,      //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
+        reader_invalid_filename,     //!< Filename is invalid or empty
     };
 
 } // namespace centipede
@@ -82,6 +87,16 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Global factor matrix is zero matrix.");
             case analysis_rhs_vector_zero:
                 return std::format_to(ctx.out(), "Global right-hand-side vector is zero vector.");
+            case reader_file_fail_to_open:
+                return std::format_to(ctx.out(), "Reader: Failed to open the file.");
+            case reader_uninitialized:
+                return std::format_to(ctx.out(), "Reader: Must be initialized beforehand!");
+            case reader_file_fail_to_read:
+                return std::format_to(ctx.out(), "Reader: Failed to read the file.");
+            case reader_buffer_overflow:
+                return std::format_to(ctx.out(), "Reader: Cannot read the file. Buffer size will be exceeded!");
+            case reader_invalid_filename:
+                return std::format_to(ctx.out(), "Reader: Filename is either empty or invalid!");
             case invalid:
                 return std::format_to(ctx.out(), "Error due to no evaluation!");
             default:

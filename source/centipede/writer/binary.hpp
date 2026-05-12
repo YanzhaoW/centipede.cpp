@@ -1,6 +1,7 @@
 #pragma once
 
 #include "centipede/data/entry.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 
@@ -24,7 +25,8 @@ namespace centipede::writer
      * handler is opened and internal buffer resetted, ready for the next data input. When adding each entrypoint, the
      * writer doesn't write the corresponding data to the binary file, but rather pushes the data to its internal buffer
      * (see @ref Binary::data_buffer_). Data is only written to the binary file after calling
-     * #Binary::write_current_entry(). All entrypoints added before this call are grouped into the same entry.
+     * #centipede::writer::Binary::write_current_entry(). All entrypoints added before this call are grouped into the
+     * same entry.
      *
      * Configuration of the class is done via the Binary::Config struct.
      *
@@ -76,10 +78,8 @@ namespace centipede::writer
          */
         struct Config
         {
-            static constexpr auto DEFAULT_BUFFER_SIZE =
-                std::size_t{ 10000 }; //!< Default vector capacities for both vectors in #Binary::BufferType.
-            std::string out_filename = "output.bin";             //!< Output binary filename.
-            uint32_t max_bufferpoint_size = DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
+            std::string out_filename = "output.bin";                     //!< Output binary filename.
+            uint32_t max_bufferpoint_size = common::DEFAULT_BUFFER_SIZE; //!< maximum bufferpoint for an entry.
         };
 
         using BufferType = std::pair<std::vector<uint32_t>, std::vector<float>>; //!< Type of the #data_buffer_.
