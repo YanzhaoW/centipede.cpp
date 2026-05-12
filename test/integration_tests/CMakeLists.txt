@@ -33,3 +33,16 @@ set_tests_properties(
     integration_test_writer_res
     PROPERTIES DEPENDS integration_test_writer_data_gen
 )
+
+add_executable(integration_test_reader test_reader.cpp)
+
+add_test(NAME integration_test_reader_data_read COMMAND integration_test_reader)
+
+target_link_libraries(integration_test_reader PRIVATE centipede::centipede)
+
+target_compile_options(integration_test_reader PRIVATE ${COMPILE_OPTIONS})
+
+set_tests_properties(
+    integration_test_reader_data_read
+    PROPERTIES DEPENDS integration_test_writer_data_gen
+)

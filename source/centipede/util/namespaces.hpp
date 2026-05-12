@@ -29,3 +29,17 @@ namespace centipede::core::engine
 namespace centipede::writer
 {
 }
+
+/**
+ * @brief Components of data input from files
+ */
+namespace centipede::reader
+{
+}
+
+/**
+ * @brief Common constants and shared utility definitions.
+ */
+namespace centipede::common
+{
+}
