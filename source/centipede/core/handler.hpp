@@ -6,7 +6,7 @@
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
 
-namespace centipede::core
+namespace centipede
 {
 
     /**
@@ -14,7 +14,7 @@ namespace centipede::core
      *
      * This class should handle all inputs and configurations from users
      */
-    template <typename DataType = double, engine::MasterOpt opt = {}>
+    template <typename DataType = double, core::engine::MasterOpt opt = {}>
     class Handler
     {
       public:
@@ -26,7 +26,7 @@ namespace centipede::core
         {
             std::size_t n_globals = 0; //!< Number of global parameters.
         };
-        using EngineType = engine::Master<DataType, opt>;
+        using EngineType = core::engine::Master<DataType, opt>;
 
         /**
          * @brief Constructor
@@ -61,4 +61,4 @@ namespace centipede::core
 
         // std::vector<>
     };
-} // namespace centipede::core
+} // namespace centipede

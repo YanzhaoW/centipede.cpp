@@ -14,7 +14,7 @@ namespace centipede::core::engine
     /**
      * @brief Concept used for core::engine::Master option.
      */
-    template <EngineType engine_type, typename DataType>
+    template <MatrixEngine engine_type, typename DataType>
     concept EngineLike = requires(Engine<engine_type, DataType> engine,
                                   Result<DataType>& result,
                                   typename Engine<engine_type, DataType>::Globals& globals) {

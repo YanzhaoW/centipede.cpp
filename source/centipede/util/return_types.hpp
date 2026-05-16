@@ -10,6 +10,9 @@
 
 namespace centipede
 {
+    /**
+     * @brief Template alias for expected string results.
+     */
     using StrError = std::expected<void, std::string>;
 
     /**
@@ -17,4 +20,9 @@ namespace centipede
      */
     template <typename T = void>
     using EnumError = std::expected<T, ErrorCode>;
+
+    /**
+     * @brief Template alias for expected void results.
+     */
+    using VoidError = std::expected<void, ErrorCode>;
 } // namespace centipede

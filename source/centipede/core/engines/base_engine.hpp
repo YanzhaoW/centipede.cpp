@@ -178,7 +178,7 @@ namespace centipede::core::engine
     /**
      * @brief Empty base engine class. The real implementation is defined in its specialization.
      */
-    template <MatrixEngineType engine_type, typename DataType>
+    template <MatrixEngine engine_type, typename DataType>
     class Engine
     {
     };

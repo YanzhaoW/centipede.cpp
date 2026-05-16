@@ -26,7 +26,7 @@ namespace centipede::core::engine
      * @brief Engine template specialization for Eigen library implementation.
      */
     template <typename DataType>
-    class Engine<MatrixEngineType::eigen, DataType> : public Base<DataType>
+    class Engine<MatrixEngine::eigen, DataType> : public Base<DataType>
     {
       public:
         /**
@@ -192,7 +192,7 @@ namespace centipede::core::engine
             global_t_.setFromSortedTriplets(triplets_.begin(), triplets_.end());
         }
 
-        auto fit_local_pars() -> EnumError<>
+        auto fit_local_pars() -> VoidError
         {
             // NOTE: Multiplications will trigger temporary object (memory allocation later during the assignment.)
             Eigen::internal::set_is_malloc_allowed(false);
@@ -234,7 +234,7 @@ namespace centipede::core::engine
             return std::pair{ ndf, chi_square };
         }
 
-        auto update_global_factor_matrix() -> EnumError<>
+        auto update_global_factor_matrix() -> VoidError
         {
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
@@ -257,7 +257,7 @@ namespace centipede::core::engine
             return {};
         }
 
-        auto update_global_rhs_vector() -> EnumError<>
+        auto update_global_rhs_vector() -> VoidError
         {
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
@@ -274,9 +274,10 @@ namespace centipede::core::engine
 
         static void resize_globals(Globals& globals, std::size_t n_globals)
         {
-            globals.rhs_vec.resize(n_globals);
+            const auto num_of_globals = static_cast<long>(n_globals);
+            globals.rhs_vec.resize(num_of_globals);
             globals.rhs_vec.setZero();
-            globals.factor_matrix.resize(n_globals, n_globals);
+            globals.factor_matrix.resize(num_of_globals, num_of_globals);
             globals.factor_matrix.setZero();
         }
 

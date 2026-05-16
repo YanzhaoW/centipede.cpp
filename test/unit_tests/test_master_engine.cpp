@@ -32,7 +32,7 @@ namespace centipede::core::engine
     /** @cond */
 
     template <typename DataType>
-    class Engine<EngineType::mock, DataType>
+    class Engine<MatrixEngine::mock, DataType>
     {
       public:
         Engine(std::size_t n_globals) { mock_helper->construct_with(n_globals); }
@@ -49,7 +49,7 @@ namespace centipede::core::engine
     };
 
     template <typename DataType>
-    MockHelper<DataType>* Engine<EngineType::mock, DataType>::mock_helper = nullptr;
+    MockHelper<DataType>* Engine<MatrixEngine::mock, DataType>::mock_helper = nullptr;
     /** @endcond */
 } // namespace centipede::core::engine
 
@@ -60,7 +60,7 @@ namespace centipede::test
         class master_engine : public testing::Test
         {
           public:
-            using Master = engine::Master<float, { .engine_type = engine::MatrixEngineType::mock }>;
+            using Master = engine::Master<float, { .engine_type = engine::MatrixEngine::mock }>;
             using Config = Master::Config;
 
           protected:

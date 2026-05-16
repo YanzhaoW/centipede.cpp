@@ -1,6 +1,6 @@
 add_library(core SHARED)
 add_library(centipede::centipede ALIAS core)
-target_compile_features(core PRIVATE cxx_std_26)
+target_compile_features(core PUBLIC cxx_std_26)
 target_compile_options(
     core
     PRIVATE
@@ -21,6 +21,8 @@ target_sources(
             BASE_DIRS ${CMAKE_SOURCE_DIR}/source
             FILES centipede.hpp
 )
+
+target_link_libraries(core PUBLIC Eigen3::Eigen GSL::gsl)
 
 add_subdirectory(core)
 add_subdirectory(util)

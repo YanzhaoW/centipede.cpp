@@ -6,7 +6,7 @@
 namespace
 {
     constexpr auto DEFAULT_MAX_POINT = 30;
-    using centipede::core::Handler;
+    using centipede::Handler;
 
 } // namespace
 
