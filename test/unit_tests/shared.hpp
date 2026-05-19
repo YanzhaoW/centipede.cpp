@@ -1,6 +1,6 @@
 #pragma once
 
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <random>

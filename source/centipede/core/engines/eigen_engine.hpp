@@ -136,9 +136,9 @@ namespace centipede::core::engine
         {
 
             const auto& current_state = Base<DataType>::get_current_state();
-            const auto entrypoint_size = current_state.n_points;
-            const auto n_globals = current_state.n_globals;
-            const auto n_locals = current_state.n_locals;
+            const auto entrypoint_size = static_cast<long>(current_state.n_points);
+            const auto n_globals = static_cast<long>(current_state.n_globals);
+            const auto n_locals = static_cast<long>(current_state.n_locals);
 
             // NOTE: resize may cause memory allocation.
             local_t_.resize(n_locals, entrypoint_size);
@@ -163,8 +163,10 @@ namespace centipede::core::engine
 
         void fill_sigmas(const std::vector<DataType>& data)
         {
-            std::ranges::copy(std::views::transform(data, [](DataType val) -> DataType { return 1. / (val * val); }),
-                              sigmas_.begin());
+            std::ranges::copy(
+                std::views::transform(data,
+                                      [](DataType val) -> DataType { return static_cast<DataType>(1.) / (val * val); }),
+                sigmas_.begin());
         }
 
         void fill_measurements(const std::vector<DataType>& data) { std::ranges::copy(data, measurements_.begin()); }
@@ -221,7 +223,7 @@ namespace centipede::core::engine
             Eigen::internal::set_is_malloc_allowed(false);
             const auto entrypoint_size = Base<DataType>::get_current_state().n_points;
             const auto local_size = buffers_.local_solutions.rows();
-            const auto ndf = entrypoint_size - local_size;
+            const auto ndf = entrypoint_size - static_cast<std::size_t>(local_size);
 
             if (ndf < 1)
             {
@@ -297,7 +299,7 @@ namespace centipede::core::engine
                 }
             }
             const auto diagonal_values = (unitary_matrix * prob_mat * unitary_matrix.transpose()).diagonal().eval();
-            for (const auto [idx, diagonal_val] : std::views::zip(std::views::iota(0), diagonal_values))
+            for (const auto [idx, diagonal_val] : std::views::zip(std::views::iota(std::size_t{ 0 }), diagonal_values))
             {
                 if (std::abs(diagonal_val) > Eigen::NumTraits<DataType>::dummy_precision())
                 {

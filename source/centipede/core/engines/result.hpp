@@ -48,8 +48,9 @@ struct std::formatter<centipede::Result<DataType>>
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
     static constexpr auto format(const Result& result, std::format_context& ctx)
     {
-        const auto percentage =
-            (result.n_entries == 0) ? 0. : result.n_entries_rejected / static_cast<double>(result.n_entries) * 100.;
+        const auto percentage = (result.n_entries == 0) ? 0.
+                                                        : static_cast<double>(result.n_entries_rejected) /
+                                                              static_cast<double>(result.n_entries) * 100.;
         if (result.error_status == centipede::ErrorCode::success)
         {
             return std::format_to(ctx.out(),

@@ -2,7 +2,7 @@
 
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/master_engine.hpp"
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
 
@@ -39,11 +39,13 @@ namespace centipede
         {
         }
 
-        /**
-         * @brief Initialization of the instance
-         *
-         */
-        [[nodiscard]] auto init() -> EnumError<> { return {}; }
+        // /**
+        //  * @brief Initialization of the instance
+        //  *
+        //  */
+        // [[nodiscard]] auto init() -> EnumError<> {
+        //     engine_.init();
+        //     return {}; }
 
         template <std::size_t NLocals, std::size_t NGlobals>
         [[nodiscard]] auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> EnumError<>
@@ -51,9 +53,18 @@ namespace centipede
             return engine_.add_entrypoint(entry_point);
         }
 
-        auto analyze_current_entry() -> EnumError<std::size_t> { return {}; };
+        auto analyze_current_entry() -> EnumError<std::size_t>
+        {
+            auto n_points = engine_.get_current_state().entry.measurements.size();
+
+            return engine_.analyze().transform([n_points]() { return n_points; });
+        };
 
         [[nodiscard]] auto get_current_state() const -> const auto& { return engine_.get_current_state(); }
+
+        [[nodiscard]] auto solve() -> VoidError { return engine_.solve(); }
+
+        [[nodiscard]] auto get_result() const -> const auto& { return engine_.get_result(); }
 
       private:
         Config config_;

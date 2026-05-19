@@ -6,7 +6,8 @@
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entry.hpp"
-#include "centipede/data/entry_base.hpp"
+#include "centipede/data/entrypoint.hpp"
+#include "centipede/data/entrypoint_base.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <algorithm>
@@ -114,7 +115,7 @@ namespace centipede::core::engine
         /**
          * @brief Fitting the current entry data.
          *
-         * This operation can be async.
+         * This operation can be async. The state is also reset to the default one.
          * @see ref
          */
         auto analyze() -> EnumError<>
@@ -135,17 +136,16 @@ namespace centipede::core::engine
          * @return name description
          * @see ref
          */
-        auto solve() -> EnumError<>
+        auto solve() -> VoidError
         {
             engine_imp_.add_to_globals(globals_);
             engine_imp_.add_to_result(result_);
-            engine_imp_.solve(globals_, result_);
+            EngineImp::solve(globals_, result_);
 
-            return (result_.error_status == ErrorCode::success) ? EnumError<>{}
-                                                                : std::unexpected{ result_.error_status };
+            return (result_.error_status == ErrorCode::success) ? VoidError{} : std::unexpected{ result_.error_status };
         }
 
-        [[nodiscard]] auto get_current_state() const -> const auto& { return current_state_; }
+        [[nodiscard]] auto get_current_state() const -> const State& { return current_state_; }
 
         [[nodiscard]] auto get_engine() const -> const auto& { return engine_imp_; }
 

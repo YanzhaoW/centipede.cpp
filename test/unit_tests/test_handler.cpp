@@ -28,19 +28,10 @@ namespace centipede::test
         auto handler = HandlerType{ Config{ .n_globals = DEFAULT_MAX_GLOBAL_ID } };
     }
 
-    TEST(handler, init)
-    {
-        auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
-    }
-
     // NOLINTBEGIN(readability-function-cognitive-complexity)
     TEST(handler, add_entrypoint)
     {
         auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
         constexpr auto n_points = 100;
         const auto entrypoints = generate_random_entry_points(n_points);
         EXPECT_EQ(n_points, entrypoints.size());
@@ -63,8 +54,6 @@ namespace centipede::test
     TEST(handler, local_derivs_incomp_numbers)
     {
         auto handler = Handler{};
-        auto err = handler.init();
-        EXPECT_TRUE(err.has_value());
         constexpr auto n_points = 10;
         const auto entrypoints = generate_random_entry_points(n_points);
         for (const auto& entry_point : entrypoints)

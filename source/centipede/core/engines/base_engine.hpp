@@ -137,7 +137,7 @@ namespace centipede::core::engine
             .and_then(
                 [&self, alpha](const auto& ndf_chi2) -> EnumError<>
                 {
-                    const auto p_value = gsl_cdf_chisq_Q(ndf_chi2.second, ndf_chi2.first);
+                    const auto p_value = gsl_cdf_chisq_Q(ndf_chi2.second, static_cast<double>(ndf_chi2.first));
 
                     self.state_.p_value = p_value;
                     self.state_.chi2 = ndf_chi2.second;
