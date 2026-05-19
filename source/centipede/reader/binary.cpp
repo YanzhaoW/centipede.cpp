@@ -60,7 +60,6 @@ namespace centipede::reader
             IterCursor iter;
             IterEnd end;
             EntryPoint<>* entrypoint;
-            std::size_t& current_size;
         };
 
         auto chunk_check_size_one(auto chunk_ptr)
@@ -106,7 +105,6 @@ namespace centipede::reader
             {
                 chunk_ptr.entrypoint->add_local(local);
             }
-            ++(chunk_ptr.current_size);
             return chunk_ptr;
         }
 
@@ -124,7 +122,7 @@ namespace centipede::reader
                 return std::unexpected{ ErrorCode::reader_file_fail_to_read };
             }
             constexpr auto chunk_size{ 4 };
-            auto size = std::size_t{};
+            auto current_n_points = std::size_t{};
             auto zipped = svs::zip(input.first, input.second) | svs::drop(1) |
                           svs::chunk_by([](const auto& current, const auto& next) -> auto
                                         { return std::get<0>(current) != 0U and std::get<0>(next) != 0U; });
@@ -140,12 +138,13 @@ namespace centipede::reader
                 svs::transform([](auto&& chunk) -> auto { return chunk | svs::values; });
 
             auto is_ok = srs::all_of(svs::zip_transform(
-                                         [&size](auto&& chunk, auto&& entrypoint) -> bool
+                                         [&current_n_points](auto&& chunk, auto&& entrypoint) -> bool
                                          {
-                                             auto chunk_ptr = ChunkPointer{ .iter = chunk.begin(),
-                                                                            .end = chunk.end(),
-                                                                            .entrypoint = &entrypoint,
-                                                                            .current_size = size };
+                                             auto chunk_ptr = ChunkPointer{
+                                                 .iter = chunk.begin(),
+                                                 .end = chunk.end(),
+                                                 .entrypoint = &entrypoint,
+                                             };
                                              using ChunkPtrType = decltype(chunk_ptr);
                                              return chunk_check_size_one(chunk_ptr)
                                                  .transform(chunk_handle_measurement<ChunkPtrType>)
@@ -157,6 +156,12 @@ namespace centipede::reader
                                                  .and_then(chunk_not_end_and_increment<ChunkPtrType>)
                                                  .transform(chunk_handle_locals<ChunkPtrType>)
                                                  .and_then(chunk_end_after_increment<ChunkPtrType>)
+                                                 .transform(
+                                                     [&current_n_points](auto)
+                                                     {
+                                                         ++current_n_points;
+                                                         return true;
+                                                     })
                                                  .has_value();
                                          },
                                          chunks,
@@ -166,7 +171,7 @@ namespace centipede::reader
             {
                 return std::unexpected{ ErrorCode::reader_file_fail_to_read };
             }
-            return size;
+            return current_n_points;
         }
     } // namespace
 
