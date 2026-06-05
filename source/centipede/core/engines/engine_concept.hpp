@@ -26,8 +26,8 @@ namespace centipede::core::engine
         { Engine<engine_type, DataType>::solve(globals, result) } -> std::same_as<void>;
         { engine.add_to_globals(globals) } -> std::same_as<void>;
         { engine.add_to_result(result) } -> std::same_as<void>;
-        { engine.analyze(double{}) } -> std::same_as<EnumError<>>;
-        { engine.fill_data(Entry<DataType>{}) } -> std::same_as<void>;
+        { engine.analyze(double{}) } -> std::same_as<VoidError>;
+        { engine.fill_data(Entry<DataType>{}) } -> std::same_as<VoidError>;
     };
 
 } // namespace centipede::core::engine

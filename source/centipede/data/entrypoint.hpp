@@ -38,6 +38,20 @@ namespace centipede
         EntryPoint() = default;
 
         /**
+         * @brief Getter for local parameter sizes.
+         * @param self The dynamic reference to the caller.
+         * @return Sizes of local parameters.
+         */
+        [[nodiscard]] inline auto get_n_locals() const -> std::size_t { return locals_.size(); }
+
+        /**
+         * @brief Getter for global parameter sizes.
+         * @param self The dynamic reference to the caller.
+         * @return Sizes of global parameters.
+         */
+        [[nodiscard]] inline auto get_n_globals() const -> std::size_t { return globals_.size(); }
+
+        /**
          * @brief Add a value to the local derivatives.
          * @param value Local derivative value.
          * @return Non-const reference to this object.
@@ -183,6 +197,20 @@ namespace centipede
 
         using internal::EntryPointBase::set_globals;
         using internal::EntryPointBase::set_locals;
+
+        /**
+         * @brief Getter for local parameter sizes.
+         * @param self The dynamic reference to the caller.
+         * @return Sizes of local parameters.
+         */
+        [[nodiscard]] inline auto get_n_locals() const -> std::size_t { return NLocals; }
+
+        /**
+         * @brief Getter for global parameter sizes.
+         * @param self The dynamic reference to the caller.
+         * @return Sizes of global parameters.
+         */
+        [[nodiscard]] inline auto get_n_globals() const -> std::size_t { return NGlobals; }
 
         /**
          * @brief Default spaceship comparison.

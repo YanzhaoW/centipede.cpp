@@ -15,6 +15,7 @@ class CompressorRecipe(ConanFile):
         self.requires("magic_enum/0.9.7")   # type: ignore
         self.requires("cli11/2.6.0")        # type: ignore
         self.requires("eigen/5.0.1")        # type: ignore
+        self.requires("libassert/2.2.1")    # type: ignore
 
         # Conditions on cmake variables set from cmake/project_options
         if os.environ["CMAKE_ENABLE_TEST"] == "ON":

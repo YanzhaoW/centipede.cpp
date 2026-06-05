@@ -24,6 +24,12 @@ target_sources(
 
 target_link_libraries(core PUBLIC Eigen3::Eigen GSL::gsl)
 
+if(libassert_FOUND)
+    message(STATUS "Libassert is available")
+    target_link_libraries(core PUBLIC libassert::assert)
+    target_compile_definitions(core PUBLIC HAS_LIBASSERT LIBASSERT_LOWERCASE)
+endif()
+
 add_subdirectory(core)
 add_subdirectory(util)
 add_subdirectory(writer)

@@ -41,7 +41,7 @@ namespace centipede::core::engine
         static void solve(const Globals& globals, Result<DataType>& result) { mock_helper->solve(globals, result); }
 
         MOCK_METHOD(void, add_to_globals, (Globals & globals), (const));
-        MOCK_METHOD((void), fill_data, (const Entry<DataType>& entry), (const));
+        MOCK_METHOD((VoidError), fill_data, (const Entry<DataType>& entry), (const));
         MOCK_METHOD((void), add_to_result, (Result<DataType> & result), (const));
         MOCK_METHOD((EnumError<>), analyze, (double alpha), (const));
 
@@ -94,7 +94,7 @@ namespace centipede::test
                                     .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                     .set_locals(1.5F, 2.5F);
         const auto& state = master_->get_current_state();
-        EXPECT_EQ(state.point_index, 0);
+        EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
         EXPECT_EQ(state.entry.sigmas.size(), 0);
@@ -103,7 +103,7 @@ namespace centipede::test
 
         EXPECT_TRUE_RES(master_->add_entrypoint(entrypoint));
 
-        EXPECT_EQ(state.point_index, 1);
+        EXPECT_EQ(state.next_point_index, 1);
         ASSERT_TRUE(state.entry.n_locals);
         EXPECT_EQ(state.entry.n_locals.value(), 2);
         EXPECT_EQ(state.entry.measurements.size(), 1);
@@ -158,7 +158,7 @@ namespace centipede::test
         EXPECT_TRUE_RES(master_->analyze());
 
         const auto& state = master_->get_current_state();
-        EXPECT_EQ(state.point_index, 0);
+        EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
         EXPECT_EQ(state.entry.sigmas.size(), 0);

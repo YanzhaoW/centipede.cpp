@@ -1,11 +1,14 @@
 #include "centipede/centipede.hpp"
 #include "centipede/data/entrypoint.hpp"
+#include <Eigen/Core>
+#include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <mps/MPS.hpp>
 #include <mps/detector_utils/DetectorTypes.hpp>
 #include <print>
 #include <ranges>
-#include <vector>
+#include <utility>
 
 namespace
 {
@@ -19,7 +22,8 @@ auto main() -> int
     auto mps = mps::MPS<mps::DetectorType::generalized>{ config };
     mps.init();
 
-    auto handler = centipede::Handler<float, { .engine_type = centipede::MatrixEngine::eigen }>{};
+    const auto n_globals = config.detector.spec.num_modules * 2;
+    auto handler = centipede::Handler<float, { .engine_type = centipede::MatrixEngine::eigen }>{ n_globals };
 
     auto entry_point_input = centipede::EntryPoint{};
     for (auto _ : std::views::iota(0, 1000))
@@ -31,22 +35,33 @@ auto main() -> int
             entry_point_input.reset();
             entry_point_input.set_measurement(entrypoint.measurement)
                 .set_sigma(entrypoint.sigma)
-                .set_globals(entrypoint.globals)
+                .set_globals(entrypoint.globals |
+                             std::views::transform([](const auto& globals)
+                                                   { return std::pair{ globals.first - 1, globals.second }; }))
                 .set_locals(entrypoint.locals);
+            auto res = handler.add_entrypoint(entry_point_input);
+            if (not res)
+            {
+                std::println(stderr, "Error from adding the current point: {}", res.error());
+            }
         }
+        // std::println("Number of entrypoints in the current entry: {}", handler.get_current_state().next_point_index);
         auto res = handler.analyze_current_entry();
         if (not res)
         {
-            std::println("Error: {}", res.error());
-            return EXIT_FAILURE;
+            if (res.error() != centipede::ErrorCode::analysis_empty_entry)
+            {
+                std::println(stderr, "Error from analyzing the current entry: {}", res.error());
+            }
         }
     }
 
+    std::println("Solving the equations");
     auto is_ok = handler.solve();
 
     if (not is_ok)
     {
-        std::println("Error: {}", is_ok.error());
+        std::println("Error from the solving: {}", is_ok.error());
         return EXIT_FAILURE;
     }
 

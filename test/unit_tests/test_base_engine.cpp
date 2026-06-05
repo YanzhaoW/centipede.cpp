@@ -27,10 +27,10 @@ namespace centipede::test
             MOCK_METHOD(void, fill_measurements, (const std::vector<DataType>&), ());
             MOCK_METHOD(void, fill_sigmas, (const std::vector<DataType>&), ());
             MOCK_METHOD(void, fill_local_derivs, (const std::vector<typename Entry<DataType>::Deriv>&), ());
-            MOCK_METHOD(void, fill_global_derivs, (const std::vector<typename Entry<DataType>::Deriv>&), ());
+            MOCK_METHOD(VoidError, fill_global_derivs, (const std::vector<typename Entry<DataType>::Deriv>&), ());
 
             // Called in analyze method.
-            MOCK_METHOD((EnumError<>), fit_local_pars, (), ());
+            MOCK_METHOD((VoidError), fit_local_pars, (), ());
             MOCK_METHOD((std::pair<std::size_t, double>), calculate_local_fit_chi_square, (), ());
             MOCK_METHOD((void), update_global_factor_matrix, (), ());
             MOCK_METHOD((void), update_global_rhs_vector, (), ());
@@ -80,7 +80,7 @@ namespace centipede::test
         EXPECT_CALL(engine, fill_local_derivs(entry.local_derivs)).Times(1);
         EXPECT_CALL(engine, fill_global_derivs(entry.global_derivs)).Times(1);
 
-        engine.fill_data(entry);
+        EXPECT_TRUE_RES(engine.fill_data(entry));
 
         EXPECT_EQ(engine.get_log().n_entries_read, 1);
     }
@@ -95,7 +95,7 @@ namespace centipede::test
         EXPECT_CALL(engine, fill_local_derivs(entry.local_derivs)).Times(0);
         EXPECT_CALL(engine, fill_global_derivs(entry.global_derivs)).Times(0);
 
-        engine.fill_data(entry);
+        EXPECT_TRUE_RES(engine.fill_data(entry));
         EXPECT_EQ(engine.get_log().n_entries_read, 0);
     }
 

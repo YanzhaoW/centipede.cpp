@@ -26,13 +26,15 @@ namespace centipede
         analysis_rank_deficit, //!< Rank deficit occurred during the analysis.
         analysis_zero_global_factor_mat,
         analysis_global_negative_definite,
+        analysis_global_idx_too_large,
         analysis_factor_matrix_zero, //!< Global factor matrix is zero matrix.
-        analysis_rhs_vector_zero,    //!< Global right-hand-side vector is zero vector.
-        reader_file_fail_to_open,    //!< Input file failed to be open.
-        reader_file_fail_to_read,    //!< Input file failed to read
-        reader_uninitialized,        //!< Reader is not initialized.
-        reader_buffer_overflow,      //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
-        reader_invalid_filename,     //!< Filename is invalid or empty
+        analysis_empty_entry,
+        analysis_rhs_vector_zero, //!< Global right-hand-side vector is zero vector.
+        reader_file_fail_to_open, //!< Input file failed to be open.
+        reader_file_fail_to_read, //!< Input file failed to read
+        reader_uninitialized,     //!< Reader is not initialized.
+        reader_buffer_overflow,   //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
+        reader_invalid_filename,  //!< Filename is invalid or empty
     };
 
 } // namespace centipede
@@ -83,10 +85,15 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Rank deficit occurred during the analysis.");
             case analysis_zero_global_factor_mat:
                 return std::format_to(ctx.out(), "Global factor matrix is zero.");
+            case analysis_global_idx_too_large:
+                return std::format_to(
+                    ctx.out(), "Global index (0-based) is larger than or equal to the size of global parameters.");
             case analysis_factor_matrix_zero:
                 return std::format_to(ctx.out(), "Global factor matrix is zero matrix.");
             case analysis_rhs_vector_zero:
                 return std::format_to(ctx.out(), "Global right-hand-side vector is zero vector.");
+            case analysis_empty_entry:
+                return std::format_to(ctx.out(), "Current entry has no entry points.");
             case reader_file_fail_to_open:
                 return std::format_to(ctx.out(), "Reader: Failed to open the file.");
             case reader_uninitialized:

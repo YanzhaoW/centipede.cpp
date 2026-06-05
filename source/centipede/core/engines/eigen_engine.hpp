@@ -4,6 +4,7 @@
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entry.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <Eigen/Cholesky>
@@ -20,8 +21,25 @@
 #include <utility>
 #include <vector>
 
+#ifdef HAS_LIBASSERT
+#include "libassert/assert.hpp"
+#else
+#include <cassert>
+#endif
+
 namespace centipede::core::engine
 {
+
+    namespace
+    {
+        class EigenMemGuard
+        {
+          public:
+            EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(false); }
+            ~EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(true); }
+        };
+    } // namespace
+
     /**
      * @brief Engine template specialization for Eigen library implementation.
      */
@@ -55,7 +73,13 @@ namespace centipede::core::engine
          */
         static void solve(const Globals& globals, Result<DataType>& result)
         {
-            assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose()));
+#ifdef HAS_LIBASSERT
+            debug_assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+                                                        static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#else
+            assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+                                                  static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#endif
 
             if (globals.factor_matrix.isZero())
             {
@@ -91,6 +115,17 @@ namespace centipede::core::engine
 
         void add_to_globals(Globals& globals)
         {
+            globals.factor_matrix.resize(globals_.factor_matrix.rows(), globals_.factor_matrix.cols());
+            globals.rhs_vec.resize(globals_.rhs_vec.rows(), globals_.rhs_vec.cols());
+#ifdef HAS_LIBASSERT
+            debug_assert(globals.factor_matrix.cols() == globals_.factor_matrix.cols(),
+                         "Check if column size matches for global factor matrix");
+            debug_assert(globals.factor_matrix.rows() == globals_.factor_matrix.rows(),
+                         "Check if row size matches for global factor matrix");
+#else
+            assert(globals.factor_matrix.cols() == globals_.factor_matrix.cols());
+            assert(globals.factor_matrix.rows() == globals_.factor_matrix.rows());
+#endif
             globals.factor_matrix += globals_.factor_matrix.eval();
             globals.rhs_vec += globals_.rhs_vec.eval();
         }
@@ -175,13 +210,18 @@ namespace centipede::core::engine
         {
             for (const auto& [point_idx, deriv] : data)
             {
+#if HAS_LIBASSERT
+                debug_assert(point_idx < local_t_.cols());
+                debug_assert(deriv.first < local_t_.rows());
+#else
                 assert(point_idx < local_t_.cols());
                 assert(deriv.first < local_t_.rows());
+#endif
                 local_t_(deriv.first, point_idx) = deriv.second;
             }
         }
 
-        void fill_global_derivs(const std::vector<typename Entry<DataType>::Deriv>& data)
+        auto fill_global_derivs(const std::vector<typename Entry<DataType>::Deriv>& data) -> VoidError
         {
             triplets_.clear();
 
@@ -192,12 +232,13 @@ namespace centipede::core::engine
                 triplets_.emplace_back(deriv.first, point_idx, deriv.second);
             }
             global_t_.setFromSortedTriplets(triplets_.begin(), triplets_.end());
+            return {};
         }
 
         auto fit_local_pars() -> VoidError
         {
             // NOTE: Multiplications will trigger temporary object (memory allocation later during the assignment.)
-            Eigen::internal::set_is_malloc_allowed(false);
+            auto _ = EigenMemGuard{};
             buffers_.local_weighted_t.noalias() = local_t_ * sigmas_.asDiagonal();
 
             buffers_.local_weighted_square.noalias() = buffers_.local_weighted_t.lazyProduct(local_t_.transpose());
@@ -213,14 +254,12 @@ namespace centipede::core::engine
             buffers_.local_solutions.noalias() =
                 buffers_.local_weighted_square_inv.lazyProduct(buffers_.local_weighted_t).lazyProduct(measurements_);
 
-            Eigen::internal::set_is_malloc_allowed(true);
-
             return {};
         }
 
         auto calculate_local_fit_chi_square() -> EnumError<std::pair<std::size_t, double>>
         {
-            Eigen::internal::set_is_malloc_allowed(false);
+            auto _ = EigenMemGuard{};
             const auto entrypoint_size = Base<DataType>::get_current_state().n_points;
             const auto local_size = buffers_.local_solutions.rows();
             const auto ndf = entrypoint_size - static_cast<std::size_t>(local_size);
@@ -232,7 +271,6 @@ namespace centipede::core::engine
 
             buffers_.residual_values.noalias() = measurements_ - (local_t_.transpose() * buffers_.local_solutions);
             const auto chi_square = buffers_.residual_values.dot(sigmas_.asDiagonal() * buffers_.residual_values);
-            Eigen::internal::set_is_malloc_allowed(true);
             return std::pair{ ndf, chi_square };
         }
 
@@ -253,7 +291,14 @@ namespace centipede::core::engine
                                             buffers_.local_weighted_square_inv_sparse *
                                             buffers_.global_local_weighted_t;
             buffers_.global_square_update += buffers_.global_weighted_square;
-            assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose()));
+#ifdef HAS_LIBASSERT
+            debug_assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose(),
+                                                                static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#else
+            assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose(),
+                                                          static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#endif
+
             globals_.factor_matrix += buffers_.global_square_update;
             // Eigen::internal::set_is_malloc_allowed(true);
             return {};

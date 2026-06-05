@@ -65,9 +65,10 @@ namespace centipede::core::engine
          *
          * @param self Reference to the caller object.
          * @param entry Entry data.
+         * @return Possible error.
          * @see #Entry
          */
-        void fill_data(this auto&& self, const Entry<DataType>& entry);
+        auto fill_data(this auto&& self, const Entry<DataType>& entry) -> VoidError;
 
         /**
          * @brief Analyze the data from the current entry.
@@ -83,7 +84,7 @@ namespace centipede::core::engine
          * @param alpha Significance level to reject the current entry.
          * @return An error value if error occurs.
          */
-        auto analyze(this auto&& self, double alpha) -> EnumError<>;
+        auto analyze(this auto&& self, double alpha) -> VoidError;
 
         [[nodiscard]] auto get_current_state() const -> const auto& { return state_; }
         [[nodiscard]] auto get_log() const -> const auto& { return log_; }
@@ -108,11 +109,11 @@ namespace centipede::core::engine
     };
 
     template <typename DataType>
-    void Base<DataType>::fill_data(this auto&& self, const Entry<DataType>& entry)
+    auto Base<DataType>::fill_data(this auto&& self, const Entry<DataType>& entry) -> VoidError
     {
         if (not entry.n_locals)
         {
-            return;
+            return {};
         }
         self.state_.n_points = entry.measurements.size();
         assert(self.state_.n_points == entry.sigmas.size());
@@ -123,13 +124,14 @@ namespace centipede::core::engine
         self.fill_measurements(entry.measurements);
         self.fill_sigmas(entry.sigmas);
         self.fill_local_derivs(entry.local_derivs);
-        self.fill_global_derivs(entry.global_derivs);
+        auto res = self.fill_global_derivs(entry.global_derivs);
 
         ++self.log_.n_entries_read;
+        return res;
     }
 
     template <typename DataType>
-    auto Base<DataType>::analyze(this auto&& self, double alpha) -> EnumError<>
+    auto Base<DataType>::analyze(this auto&& self, double alpha) -> VoidError
     {
         return self.fit_local_pars()
             .and_then([&self]() -> EnumError<std::pair<std::size_t, double>>
