@@ -49,13 +49,19 @@ set_tests_properties(
 
 find_package(mps)
 
-if(mps_FOUND)
+if(NOT Boost_FOUND)
+    message(STATUS "Boost library is not used for the build!")
+endif()
+
+if(mps_FOUND AND Boost_FOUND)
     message(STATUS "Testing with simulated data from mps is enabled!")
     add_executable(test_eigen test_eigen.cpp)
 
-    target_link_libraries(test_eigen PRIVATE centipede::centipede mps::mps)
+    target_link_libraries(test_eigen PRIVATE centipede::centipede mps::mps Boost::headers)
 
     target_compile_options(test_eigen PRIVATE ${COMPILE_OPTIONS})
+
+    target_compile_definitions(test_eigen PRIVATE BOOST_NO_EXCEPTIONS BOOST_THROW_EXCEPTION_HEADER_ONLY)
 
     add_test(NAME integration_test_eigen COMMAND test_eigen)
     set_tests_properties(integration_test_eigen PROPERTIES TIMEOUT 10)

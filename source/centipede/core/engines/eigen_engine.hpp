@@ -30,22 +30,30 @@
 namespace centipede::core::engine
 {
 
-    namespace
-    {
-        class EigenMemGuard
-        {
-          public:
-            EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(false); }
-            ~EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(true); }
-        };
-    } // namespace
-
     /**
      * @brief Engine template specialization for Eigen library implementation.
      */
     template <typename DataType>
     class Engine<MatrixEngine::eigen, DataType> : public Base<DataType>
     {
+      private:
+        /**
+         * @brief RAII class to perform the malloc check for eigen matrix operations.
+         *
+         */
+        class EigenMemGuard
+        {
+          public:
+            /**
+             * @brief Default constructor to enable the check.
+             */
+            EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(false); }
+            /**
+             * @brief Default destructor to disable the check.
+             */
+            ~EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(true); }
+        };
+
       public:
         /**
          * @brief Matrix and vector used to solve global parameter updates
@@ -107,10 +115,10 @@ namespace centipede::core::engine
                     std::back_inserter(result.parameters));
                 result.error_status = ErrorCode::success;
             }
-            else
-            {
-                check_rank_deficit(globals, result);
-            }
+            // else
+            // {
+            check_rank_deficit(globals, result);
+            // }
         }
 
         void add_to_globals(Globals& globals)

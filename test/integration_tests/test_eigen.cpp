@@ -1,19 +1,38 @@
 #include "centipede/centipede.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include <Eigen/Core>
-#include <algorithm>
+#include <boost/histogram.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/make_histogram.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <mps/MPS.hpp>
 #include <mps/detector_utils/DetectorTypes.hpp>
 #include <print>
 #include <ranges>
+#include <sstream>
 #include <utility>
 
 namespace
 {
-    // void entrypoints_generator() {}
+    enum class ResStatus
+    {
+        succeed,
+        fail,
+    };
 } // namespace
+
+namespace bh = boost::histogram;
+
+namespace boost
+{
+
+    BOOST_NORETURN void throw_exception(std::exception const&) { std::abort(); }
+
+    BOOST_NORETURN void throw_exception(std::exception const&, boost::source_location const&) { std::abort(); }
+
+} // namespace boost
 
 auto main() -> int
 {
@@ -25,6 +44,9 @@ auto main() -> int
     const auto n_globals = config.detector.spec.num_modules * 2;
     auto handler = centipede::Handler<float, { .engine_type = centipede::MatrixEngine::eigen }>{ n_globals };
 
+    auto hist_residuals = bh::make_histogram(bh::axis::regular{ 20, 0., 17., "chi2" });
+    auto hist_pvalues = bh::make_histogram(bh::axis::regular{ 20, 0., 1., "pvalues" });
+
     auto entry_point_input = centipede::EntryPoint{};
     for (auto _ : std::views::iota(0, 1000))
     {
@@ -34,6 +56,7 @@ auto main() -> int
         {
             entry_point_input.reset();
             entry_point_input.set_measurement(entrypoint.measurement)
+            // entry_point_input.set_measurement(0.)
                 .set_sigma(entrypoint.sigma)
                 .set_globals(entrypoint.globals |
                              std::views::transform([](const auto& globals)
@@ -47,6 +70,9 @@ auto main() -> int
         }
         // std::println("Number of entrypoints in the current entry: {}", handler.get_current_state().next_point_index);
         auto res = handler.analyze_current_entry();
+        const auto& state = handler.get_current_entry_state();
+        hist_residuals(state.chi2);
+        hist_pvalues(state.p_value);
         if (not res)
         {
             if (res.error() != centipede::ErrorCode::analysis_empty_entry)
@@ -67,7 +93,13 @@ auto main() -> int
 
     const auto& result = handler.get_result();
 
+    auto hist_ostream = std::ostringstream{};
+    hist_ostream << hist_residuals << hist_pvalues;
+
+    std::println("{}", hist_ostream.str());
     std::println("{}", result);
+    std::println("parameters: {}", result.parameters);
+    std::println("eigen values: {}", result.eigen_values);
 
     return EXIT_SUCCESS;
 }

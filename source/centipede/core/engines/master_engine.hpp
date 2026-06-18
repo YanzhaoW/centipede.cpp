@@ -147,7 +147,7 @@ namespace centipede::core::engine
         State current_state_;
         EngineImp engine_imp_{};
 
-        //TODO: represent globals as mdspan, instead of relying on eigen.
+        // TODO: represent globals as mdspan, instead of relying on eigen.
         EngineImp::Globals globals_{};
 
         void reset_state()

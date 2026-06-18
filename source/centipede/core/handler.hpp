@@ -69,6 +69,11 @@ namespace centipede
 
         [[nodiscard]] auto get_current_state() const -> const auto& { return engine_.get_current_state(); }
 
+        [[nodiscard]] auto get_current_entry_state() const -> const auto&
+        {
+            return engine_.get_engine().get_current_state();
+        }
+
         [[nodiscard]] auto solve() -> VoidError { return engine_.solve(); }
 
         [[nodiscard]] auto get_result() const -> const auto& { return engine_.get_result(); }

@@ -11,6 +11,10 @@ This program includes a header-only library for the direct integration of the al
 - \subpage installation "Installation"
 - \subpage basic_usages "Basic usages"
 
+<h2> Theories </h2>
+
+- \subpage linear_reg "Linear regression"
+
 <h2> For Developers</h2>
 
 - \subpage program_style_conventions "Programming styles and conventions"

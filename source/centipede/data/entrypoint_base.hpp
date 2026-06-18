@@ -64,7 +64,6 @@ namespace centipede::internal
       public:
         using data_type = float; //!< Data type of deriv values.
 
-        //
         /**
          * @brief Reset all values to the default values.
          *

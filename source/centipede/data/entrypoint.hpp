@@ -39,14 +39,12 @@ namespace centipede
 
         /**
          * @brief Getter for local parameter sizes.
-         * @param self The dynamic reference to the caller.
          * @return Sizes of local parameters.
          */
         [[nodiscard]] inline auto get_n_locals() const -> std::size_t { return locals_.size(); }
 
         /**
          * @brief Getter for global parameter sizes.
-         * @param self The dynamic reference to the caller.
          * @return Sizes of global parameters.
          */
         [[nodiscard]] inline auto get_n_globals() const -> std::size_t { return globals_.size(); }
@@ -84,7 +82,6 @@ namespace centipede
          * values are emptied before being set by the new values.
          *
          * @tparam View Types of the view.
-         * @param self The dynamic reference to the caller.
          * @param view View object.
          * @return Universal reference to the caller.
          */
@@ -104,7 +101,6 @@ namespace centipede
          * new values.
          *
          * @tparam View Types of the view.
-         * @param self The dynamic reference to the caller.
          * @param view View object.
          * @return Universal reference to the caller.
          */
@@ -175,7 +171,9 @@ namespace centipede
      *
      * Entrypoint contains the derivatives of local and global parameters, together with measurement and sigma values.
      * The values are stored locally.
+     * @anchor NLocals_DY_Entrypoint
      * @tparam NLocals Number of local parameters.
+     * @anchor NGlobals_DY_Entrypoint
      * @tparam NGlobals Number of global parameters.
      */
     template <std::size_t NLocals, std::size_t NGlobals>
@@ -200,14 +198,12 @@ namespace centipede
 
         /**
          * @brief Getter for local parameter sizes.
-         * @param self The dynamic reference to the caller.
          * @return Sizes of local parameters.
          */
         [[nodiscard]] inline auto get_n_locals() const -> std::size_t { return NLocals; }
 
         /**
          * @brief Getter for global parameter sizes.
-         * @param self The dynamic reference to the caller.
          * @return Sizes of global parameters.
          */
         [[nodiscard]] inline auto get_n_globals() const -> std::size_t { return NGlobals; }
@@ -221,10 +217,9 @@ namespace centipede
          * @brief Set global derivative values from a view.
          *
          * The view must reference a std::pair, which must satisfy EntryPointGlobalIdxPair concept. The size of the
-         * input view is assumed to be larger or equal to #NGlobals.
+         * input view is assumed to be larger or equal to @ref NGlobals_DY_Entrypoint "NGlobals".
          *
          * @tparam View Types of the view.
-         * @param self The dynamic reference to the caller.
          * @param view View object.
          * @return Universal reference to the caller.
          */
@@ -240,10 +235,9 @@ namespace centipede
          * @brief Set local derivative values from a view.
          *
          * The view must reference a value of DataType.  The size of the input view is assumed to be larger or equal to
-         * #NLocals.
+         * @ref NLocals_DY_Entrypoint "NLocals".
          *
          * @tparam View Types of the view.
-         * @param self The dynamic reference to the caller.
          * @param view View object.
          * @return Universal reference to the caller.
          */
