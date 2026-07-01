@@ -20,7 +20,9 @@ namespace centipede::progress
     class ProgressAdaptor;
 
     using IncrementFunT = std::function<std::size_t()>;
+
     template <typename RangeT>
+        requires std::ranges::range<RangeT>
     using BaseView = std::views::all_t<RangeT>;
 
     struct ProgressClosure : std::ranges::range_adaptor_closure<ProgressClosure>
