@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <functional>
 #include <indicators/color.hpp>
 #include <indicators/font_style.hpp>
 #include <indicators/progress_bar.hpp>
@@ -16,8 +17,9 @@ namespace centipede::progress
     //  ProgressAdaptor constructor that takes some config struct (to config the prog bar)
     class ProgressAdaptor;
 
-    template <typename IncrementFunT>
-    struct ProgressClosure : std::ranges::range_adaptor_closure<ProgressClosure<IncrementFunT>>
+    using IncrementFunT = std::function<std::size_t()>;
+
+    struct ProgressClosure : std::ranges::range_adaptor_closure<ProgressClosure>
     {
         ProgressAdaptor* adaptor;
         std::size_t total_size_n;
@@ -33,21 +35,18 @@ namespace centipede::progress
     class ProgressAdaptor
     {
       public:
-        template <typename RangeT, typename IncrementFunT>
+        template <typename RangeT>
         auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressView<RangeT, IncrementFunT>{
-                this, std::forward<RangeT>(range), total_size_n, increment_fun
-            };
+            return ProgressView<RangeT>{ this, std::forward<RangeT>(range), total_size_n, increment_fun };
         }
 
-        template <typename IncrementFunT>
         auto operator()(std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressClosure<IncrementFunT>{ {}, this, total_size_n, increment_fun };
+            return ProgressClosure{ {}, this, total_size_n, increment_fun };
         }
 
-        template <typename RangeT, typename IncrementFunT>
+        template <typename RangeT>
         struct ProgressView
         {
             using IteratorType = std::ranges::iterator_t<RangeT>;
