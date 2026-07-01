@@ -1,4 +1,3 @@
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <indicators/color.hpp>
@@ -17,6 +16,7 @@ namespace centipede::progress
     //  2) iterate by 1 (for standard ranges)
     //  ProgressAdaptor constructor that takes some config struct (to config the prog bar)
     //  Error Handling!
+    //  Ehm, testing?
     class ProgressAdaptor;
 
     using IncrementFunT = std::function<std::size_t()>;
