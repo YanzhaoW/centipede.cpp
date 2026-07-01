@@ -1,3 +1,4 @@
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <indicators/color.hpp>
@@ -26,6 +27,7 @@ namespace centipede::progress
         IncrementFunT increment_fun;
 
         template <typename RangeT>
+            requires std::ranges::range<RangeT>
         auto operator()(RangeT&& range)
         {
             return (*adaptor)(std::forward<RangeT>(range), total_size_n, increment_fun);
@@ -141,6 +143,7 @@ namespace centipede::progress
                     if (percent == 100)
                     {
                         finished_ = true;
+                        progress_adaptor_->bar_.mark_as_completed();
                     }
                 }
 
