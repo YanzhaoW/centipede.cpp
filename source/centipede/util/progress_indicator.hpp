@@ -6,6 +6,7 @@
 #include <indicators/progress_bar.hpp>
 #include <indicators/setting.hpp>
 #include <ranges>
+#include <utility>
 #include <vector>
 
 namespace centipede::progress
@@ -19,6 +20,8 @@ namespace centipede::progress
     class ProgressAdaptor;
 
     using IncrementFunT = std::function<std::size_t()>;
+    template <typename RangeT>
+    using BaseView = std::views::all_t<RangeT>;
 
     struct ProgressClosure : std::ranges::range_adaptor_closure<ProgressClosure>
     {
@@ -41,16 +44,19 @@ namespace centipede::progress
             requires std::ranges::range<RangeT>
         auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressView<RangeT>{ this, std::forward<RangeT>(range), total_size_n, increment_fun };
+            return ProgressView<BaseView<RangeT>>{
+                this, std::views::all(std::forward<RangeT>(range)), total_size_n, std::move(increment_fun)
+            };
         }
 
         template <typename RangeT>
             requires std::ranges::range<RangeT>
         auto operator()(RangeT&& range, std::size_t total_size_n)
         {
-            return ProgressView<RangeT>{
-                this, std::forward<RangeT>(range), total_size_n, []() -> std::size_t { return 1; }
-            };
+            return ProgressView<BaseView<RangeT>>{ this,
+                                                   std::views::all(std::forward<RangeT>(range)),
+                                                   total_size_n,
+                                                   std::move([]() -> std::size_t { return 1; }) };
         }
 
         auto operator()(std::size_t total_size_n)
@@ -60,21 +66,22 @@ namespace centipede::progress
 
         auto operator()(std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressClosure{ {}, this, total_size_n, increment_fun };
+            return ProgressClosure{ {}, this, total_size_n, std::move(increment_fun) };
         }
 
         template <typename RangeT>
             requires std::ranges::range<RangeT>
         struct ProgressView
         {
+            using BaseView = std::views::all_t<RangeT>;
             using IteratorType = std::ranges::iterator_t<RangeT>;
             using SentinelType = std::ranges::sentinel_t<RangeT>;
 
             ProgressView(ProgressAdaptor* progress_adaptor,
-                         RangeT&& base_range,
+                         BaseView base_view,
                          std::size_t total_size_n,
                          IncrementFunT increment_fun)
-                : base_range_(base_range)
+                : base_view_(std::move(base_view))
                 , total_size_n_(total_size_n)
                 , increment_fun_(increment_fun)
                 , progress_adaptor_(progress_adaptor)
@@ -84,7 +91,7 @@ namespace centipede::progress
             auto begin()
             {
                 return Iterator{
-                    progress_adaptor_, this, std::ranges::begin(base_range_), std::ranges::end(base_range_)
+                    progress_adaptor_, this, std::ranges::begin(base_view_), std::ranges::end(base_view_)
                 };
             }
 
@@ -158,7 +165,7 @@ namespace centipede::progress
             };
 
           private:
-            RangeT base_range_;
+            BaseView base_view_;
             std::size_t total_size_n_;
             IncrementFunT increment_fun_;
             ProgressAdaptor* progress_adaptor_;
