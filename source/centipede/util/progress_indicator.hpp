@@ -140,16 +140,11 @@ namespace centipede::progress
 
                 void add_progress()
                 {
-                    if (finished_)
-                    {
-                        return;
-                    }
                     count_n_ += progress_view_->increment_fun_();
                     const auto percent = 100 * count_n_ / progress_view_->total_size_n_;
                     progress_adaptor_->bar_.set_progress(percent);
                     if (percent == 100)
                     {
-                        finished_ = true;
                         progress_adaptor_->bar_.mark_as_completed();
                     }
                 }
@@ -161,7 +156,6 @@ namespace centipede::progress
                 SentinelType end_it_;
                 std::size_t element_count_{};
                 std::size_t count_n_{};
-                bool finished_{ false };
             };
 
           private:
