@@ -191,7 +191,7 @@ namespace centipede::reader
          * The status is updated during iteration and after manual read operations.
          *
          * @return
-         * - ErrorCode::invalid while iteration/reading is in progress.
+         * - ErrorCode::incomplete while iteration/reading is in progress.
          * - ErrorCode::success if iteration finished successfully.
          * - Any other ErrorCode if a read or parsing error occurred.
          */
@@ -245,7 +245,7 @@ namespace centipede::reader
             explicit Iterator(Binary* reader_ptr)
                 : reader_{ reader_ptr }
             {
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorCode::incomplete;
                 ++(*this);
             }
 
@@ -286,7 +286,7 @@ namespace centipede::reader
                 }
 
                 current_ = reader_->get_current_entry();
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorCode::incomplete;
                 return *this;
             }
             /**
@@ -306,10 +306,10 @@ namespace centipede::reader
              *
              * @return Returns true while iteration is not finished.
              */
-            auto operator!=(const Sentinel&) const -> bool { return reader_->status_ == ErrorCode::invalid; }
+            auto operator!=(const Sentinel&) const -> bool { return reader_->status_ == ErrorCode::incomplete; }
 
             // TODO: add documentation
-            bool operator==(Sentinel) const { return reader_->status_ != ErrorCode::invalid; }
+            bool operator==(Sentinel) const { return reader_->status_ != ErrorCode::incomplete; }
 
           private:
             Binary* reader_{};    //!< Associated Binary reader instance.
@@ -340,7 +340,7 @@ namespace centipede::reader
         std::size_t last_entry_bytes_{}; // TODO: Add documentation
 
         bool end_of_file_{ false }; //!< Indicates if end of file is reached. Gets updated on read.
-        ErrorCode status_{ ErrorCode::invalid };
+        ErrorCode status_{ ErrorCode::incomplete };
 
         void reset();
         auto read_entry_to_buffer(uint32_t read_size) -> EnumError<>;

@@ -13,6 +13,7 @@ namespace centipede
         // TODO: duplication of comments
         invalid,                    //!< Error due to no evaluation!
         success,                    //!< No error. All good!
+        incomplete,                 //!< Operation incomplete!
         handler_incomp_n_locals,    //!< Incompatible number of local variables from the current entrypoint.
         writer_neg_or_zero_sigma,   //!< Zero or negative sigma occurs. See @ref writer::Binary.
         writer_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref writer::Binary.
@@ -99,6 +100,8 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Reader: Filename is either empty or invalid!");
             case invalid:
                 return std::format_to(ctx.out(), "Error due to no evaluation!");
+            case incomplete:
+                return std::format_to(ctx.out(), "Operation incomplete!");
             default:
                 break;
         }
