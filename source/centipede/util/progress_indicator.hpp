@@ -13,7 +13,6 @@ namespace centipede::progress
     //  Overload ProgressAdaptor () to:
     //  1) iterate over n elements (instead of increment_fun)
     //  2) iterate by 1 (for standard ranges)
-    //  harden templates: use concepts, use std::function
     //  ProgressAdaptor constructor that takes some config struct (to config the prog bar)
     class ProgressAdaptor;
 
