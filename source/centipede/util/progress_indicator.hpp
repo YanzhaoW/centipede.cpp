@@ -131,14 +131,14 @@ namespace centipede::progress
                     return current_it_ == end_it_ || element_count_ >= progress_view_->total_size_n_;
                 }
 
-                bool operator!=(Sentinel s) { return !(*this == s); }
+                bool operator!=(Sentinel sentinel) { return !(*this == sentinel); }
 
                 bool operator==(Sentinel) const
                 {
                     return current_it_ == end_it_ || element_count_ >= progress_view_->total_size_n_;
                 }
 
-                bool operator!=(Sentinel s) const { return !(*this == s); }
+                bool operator!=(Sentinel sentinel) const { return !(*this == sentinel); }
 
                 void add_progress()
                 {
