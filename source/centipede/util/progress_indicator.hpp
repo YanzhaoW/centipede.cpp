@@ -36,6 +36,7 @@ namespace centipede::progress
     {
       public:
         template <typename RangeT>
+            requires std::ranges::range<RangeT>
         auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
         {
             return ProgressView<RangeT>{ this, std::forward<RangeT>(range), total_size_n, increment_fun };
@@ -47,6 +48,7 @@ namespace centipede::progress
         }
 
         template <typename RangeT>
+            requires std::ranges::range<RangeT>
         struct ProgressView
         {
             using IteratorType = std::ranges::iterator_t<RangeT>;
