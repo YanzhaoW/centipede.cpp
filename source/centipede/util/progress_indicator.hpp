@@ -54,7 +54,7 @@ namespace centipede::progress
         };
         template <typename RangeT>
             requires std::ranges::range<RangeT>
-        auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
+        auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun) &
         {
             return ProgressView<BaseView<RangeT>>{
                 this, std::views::all(std::forward<RangeT>(range)), total_size_n, std::move(increment_fun)
@@ -63,7 +63,7 @@ namespace centipede::progress
 
         template <typename RangeT>
             requires std::ranges::range<RangeT>
-        auto operator()(RangeT&& range, std::size_t total_size_n)
+        auto operator()(RangeT&& range, std::size_t total_size_n) &
         {
             return ProgressView<BaseView<RangeT>>{ this,
                                                    std::views::all(std::forward<RangeT>(range)),
@@ -73,7 +73,7 @@ namespace centipede::progress
 
         template <typename RangeT>
             requires std::ranges::sized_range<RangeT>
-        auto operator()(RangeT&& range)
+        auto operator()(RangeT&& range) &
         {
             return ProgressView<BaseView<RangeT>>{ this,
                                                    std::views::all(std::forward<RangeT>(range)),
