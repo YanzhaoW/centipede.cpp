@@ -1,4 +1,5 @@
 #include "centipede/util/error_types.hpp"
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <indicators/color.hpp>
@@ -35,19 +36,27 @@ namespace centipede::progress
         template <typename RangeT>
             requires std::ranges::range<RangeT>
         using BaseView = std::views::all_t<RangeT>;
+
         struct ProgressClosure : std::ranges::range_adaptor_closure<ProgressClosure>
         {
-            ProgressAdaptor* adaptor;
             std::size_t total_size_n;
             IncrementFunT increment_fun;
+
+            std::shared_ptr<indicators::ProgressBar> bar_ptr;
+            std::shared_ptr<ErrorCode> status_ptr;
 
             template <typename RangeT>
                 requires std::ranges::range<RangeT>
             auto operator()(RangeT&& range)
             {
-                return (*adaptor)(std::forward<RangeT>(range), total_size_n, increment_fun);
+                using ViewT = std::views::all_t<RangeT>;
+
+                return ProgressView<ViewT>{
+                    std::views::all(std::forward<RangeT>(range)), total_size_n, increment_fun, bar_ptr, status_ptr
+                };
             }
         };
+
         template <typename RangeT>
             requires std::ranges::range<RangeT>
         auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
@@ -83,12 +92,12 @@ namespace centipede::progress
 
         auto operator()(std::size_t total_size_n)
         {
-            return ProgressClosure{ {}, this, total_size_n, []() -> std::size_t { return 1UZ; } };
+            return ProgressClosure{ {}, total_size_n, []() -> std::size_t { return 1UZ; }, bar_ptr_, status_ptr_ };
         }
 
         auto operator()(std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressClosure{ {}, this, total_size_n, std::move(increment_fun) };
+            return ProgressClosure{ {}, total_size_n, std::move(increment_fun), bar_ptr_, status_ptr_ };
         }
 
         [[nodiscard]] auto get_status() const -> ErrorCode { return *status_ptr_; }
@@ -112,6 +121,9 @@ namespace centipede::progress
                 , bar_ptr_(std::move(bar_ptr))
                 , status_ptr_(std::move(status_ptr))
             {
+                assert(bar_ptr_);
+                assert(status_ptr_);
+                assert(increment_fun_);
             }
 
             auto get_status() -> ErrorCode { return *status_ptr_; }
@@ -142,34 +154,38 @@ namespace centipede::progress
                     , current_it_(current_it)
                     , end_it_(end_it)
                 {
+                    assert(progress_view_);
                 }
 
-                auto operator++()
+                auto operator++() -> Iterator&
                 {
+                    assert(current_it_ != end_it_);
                     add_progress();
                     ++current_it_;
-                    ++element_count_;
                     return *this;
                 }
 
-                auto operator*() { return *current_it_; }
-
-                bool operator==(Sentinel)
+                auto operator*()
                 {
-                    return current_it_ == end_it_ or element_count_ >= progress_view_->total_size_n_;
+                    assert(current_it_ != end_it_);
+                    return *current_it_;
                 }
+
+                bool operator==(Sentinel) { return current_it_ == end_it_; }
 
                 bool operator!=(Sentinel sentinel) { return !(*this == sentinel); }
 
-                bool operator==(Sentinel) const
-                {
-                    return current_it_ == end_it_ or element_count_ >= progress_view_->total_size_n_;
-                }
+                bool operator==(Sentinel) const { return current_it_ == end_it_; }
 
                 bool operator!=(Sentinel sentinel) const { return !(*this == sentinel); }
 
                 void add_progress()
                 {
+                    assert(progress_view_);
+                    assert(progress_view_->bar_ptr_);
+                    assert(progress_view_->status_ptr_);
+                    assert(progress_view_->increment_fun_);
+                    assert(count_n_ <= progress_view_->total_size_n_);
                     const auto increment = progress_view_->increment_fun_();
 
                     if (increment == 0UZ)
@@ -189,20 +205,22 @@ namespace centipede::progress
                     else
                     {
                         count_n_ += increment;
-
-                        *progress_view_->status_ptr_ = ErrorCode::success;
                     }
 
                     const auto percent = 100UZ * count_n_ / progress_view_->total_size_n_;
 
                     progress_view_->bar_ptr_->set_progress(percent);
+
+                    if (count_n_ == progress_view_->total_size_n_)
+                    {
+                        *(progress_view_->status_ptr_) = ErrorCode::success;
+                    }
                 }
 
               private:
                 ProgressView* progress_view_;
                 IteratorType current_it_;
                 SentinelType end_it_;
-                std::size_t element_count_{};
                 std::size_t count_n_{};
             };
 
