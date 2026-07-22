@@ -30,16 +30,25 @@ auto main() -> int
         centipede::progress::config::Lead{ ">" },
         centipede::progress::config::Remainder{ " " },
         centipede::progress::config::End{ "]" },
-        centipede::progress::config::PostfixText{ "Reading binary data" },
+        centipede::progress::config::PostfixText{ "Reading binary data..." },
         centipede::progress::config::ForegroundColor{ centipede::progress::ProgressColor::green },
         centipede::progress::config::ShowPercentage{ true },
         centipede::progress::config::FontStyles{
             std::vector<centipede::progress::ProgressFontStyle>{ centipede::progress::ProgressFontStyle::bold } }
     };
 
+    std::size_t total_read{};
+
     for ([[maybe_unused]] const auto& entry :
          reader | progress_adaptor(reader.get_file_size(), [&reader]() { return reader.get_last_entry_bytes(); }))
     {
+        total_read += reader.get_last_entry_bytes();
+    }
+
+    if (total_read != reader.get_file_size())
+    {
+        std::println(stderr, "Error: not all reads counted");
+        return EXIT_FAILURE;
     }
 
     if (not reader.is_ok())
@@ -66,8 +75,17 @@ auto main() -> int
 
     auto array = std::array{ 1, 2, 3, 4 };
 
-    for ([[maybe_unused]] auto elem : array | centipede::progress::ProgressAdaptor{})
+    auto progress_view = array | centipede::progress::ProgressAdaptor{};
+
+    for ([[maybe_unused]] auto elem : progress_view)
     {
+    }
+
+    if (const auto progress_view_status = progress_view.get_status();
+        progress_view_status != centipede::ErrorCode::success)
+    {
+        std::println(stderr, "Error: {}", progress_view_status);
+        return EXIT_FAILURE;
     }
 
     if (const auto progress_adaptor_status = progress_adaptor.get_status();
