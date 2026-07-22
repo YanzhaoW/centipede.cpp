@@ -23,7 +23,7 @@ namespace centipede::progress
     using ProgressFontStyle = indicators::FontStyle;
     using ProgressColor = indicators::Color;
 
-    class ProgressAdaptor
+    class ProgressAdaptor : public std::ranges::range_adaptor_closure<ProgressAdaptor>
     {
       public:
         using IncrementFunT = std::function<std::size_t()>;
@@ -68,6 +68,16 @@ namespace centipede::progress
             return ProgressView<BaseView<RangeT>>{ this,
                                                    std::views::all(std::forward<RangeT>(range)),
                                                    total_size_n,
+                                                   std::move([]() -> std::size_t { return 1UZ; }) };
+        }
+
+        template <typename RangeT>
+            requires std::ranges::sized_range<RangeT>
+        auto operator()(RangeT&& range)
+        {
+            return ProgressView<BaseView<RangeT>>{ this,
+                                                   std::views::all(std::forward<RangeT>(range)),
+                                                   std::ranges::size(range),
                                                    std::move([]() -> std::size_t { return 1UZ; }) };
         }
 

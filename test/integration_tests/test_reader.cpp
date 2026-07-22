@@ -66,7 +66,7 @@ auto main() -> int
 
     auto array = std::array{ 1, 2, 3, 4 };
 
-    for ([[maybe_unused]] auto elem : array | progress_adaptor(array.size()))
+    for ([[maybe_unused]] auto elem : array | centipede::progress::ProgressAdaptor{})
     {
     }
 
