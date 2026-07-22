@@ -19,6 +19,10 @@ namespace centipede::progress
     //  Error Handling!
     //  Ehm, testing?
 
+    namespace config = indicators::option;
+    using ProgressFontStyle = indicators::FontStyle;
+    using ProgressColor = indicators::Color;
+
     class ProgressAdaptor
     {
       public:
@@ -26,33 +30,9 @@ namespace centipede::progress
 
         ProgressAdaptor() = default;
 
-        struct Config
-        {
-            indicators::option::BarWidth bar_width{ 50 };
-            indicators::option::PrefixText prefix_text{ "=" };
-            indicators::option::PostfixText postfix_text{ "=" };
-            indicators::option::Start start{};
-            indicators::option::End end{};
-            indicators::option::Fill fill{};
-            indicators::option::Lead lead{};
-            indicators::option::Remainder remainder{};
-            indicators::option::MaxPostfixTextLen max_postfix_text_len{};
-            indicators::option::Completed completed{};
-            indicators::option::ShowPercentage show_percentage{};
-            indicators::option::ShowElapsedTime show_elapsed_time{};
-            // indicators::option::ShowRemainingTime show_remaining_time;
-            indicators::option::SavedStartTime saved_start_time{};
-            indicators::option::ForegroundColor fore_ground_color{};
-            std::vector<indicators::FontStyle> font_style{ indicators::FontStyle::bold };
-            // indicators::option::FontStyles font_styles{};
-            // indicators::option::MinProgress min_progress;
-            // indicators::option::MaxProgress max_progress;
-            indicators::option::ProgressType progress_type{};
-            // indicators::option::Stream stream{};
-        };
-
-        ProgressAdaptor(Config config)
-            : config_(config)
+        template <typename... Options>
+        explicit ProgressAdaptor(Options&&... options)
+            : bar_{ std::forward<Options>(options)... }
         {
         }
 
@@ -117,19 +97,27 @@ namespace centipede::progress
                          IncrementFunT increment_fun)
                 : base_view_(std::move(base_view))
                 , total_size_n_(total_size_n)
-                , increment_fun_(increment_fun)
+                , increment_fun_(std::move(increment_fun))
                 , progress_adaptor_(progress_adaptor)
             {
             }
 
             auto begin()
             {
+                if (total_size_n_ == 0UZ)
+                {
+                    progress_adaptor_->status_ = ErrorCode::progress_zero_size;
+
+                    progress_adaptor_->bar_.mark_as_completed();
+                }
+
                 return Iterator{
                     progress_adaptor_, this, std::ranges::begin(base_view_), std::ranges::end(base_view_)
                 };
             }
 
             auto end() { return Sentinel{}; }
+
             struct Sentinel
             {
             };
@@ -174,36 +162,35 @@ namespace centipede::progress
 
                 void add_progress()
                 {
-                    auto percent = std::size_t{ 0 };
-                    count_n_ += progress_view_->increment_fun_();
-                    if (progress_view_->increment_fun_() == 0UZ)
+                    const auto increment = progress_view_->increment_fun_();
+
+                    if (increment == 0UZ)
                     {
                         progress_adaptor_->status_ = ErrorCode::progress_inc_returns_zero;
-                        percent = 0UZ;
-                        progress_adaptor_->bar_.mark_as_completed();
                         return;
                     }
-                    if (progress_view_->total_size_n_ == 0UZ)
-                    {
-                        progress_adaptor_->status_ = ErrorCode::progress_zero_size;
-                        percent = 100UZ;
-                        progress_adaptor_->bar_.mark_as_completed();
-                        return;
-                    }
-                    if (count_n_ > progress_view_->total_size_n_)
+
+                    if (increment > progress_view_->total_size_n_ - count_n_)
                     {
                         progress_adaptor_->status_ = ErrorCode::progress_inc_exceeds_size;
-                        percent = 100UZ;
-                        progress_adaptor_->bar_.mark_as_completed();
-                        return;
+
+                        count_n_ = progress_view_->total_size_n_;
                     }
-                    percent = 100 * count_n_ / progress_view_->total_size_n_;
+                    else
+                    {
+                        count_n_ += increment;
+                        progress_adaptor_->status_ = ErrorCode::success;
+                    }
+
+                    const auto percent = 100UZ * count_n_ / progress_view_->total_size_n_;
+
                     progress_adaptor_->bar_.set_progress(percent);
-                    if (percent == 100)
+
+                    if (count_n_ >= progress_view_->total_size_n_)
                     {
                         progress_adaptor_->bar_.mark_as_completed();
+                        progress_adaptor_->status_ = ErrorCode::success;
                     }
-                    progress_adaptor_->status_ = ErrorCode::success;
                 }
 
               private:
@@ -223,8 +210,17 @@ namespace centipede::progress
         };
 
       private:
-        Config config_{};
-        indicators::ProgressBar bar_{ std::move(config_.bar_width), std::move(config_.start), std::move(config_.fill) };
-        ErrorCode status_ = ErrorCode::success;
+        indicators::ProgressBar bar_{ config::BarWidth{ 50 },
+                                      config::Start{ "[" },
+                                      config::Fill{ "=" },
+                                      config::Lead{ ">" },
+                                      config::Remainder{ " " },
+                                      config::End{ "]" },
+                                      config::PostfixText{ "Reading binary data" },
+                                      config::ForegroundColor{ ProgressColor::green },
+                                      config::ShowPercentage{ true },
+                                      config::FontStyles{
+                                          std::vector<indicators::FontStyle>{ ProgressFontStyle::bold } } };
+        ErrorCode status_ = ErrorCode::incomplete;
     };
 } // namespace centipede::progress
