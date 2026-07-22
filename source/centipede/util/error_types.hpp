@@ -34,6 +34,9 @@ namespace centipede
         reader_uninitialized,        //!< Reader is not initialized.
         reader_buffer_overflow,      //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
         reader_invalid_filename,     //!< Filename is invalid or empty
+        progress_zero_size,          //!< Given size is zero
+        progress_inc_exceeds_size,   //!< Increment exceeds given size
+        progress_inc_returns_zero    //!< Increment returns zero
     };
 
 } // namespace centipede
@@ -98,6 +101,12 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Reader: Cannot read the file. Buffer size will be exceeded!");
             case reader_invalid_filename:
                 return std::format_to(ctx.out(), "Reader: Filename is either empty or invalid!");
+            case progress_zero_size:
+                return std::format_to(ctx.out(), "Progress: Given size is 0!");
+            case progress_inc_exceeds_size:
+                return std::format_to(ctx.out(), "Progress: Increment exceeds given size!");
+            case progress_inc_returns_zero:
+                return std::format_to(ctx.out(), "Progress: Increment returns 0!");
             case invalid:
                 return std::format_to(ctx.out(), "Error due to no evaluation!");
             case incomplete:
