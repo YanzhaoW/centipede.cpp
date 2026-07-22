@@ -5,17 +5,13 @@
 #include <indicators/font_style.hpp>
 #include <indicators/progress_bar.hpp>
 #include <indicators/setting.hpp>
+#include <memory>
 #include <ranges>
 #include <utility>
-#include <vector>
 
 namespace centipede::progress
 {
     // TODO:
-    //  Overload ProgressAdaptor () to:
-    //  1) iterate over n elements (instead of increment_fun)
-    //  2) iterate by 1 (for standard ranges)
-    //  ProgressAdaptor constructor that takes some config struct (to config the prog bar)
     //  Error Handling!
     //  Ehm, testing?
 
@@ -32,7 +28,7 @@ namespace centipede::progress
 
         template <typename... Options>
         explicit ProgressAdaptor(Options&&... options)
-            : bar_{ std::forward<Options>(options)... }
+            : bar_ptr_{ std::make_shared<indicators::ProgressBar>(std::forward<Options>(options)...) }
         {
         }
 
@@ -54,31 +50,35 @@ namespace centipede::progress
         };
         template <typename RangeT>
             requires std::ranges::range<RangeT>
-        auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun) &
+        auto operator()(RangeT&& range, std::size_t total_size_n, IncrementFunT increment_fun)
         {
-            return ProgressView<BaseView<RangeT>>{
-                this, std::views::all(std::forward<RangeT>(range)), total_size_n, std::move(increment_fun)
-            };
+            return ProgressView<BaseView<RangeT>>{ std::views::all(std::forward<RangeT>(range)),
+                                                   total_size_n,
+                                                   std::move(increment_fun),
+                                                   bar_ptr_,
+                                                   status_ptr_ };
         }
 
         template <typename RangeT>
             requires std::ranges::range<RangeT>
-        auto operator()(RangeT&& range, std::size_t total_size_n) &
+        auto operator()(RangeT&& range, std::size_t total_size_n)
         {
-            return ProgressView<BaseView<RangeT>>{ this,
-                                                   std::views::all(std::forward<RangeT>(range)),
+            return ProgressView<BaseView<RangeT>>{ std::views::all(std::forward<RangeT>(range)),
                                                    total_size_n,
-                                                   std::move([]() -> std::size_t { return 1UZ; }) };
+                                                   []() -> std::size_t { return 1UZ; },
+                                                   bar_ptr_,
+                                                   status_ptr_ };
         }
 
         template <typename RangeT>
             requires std::ranges::sized_range<RangeT>
-        auto operator()(RangeT&& range) &
+        auto operator()(RangeT&& range)
         {
-            return ProgressView<BaseView<RangeT>>{ this,
-                                                   std::views::all(std::forward<RangeT>(range)),
+            return ProgressView<BaseView<RangeT>>{ std::views::all(std::forward<RangeT>(range)),
                                                    std::ranges::size(range),
-                                                   std::move([]() -> std::size_t { return 1UZ; }) };
+                                                   []() -> std::size_t { return 1UZ; },
+                                                   bar_ptr_,
+                                                   status_ptr_ };
         }
 
         auto operator()(std::size_t total_size_n)
@@ -91,7 +91,7 @@ namespace centipede::progress
             return ProgressClosure{ {}, this, total_size_n, std::move(increment_fun) };
         }
 
-        [[nodiscard]] auto get_status() const -> ErrorCode { return status_; }
+        [[nodiscard]] auto get_status() const -> ErrorCode { return *status_ptr_; }
 
         template <typename RangeT>
             requires std::ranges::range<RangeT>
@@ -101,29 +101,31 @@ namespace centipede::progress
             using IteratorType = std::ranges::iterator_t<RangeT>;
             using SentinelType = std::ranges::sentinel_t<RangeT>;
 
-            ProgressView(ProgressAdaptor* progress_adaptor,
-                         BaseView base_view,
+            ProgressView(BaseView base_view,
                          std::size_t total_size_n,
-                         IncrementFunT increment_fun)
+                         IncrementFunT increment_fun,
+                         std::shared_ptr<indicators::ProgressBar> bar_ptr,
+                         std::shared_ptr<ErrorCode> status_ptr)
                 : base_view_(std::move(base_view))
                 , total_size_n_(total_size_n)
                 , increment_fun_(std::move(increment_fun))
-                , progress_adaptor_(progress_adaptor)
+                , bar_ptr_(std::move(bar_ptr))
+                , status_ptr_(std::move(status_ptr))
             {
             }
+
+            auto get_status() -> ErrorCode { return *status_ptr_; }
 
             auto begin()
             {
                 if (total_size_n_ == 0UZ)
                 {
-                    progress_adaptor_->status_ = ErrorCode::progress_zero_size;
+                    *status_ptr_ = ErrorCode::progress_zero_size;
 
-                    progress_adaptor_->bar_.mark_as_completed();
+                    bar_ptr_->mark_as_completed();
                 }
 
-                return Iterator{
-                    progress_adaptor_, this, std::ranges::begin(base_view_), std::ranges::end(base_view_)
-                };
+                return Iterator{ this, std::ranges::begin(base_view_), std::ranges::end(base_view_) };
             }
 
             auto end() { return Sentinel{}; }
@@ -135,12 +137,8 @@ namespace centipede::progress
             class Iterator
             {
               public:
-                Iterator(ProgressAdaptor* progress_adaptor,
-                         ProgressView* progress_view,
-                         IteratorType current_it,
-                         SentinelType end_it)
-                    : progress_adaptor_(progress_adaptor)
-                    , progress_view_(progress_view)
+                Iterator(ProgressView* progress_view, IteratorType current_it, SentinelType end_it)
+                    : progress_view_(progress_view)
                     , current_it_(current_it)
                     , end_it_(end_it)
                 {
@@ -148,9 +146,9 @@ namespace centipede::progress
 
                 auto operator++()
                 {
+                    add_progress();
                     ++current_it_;
                     ++element_count_;
-                    add_progress();
                     return *this;
                 }
 
@@ -176,35 +174,31 @@ namespace centipede::progress
 
                     if (increment == 0UZ)
                     {
-                        progress_adaptor_->status_ = ErrorCode::progress_inc_returns_zero;
+                        *progress_view_->status_ptr_ = ErrorCode::progress_inc_returns_zero;
                         return;
                     }
 
-                    if (increment > progress_view_->total_size_n_ - count_n_)
-                    {
-                        progress_adaptor_->status_ = ErrorCode::progress_inc_exceeds_size;
+                    const auto remaining = progress_view_->total_size_n_ - count_n_;
 
+                    if (increment > remaining)
+                    {
                         count_n_ = progress_view_->total_size_n_;
+
+                        *progress_view_->status_ptr_ = ErrorCode::progress_inc_exceeds_size;
                     }
                     else
                     {
                         count_n_ += increment;
-                        progress_adaptor_->status_ = ErrorCode::success;
+
+                        *progress_view_->status_ptr_ = ErrorCode::success;
                     }
 
                     const auto percent = 100UZ * count_n_ / progress_view_->total_size_n_;
 
-                    progress_adaptor_->bar_.set_progress(percent);
-
-                    if (count_n_ >= progress_view_->total_size_n_)
-                    {
-                        progress_adaptor_->bar_.mark_as_completed();
-                        progress_adaptor_->status_ = ErrorCode::success;
-                    }
+                    progress_view_->bar_ptr_->set_progress(percent);
                 }
 
               private:
-                ProgressAdaptor* progress_adaptor_;
                 ProgressView* progress_view_;
                 IteratorType current_it_;
                 SentinelType end_it_;
@@ -216,21 +210,12 @@ namespace centipede::progress
             BaseView base_view_;
             std::size_t total_size_n_;
             IncrementFunT increment_fun_;
-            ProgressAdaptor* progress_adaptor_;
+            std::shared_ptr<indicators::ProgressBar> bar_ptr_ = nullptr;
+            std::shared_ptr<ErrorCode> status_ptr_ = nullptr;
         };
 
       private:
-        indicators::ProgressBar bar_{ config::BarWidth{ 50 },
-                                      config::Start{ "[" },
-                                      config::Fill{ "=" },
-                                      config::Lead{ ">" },
-                                      config::Remainder{ " " },
-                                      config::End{ "]" },
-                                      config::PostfixText{ "Reading binary data" },
-                                      config::ForegroundColor{ ProgressColor::green },
-                                      config::ShowPercentage{ true },
-                                      config::FontStyles{
-                                          std::vector<indicators::FontStyle>{ ProgressFontStyle::bold } } };
-        ErrorCode status_ = ErrorCode::incomplete;
+        std::shared_ptr<indicators::ProgressBar> bar_ptr_{ std::make_shared<indicators::ProgressBar>() };
+        std::shared_ptr<ErrorCode> status_ptr_ = std::make_shared<ErrorCode>(ErrorCode::incomplete);
     };
 } // namespace centipede::progress
