@@ -3,7 +3,7 @@ on:
   schedule:
     # trigger the workflow on the every 2 am UTC
     - cron: '00 02 * * *'
-  pull_request_target:
+  pull_request:
     branches:
       - master
   push:
@@ -14,7 +14,7 @@ permissions: write-all
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: codecov
       deployment: false
     container:
@@ -25,7 +25,6 @@ jobs:
         with:
           fetch-depth: 1
           submodules: 'true'
-          ref: '${{ github.event.pull_request.head.sha }}'
 
       - name: pre-build
         uses: './.github/actions/pre_build_config'
@@ -38,10 +37,19 @@ jobs:
           lcov --list coverage.info
         shell: bash
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage reports to Codecov with token
+        if: github.event_name != 'pull_request'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.info
+          disable_search: true
+          name: codecov-test
+
+      - name: Upload coverage reports to Codecov without token
+        if: github.event_name == 'pull_request'
+        uses: codecov/codecov-action@v5
+        with:
           files: coverage.info
           disable_search: true
           name: codecov-test
