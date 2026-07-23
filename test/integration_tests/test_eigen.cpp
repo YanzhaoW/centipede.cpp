@@ -1,12 +1,15 @@
 #include "centipede/centipede.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include <Eigen/Core>
+#include <boost/assert/source_location.hpp>
+#include <boost/config/detail/suffix.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <mps/MPS.hpp>
 #include <mps/detector_utils/DetectorTypes.hpp>
 #include <print>
@@ -36,10 +39,21 @@ namespace boost
 
 auto main() -> int
 {
-    const auto config = mps::MPSConfig{};
+    auto config = mps::MPSConfig{};
+    config.detector.init_sigma = 1.;
 
     auto mps = mps::MPS<mps::DetectorType::generalized>{ config };
     mps.init();
+
+    const auto& init_pars = mps.get_init_pars();
+    // const auto& init_pars_errors = mps.get_init_pars_errors();
+    const auto& true_pars = mps.get_true_pars();
+    // const auto& true_pars_errors = mps.get_true_pars_errors();
+
+    std::println("init pars: {}", init_pars);
+    // std::println("init par errors: {}", init_pars_errors);
+    std::println("true pars: {}", true_pars);
+    // std::println("true par errors: {}", true_pars_errors);
 
     const auto n_globals = config.detector.spec.num_modules * 2;
     auto handler = centipede::Handler<float, { .engine_type = centipede::MatrixEngine::eigen }>{ n_globals };
@@ -52,11 +66,14 @@ auto main() -> int
     {
         auto entry_span = mps.generate_one_entry_data();
 
+        // std::println("---------------------");
         for (const auto& entrypoint : entry_span)
         {
+            // std::println("current input entry: {}", entrypoint);
             entry_point_input.reset();
-            entry_point_input.set_measurement(entrypoint.measurement)
-            // entry_point_input.set_measurement(0.)
+            entry_point_input
+                .set_measurement(entrypoint.measurement)
+                // entry_point_input.set_measurement(0.)
                 .set_sigma(entrypoint.sigma)
                 .set_globals(entrypoint.globals |
                              std::views::transform([](const auto& globals)
