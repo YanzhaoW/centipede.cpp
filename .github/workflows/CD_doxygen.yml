@@ -28,7 +28,8 @@ jobs:
           brew install --cask basictex
           echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
           export PATH="/Library/TeX/texbin:$PATH"
-          sudo tlmgr install natbib url
+          tlmgr update --self
+          tlmgr install natbib url
           export PATH="/opt/homebrew/bin:$PATH"
           export FC="gfortran-14"
 

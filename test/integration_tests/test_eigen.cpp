@@ -1,7 +1,6 @@
 #include "centipede/centipede.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include <Eigen/Core>
-#include <boost/assert/source_location.hpp>
 #include <boost/config/detail/suffix.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -30,6 +29,7 @@ namespace bh = boost::histogram;
 
 namespace boost
 {
+    class source_location;
 
     BOOST_NORETURN void throw_exception(std::exception const&) { std::abort(); }
 
