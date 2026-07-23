@@ -13,7 +13,7 @@ namespace centipede::test
     TEST(eigen_engine, constructor)
     {
         constexpr auto n_global_pars = 10;
-        auto engine = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>{ n_global_pars };
+        auto engine = core::engine::Engine<core::engine::MatrixEngine::eigen, float>{ n_global_pars };
         const auto& factor_matrix = engine.get_global_factor_matrix();
         EXPECT_EQ(factor_matrix.rows(), n_global_pars);
         EXPECT_EQ(factor_matrix.cols(), n_global_pars);
@@ -24,7 +24,7 @@ namespace centipede::test
 
     TEST(eigen_engine, solve_rank_deficit)
     {
-        using EngineClass = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>;
+        using EngineClass = core::engine::Engine<core::engine::MatrixEngine::eigen, float>;
 
         auto result = Result<float>{};
         const auto globals = []()
@@ -48,7 +48,7 @@ namespace centipede::test
 
     TEST(eigen_engine, solve_negative_definite)
     {
-        using EngineClass = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>;
+        using EngineClass = core::engine::Engine<core::engine::MatrixEngine::eigen, float>;
 
         auto result = Result<float>{};
         const auto globals = []()
@@ -69,7 +69,7 @@ namespace centipede::test
 
     TEST(eigen_engine, solve_zero_factor_matrix)
     {
-        using EngineClass = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>;
+        using EngineClass = core::engine::Engine<core::engine::MatrixEngine::eigen, float>;
 
         auto result = Result<float>{};
         const auto globals = []()
@@ -90,7 +90,7 @@ namespace centipede::test
 
     TEST(eigen_engine, solve_zero_rhs_vector)
     {
-        using EngineClass = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>;
+        using EngineClass = core::engine::Engine<core::engine::MatrixEngine::eigen, float>;
 
         auto result = Result<float>{};
         const auto globals = []()
@@ -111,7 +111,7 @@ namespace centipede::test
 
     TEST(eigen_engine, solve)
     {
-        using EngineClass = core::engine::Engine<core::engine::MatrixEngineType::eigen, float>;
+        using EngineClass = core::engine::Engine<core::engine::MatrixEngine::eigen, float>;
 
         auto result = Result<float>{};
         const auto globals = []()

@@ -4,6 +4,7 @@
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entry.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <Eigen/Cholesky>
@@ -20,14 +21,39 @@
 #include <utility>
 #include <vector>
 
+#ifdef HAS_LIBASSERT
+#include "libassert/assert.hpp"
+#else
+#include <cassert>
+#endif
+
 namespace centipede::core::engine
 {
+
     /**
      * @brief Engine template specialization for Eigen library implementation.
      */
     template <typename DataType>
-    class Engine<MatrixEngineType::eigen, DataType> : public Base<DataType>
+    class Engine<MatrixEngine::eigen, DataType> : public Base<DataType>
     {
+      private:
+        /**
+         * @brief RAII class to perform the malloc check for eigen matrix operations.
+         *
+         */
+        class EigenMemGuard
+        {
+          public:
+            /**
+             * @brief Default constructor to enable the check.
+             */
+            EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(false); }
+            /**
+             * @brief Default destructor to disable the check.
+             */
+            ~EigenMemGuard() { Eigen::internal::set_is_malloc_allowed(true); }
+        };
+
       public:
         /**
          * @brief Matrix and vector used to solve global parameter updates
@@ -55,7 +81,13 @@ namespace centipede::core::engine
          */
         static void solve(const Globals& globals, Result<DataType>& result)
         {
-            assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose()));
+#ifdef HAS_LIBASSERT
+            debug_assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+                                                        static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#else
+            assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+                                                  static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#endif
 
             if (globals.factor_matrix.isZero())
             {
@@ -83,14 +115,25 @@ namespace centipede::core::engine
                     std::back_inserter(result.parameters));
                 result.error_status = ErrorCode::success;
             }
-            else
-            {
-                check_rank_deficit(globals, result);
-            }
+            // else
+            // {
+            check_rank_deficit(globals, result);
+            // }
         }
 
         void add_to_globals(Globals& globals)
         {
+            globals.factor_matrix.resize(globals_.factor_matrix.rows(), globals_.factor_matrix.cols());
+            globals.rhs_vec.resize(globals_.rhs_vec.rows(), globals_.rhs_vec.cols());
+#ifdef HAS_LIBASSERT
+            debug_assert(globals.factor_matrix.cols() == globals_.factor_matrix.cols(),
+                         "Check if column size matches for global factor matrix");
+            debug_assert(globals.factor_matrix.rows() == globals_.factor_matrix.rows(),
+                         "Check if row size matches for global factor matrix");
+#else
+            assert(globals.factor_matrix.cols() == globals_.factor_matrix.cols());
+            assert(globals.factor_matrix.rows() == globals_.factor_matrix.rows());
+#endif
             globals.factor_matrix += globals_.factor_matrix.eval();
             globals.rhs_vec += globals_.rhs_vec.eval();
         }
@@ -136,9 +179,9 @@ namespace centipede::core::engine
         {
 
             const auto& current_state = Base<DataType>::get_current_state();
-            const auto entrypoint_size = current_state.n_points;
-            const auto n_globals = current_state.n_globals;
-            const auto n_locals = current_state.n_locals;
+            const auto entrypoint_size = static_cast<long>(current_state.n_points);
+            const auto n_globals = static_cast<long>(current_state.n_globals);
+            const auto n_locals = static_cast<long>(current_state.n_locals);
 
             // NOTE: resize may cause memory allocation.
             local_t_.resize(n_locals, entrypoint_size);
@@ -163,8 +206,10 @@ namespace centipede::core::engine
 
         void fill_sigmas(const std::vector<DataType>& data)
         {
-            std::ranges::copy(std::views::transform(data, [](DataType val) -> DataType { return 1. / (val * val); }),
-                              sigmas_.begin());
+            std::ranges::copy(
+                std::views::transform(data,
+                                      [](DataType val) -> DataType { return static_cast<DataType>(1.) / (val * val); }),
+                sigmas_.begin());
         }
 
         void fill_measurements(const std::vector<DataType>& data) { std::ranges::copy(data, measurements_.begin()); }
@@ -173,13 +218,18 @@ namespace centipede::core::engine
         {
             for (const auto& [point_idx, deriv] : data)
             {
+#if HAS_LIBASSERT
+                debug_assert(point_idx < local_t_.cols());
+                debug_assert(deriv.first < local_t_.rows());
+#else
                 assert(point_idx < local_t_.cols());
                 assert(deriv.first < local_t_.rows());
+#endif
                 local_t_(deriv.first, point_idx) = deriv.second;
             }
         }
 
-        void fill_global_derivs(const std::vector<typename Entry<DataType>::Deriv>& data)
+        auto fill_global_derivs(const std::vector<typename Entry<DataType>::Deriv>& data) -> VoidError
         {
             triplets_.clear();
 
@@ -190,12 +240,13 @@ namespace centipede::core::engine
                 triplets_.emplace_back(deriv.first, point_idx, deriv.second);
             }
             global_t_.setFromSortedTriplets(triplets_.begin(), triplets_.end());
+            return {};
         }
 
-        auto fit_local_pars() -> EnumError<>
+        auto fit_local_pars() -> VoidError
         {
             // NOTE: Multiplications will trigger temporary object (memory allocation later during the assignment.)
-            Eigen::internal::set_is_malloc_allowed(false);
+            auto _ = EigenMemGuard{};
             buffers_.local_weighted_t.noalias() = local_t_ * sigmas_.asDiagonal();
 
             buffers_.local_weighted_square.noalias() = buffers_.local_weighted_t.lazyProduct(local_t_.transpose());
@@ -211,17 +262,15 @@ namespace centipede::core::engine
             buffers_.local_solutions.noalias() =
                 buffers_.local_weighted_square_inv.lazyProduct(buffers_.local_weighted_t).lazyProduct(measurements_);
 
-            Eigen::internal::set_is_malloc_allowed(true);
-
             return {};
         }
 
         auto calculate_local_fit_chi_square() -> EnumError<std::pair<std::size_t, double>>
         {
-            Eigen::internal::set_is_malloc_allowed(false);
+            auto _ = EigenMemGuard{};
             const auto entrypoint_size = Base<DataType>::get_current_state().n_points;
             const auto local_size = buffers_.local_solutions.rows();
-            const auto ndf = entrypoint_size - local_size;
+            const auto ndf = entrypoint_size - static_cast<std::size_t>(local_size);
 
             if (ndf < 1)
             {
@@ -230,11 +279,10 @@ namespace centipede::core::engine
 
             buffers_.residual_values.noalias() = measurements_ - (local_t_.transpose() * buffers_.local_solutions);
             const auto chi_square = buffers_.residual_values.dot(sigmas_.asDiagonal() * buffers_.residual_values);
-            Eigen::internal::set_is_malloc_allowed(true);
             return std::pair{ ndf, chi_square };
         }
 
-        auto update_global_factor_matrix() -> EnumError<>
+        auto update_global_factor_matrix() -> VoidError
         {
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
@@ -251,13 +299,20 @@ namespace centipede::core::engine
                                             buffers_.local_weighted_square_inv_sparse *
                                             buffers_.global_local_weighted_t;
             buffers_.global_square_update += buffers_.global_weighted_square;
-            assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose()));
+#ifdef HAS_LIBASSERT
+            debug_assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose(),
+                                                                static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#else
+            assert(buffers_.global_square_update.isApprox(buffers_.global_square_update.transpose(),
+                                                          static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+#endif
+
             globals_.factor_matrix += buffers_.global_square_update;
             // Eigen::internal::set_is_malloc_allowed(true);
             return {};
         }
 
-        auto update_global_rhs_vector() -> EnumError<>
+        auto update_global_rhs_vector() -> VoidError
         {
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
@@ -274,9 +329,10 @@ namespace centipede::core::engine
 
         static void resize_globals(Globals& globals, std::size_t n_globals)
         {
-            globals.rhs_vec.resize(n_globals);
+            const auto num_of_globals = static_cast<long>(n_globals);
+            globals.rhs_vec.resize(num_of_globals);
             globals.rhs_vec.setZero();
-            globals.factor_matrix.resize(n_globals, n_globals);
+            globals.factor_matrix.resize(num_of_globals, num_of_globals);
             globals.factor_matrix.setZero();
         }
 
@@ -296,7 +352,7 @@ namespace centipede::core::engine
                 }
             }
             const auto diagonal_values = (unitary_matrix * prob_mat * unitary_matrix.transpose()).diagonal().eval();
-            for (const auto [idx, diagonal_val] : std::views::zip(std::views::iota(0), diagonal_values))
+            for (const auto [idx, diagonal_val] : std::views::zip(std::views::iota(std::size_t{ 0 }), diagonal_values))
             {
                 if (std::abs(diagonal_val) > Eigen::NumTraits<DataType>::dummy_precision())
                 {

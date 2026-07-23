@@ -14,7 +14,7 @@ namespace centipede::core::engine
     /**
      * @brief Concept used for core::engine::Master option.
      */
-    template <EngineType engine_type, typename DataType>
+    template <MatrixEngine engine_type, typename DataType>
     concept EngineLike = requires(Engine<engine_type, DataType> engine,
                                   Result<DataType>& result,
                                   typename Engine<engine_type, DataType>::Globals& globals) {
@@ -26,8 +26,8 @@ namespace centipede::core::engine
         { Engine<engine_type, DataType>::solve(globals, result) } -> std::same_as<void>;
         { engine.add_to_globals(globals) } -> std::same_as<void>;
         { engine.add_to_result(result) } -> std::same_as<void>;
-        { engine.analyze(double{}) } -> std::same_as<EnumError<>>;
-        { engine.fill_data(Entry<DataType>{}) } -> std::same_as<void>;
+        { engine.analyze(double{}) } -> std::same_as<VoidError>;
+        { engine.fill_data(Entry<DataType>{}) } -> std::same_as<VoidError>;
     };
 
 } // namespace centipede::core::engine
