@@ -224,6 +224,7 @@ namespace centipede::reader
         {
             return std::unexpected{ size.error() };
         }
+        last_entry_bytes_ = (read_size + 1U) * sizeof(uint32_t);
         ++n_entries_;
         size_ = size.value();
         return size.value();

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <span>
@@ -169,6 +170,15 @@ namespace centipede::reader
          */
         [[nodiscard]] constexpr auto get_n_entries() const -> std::size_t { return n_entries_; }
 
+        // TODO: Add documentation
+        [[nodiscard]] auto get_file_size() const -> std::size_t
+        {
+            return static_cast<std::size_t>(std::filesystem::file_size(config_.in_filename));
+        }
+
+        // TODO: Add documentation
+        [[nodiscard]] auto get_last_entry_bytes() const -> std::size_t { return last_entry_bytes_; }
+
         /**
          * @brief Checks if last read operation reached end of file.
          * @return Returns true if end of file is reached.
@@ -181,7 +191,7 @@ namespace centipede::reader
          * The status is updated during iteration and after manual read operations.
          *
          * @return
-         * - ErrorCode::invalid while iteration/reading is in progress.
+         * - ErrorCode::incomplete while iteration/reading is in progress.
          * - ErrorCode::success if iteration finished successfully.
          * - Any other ErrorCode if a read or parsing error occurred.
          */
@@ -235,7 +245,7 @@ namespace centipede::reader
             explicit Iterator(Binary* reader_ptr)
                 : reader_{ reader_ptr }
             {
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorCode::incomplete;
                 ++(*this);
             }
 
@@ -276,7 +286,7 @@ namespace centipede::reader
                 }
 
                 current_ = reader_->get_current_entry();
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorCode::incomplete;
                 return *this;
             }
             /**
@@ -296,7 +306,10 @@ namespace centipede::reader
              *
              * @return Returns true while iteration is not finished.
              */
-            auto operator!=(const Sentinel&) const -> bool { return reader_->status_ == ErrorCode::invalid; }
+            auto operator!=(const Sentinel&) const -> bool { return reader_->status_ == ErrorCode::incomplete; }
+
+            // TODO: add documentation
+            bool operator==(Sentinel) const { return reader_->status_ != ErrorCode::incomplete; }
 
           private:
             Binary* reader_{};    //!< Associated Binary reader instance.
@@ -324,8 +337,10 @@ namespace centipede::reader
         std::ifstream input_file_;       //!< Input file handler
         std::size_t size_{};             //!< Number of Entrypoints in the current entry
         std::size_t n_entries_{};        //!< Total number of entries read by this instance
-        bool end_of_file_{ false };      //!< Indicates if end of file is reached. Gets updated on read.
-        ErrorCode status_{ ErrorCode::invalid };
+        std::size_t last_entry_bytes_{}; // TODO: Add documentation
+
+        bool end_of_file_{ false }; //!< Indicates if end of file is reached. Gets updated on read.
+        ErrorCode status_{ ErrorCode::incomplete };
 
         void reset();
         auto read_entry_to_buffer(uint32_t read_size) -> EnumError<>;
