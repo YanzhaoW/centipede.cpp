@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <ios>
@@ -30,27 +31,25 @@ namespace centipede::test
         auto file_name = std::string{ "binary_reader_init.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto reader = Binary{ { .in_filename = file_name } };
-        auto error = reader.init();
-        EXPECT_TRUE(error.has_value());
+        auto is_ok = reader.init();
+        EXPECT_TRUE(is_ok);
     }
 
     TEST(reader, init_empty_file_name_error)
     {
         auto reader = Binary{ { .in_filename = "" } };
-        auto error = reader.init();
-        EXPECT_TRUE(not error.has_value());
-        EXPECT_EQ(error.error(), ErrorCode::reader_invalid_filename);
+        auto is_ok = reader.init();
+        EXPECT_FALSE(is_ok);
         reader = Binary{ { .in_filename = "nonexistent.bin" } };
-        error = reader.init();
-        EXPECT_EQ(error.error(), ErrorCode::reader_file_fail_to_open);
+        is_ok = reader.init();
+        EXPECT_FALSE(is_ok);
     }
 
     TEST(reader, init_nonexisting_file_error)
     {
         auto reader = Binary{ { .in_filename = "nonexistent.bin" } };
-        auto error = reader.init();
-        EXPECT_TRUE(not error.has_value());
-        EXPECT_EQ(error.error(), ErrorCode::reader_file_fail_to_open);
+        auto is_ok = reader.init();
+        EXPECT_FALSE(is_ok);
     }
 
     TEST(reader, not_initialized)
@@ -59,9 +58,9 @@ namespace centipede::test
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
-        auto read_err = reader.read_one_entry();
-        EXPECT_FALSE(read_err);
-        EXPECT_EQ(read_err.error(), ErrorCode::reader_uninitialized);
+        auto is_ok = reader.read_one_entry();
+        EXPECT_FALSE(is_ok);
+        EXPECT_EQ(is_ok.error(), ErrorCode::reader_uninitialized);
     }
 
     TEST(reader, file_invalid_idx_size)
@@ -76,11 +75,11 @@ namespace centipede::test
         // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
-        auto init_err = reader.init();
-        EXPECT_TRUE(init_err);
-        auto read_err = reader.read_one_entry();
-        EXPECT_FALSE(read_err);
-        EXPECT_EQ(read_err.error(), ErrorCode::reader_file_fail_to_read);
+        auto is_init_ok = reader.init();
+        EXPECT_TRUE(is_init_ok);
+        auto is_read_ok = reader.read_one_entry();
+        EXPECT_FALSE(is_read_ok);
+        EXPECT_EQ(is_read_ok.error(), ErrorCode::reader_file_fail_to_read);
     }
 
     TEST(reader, file_invalid_val_size)
@@ -147,8 +146,8 @@ namespace centipede::test
         auto file_name = std::string{ "valid_single_entry.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_sigma, valid_locals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_sigma, valid_locals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
@@ -161,7 +160,7 @@ namespace centipede::test
             {
                 EXPECT_EQ(valid_locals_data.second, entrypoint.get_locals());
                 auto expected_globals = std::views::zip_transform([](const auto& index, const auto& value) -> auto
-                                                                  { return std::pair{ index, value }; },
+                                                                  { return std::pair{ index - 1, value }; },
                                                                   valid_globals_data.first,
                                                                   valid_globals_data.second) |
                                         std::ranges::to<std::vector>();
@@ -433,5 +432,49 @@ namespace centipede::test
         EXPECT_FALSE(reader.is_ok());
         EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
         reader.close();
+    }
+
+    TEST(reader, entry_value_check)
+    {
+        const auto filename = "test_entry.bin";
+        auto writer = writer::Binary{ { .out_filename = filename } };
+        auto reader = reader::Binary{ { .in_filename = filename } };
+
+        auto is_writer_init_ok = writer.init();
+        ASSERT_TRUE(is_writer_init_ok);
+
+        const auto entrypoint = EntryPoint{}
+                                    .add_global(4, 2.3)
+                                    .add_global(15, 2.0)
+                                    .add_local(2.0)
+                                    .add_local(1.0)
+                                    .set_measurement(3.4)
+                                    .set_sigma(2.1);
+        auto is_add_ok = writer.add_entrypoint(entrypoint);
+        ASSERT_TRUE(is_add_ok);
+
+        const auto raw_writer_buffer = writer.get_buffer();
+        auto is_write_ok = writer.write_current_entry();
+        ASSERT_TRUE(is_write_ok);
+        writer.close();
+
+        auto is_reader_init_ok = reader.init();
+        auto size_res = reader.read_one_entry();
+        ASSERT_TRUE(size_res);
+
+        auto current_entries = reader.get_current_entry();
+        EXPECT_EQ(current_entries.size(), 1);
+
+        const auto reader_raw_entry_buffer = reader.get_buffer();
+
+        EXPECT_EQ(raw_writer_buffer.first, reader_raw_entry_buffer.first);
+        EXPECT_EQ(raw_writer_buffer.second, reader_raw_entry_buffer.second);
+
+        EXPECT_EQ(current_entries.front(), entrypoint)
+            << std::format("write entry: {}\nread entry: {}\nwrite buffer: {}\nread buffer: {}",
+                           entrypoint,
+                           current_entries.front(),
+                           raw_writer_buffer,
+                           reader_raw_entry_buffer);
     }
 } // namespace centipede::test

@@ -8,6 +8,7 @@
 #include "centipede/core/handler.hpp"               // IWYU pragma: export
 #include "centipede/data/entry.hpp"                 // IWYU pragma: export
 #include "centipede/data/entrypoint.hpp"            // IWYU pragma: export
+#include "centipede/reader/binary.hpp"              // IWYU pragma: export
 #include "centipede/util/eigen_formatter.hpp"       // IWYU pragma: export
 #include "centipede/util/error_types.hpp"           // IWYU pragma: export
 #include "centipede/util/return_types.hpp"          // IWYU pragma: export

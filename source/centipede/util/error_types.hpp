@@ -34,7 +34,8 @@ namespace centipede
         reader_file_fail_to_read, //!< Input file failed to read
         reader_uninitialized,     //!< Reader is not initialized.
         reader_buffer_overflow,   //!< Buffer size is too small for a new entry occurs. See @ref reader::Binary.
-        reader_invalid_filename,  //!< Filename is invalid or empty
+        cli_lua_read_error,       //!< Lua config file is ill formatted.
+        cli_env_not_defined,      //!< Environment variable not defined.
     };
 
 } // namespace centipede
@@ -102,8 +103,10 @@ struct std::formatter<centipede::ErrorCode>
                 return std::format_to(ctx.out(), "Reader: Failed to read the file.");
             case reader_buffer_overflow:
                 return std::format_to(ctx.out(), "Reader: Cannot read the file. Buffer size will be exceeded!");
-            case reader_invalid_filename:
-                return std::format_to(ctx.out(), "Reader: Filename is either empty or invalid!");
+            case cli_lua_read_error:
+                return std::format_to(ctx.out(), "App: Lua config file is ill formatted.");
+            case cli_env_not_defined:
+                return std::format_to(ctx.out(), "App: Environment variable not defined.");
             case invalid:
                 return std::format_to(ctx.out(), "Error due to no evaluation!");
             default:

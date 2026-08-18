@@ -37,6 +37,7 @@ namespace centipede::writer
 
     auto Binary::fill_entrypoint_to_buffer(BufferPoint buffer_point, bool has_check_value) -> bool
     {
+        // NOTE: need to filter out zero values?
         if ((not has_check_value) or buffer_point.second != 0)
         {
             data_buffer_.first.push_back(buffer_point.first);
@@ -46,7 +47,7 @@ namespace centipede::writer
         return false;
     }
 
-    auto Binary::init() -> EnumError<>
+    auto Binary::init() -> VoidError
     {
         data_buffer_.first.reserve(config_.max_bufferpoint_size);
         data_buffer_.second.reserve(config_.max_bufferpoint_size);

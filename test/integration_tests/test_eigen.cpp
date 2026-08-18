@@ -1,6 +1,6 @@
 #include "Simulator.hpp"
 #include "centipede/centipede.hpp"
-#include "centipede/util/eigen_formatter.hpp" // IWYU pragma: keep
+#include "centipede/cli/spdlog_stream.hpp" // IWYU pragma: keep
 #include <Eigen/Core>
 #include <cstdio>
 #include <cstdlib>
@@ -9,14 +9,11 @@
 #include <glaze/core/opts.hpp>
 #include <glaze/glaze.hpp>
 #include <glaze/json/write.hpp>
-#include <ios>
-#include <istream>
 #include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <mps/MPS.hpp>
 #include <mps/detector_utils/DetectorTypes.hpp>
 #include <mps/utils/CommonAlias.hpp>
-#include <optional>
 #include <print>
 #include <ranges>
 #include <set>
@@ -37,29 +34,6 @@ namespace
 
 constexpr auto par_filename = std::string_view{ "pars.json" };
 constexpr auto output_data_filename = std::string_view{ "mille_data.bin" };
-
-namespace spdlog::level
-{
-    auto operator>>(std::istream& in, level_enum& level) -> std::istream&
-    {
-        std::string level_str;
-        in >> level_str;
-
-        auto input_level_enum = magic_enum::enum_cast<spdlog::level::level_enum>(level_str);
-        if (not input_level_enum)
-        {
-            spdlog::error(
-                "Unknown log level {:?}. Available values: {}", level_str, magic_enum::enum_names<level_enum>());
-            in.setstate(std::ios::failbit);
-        }
-        else
-        {
-            level = input_level_enum.value();
-        }
-
-        return in;
-    }
-} // namespace spdlog::level
 
 auto main(int argc, char** argv) -> int
 {
@@ -120,11 +94,13 @@ auto main(int argc, char** argv) -> int
     }
 
     const auto n_globals = config.detector.spec.num_modules * 2;
-    auto handler = centipede::Handler<float, { .engine_type = centipede::MatrixEngine::eigen }>{
-        { .n_globals = n_globals, .fixed_parameter_ids = std::set{ 0UZ, 1UZ, 41UZ } }
-    };
+    spdlog::info("Total number of global parameters is: {}", n_globals);
+    auto handler_res = centipede::create<float, { .engine_type = centipede::MatrixEngine::eigen }>(
+        { .n_globals = n_globals, .fixed_parameter_ids = std::set{ 0UZ, 1UZ, 41UZ } });
 
-    const auto& master_engine = handler.get_engine();
+    auto& handler = handler_res.value();
+
+    const auto& master_engine = handler.get_master_engine();
     spdlog::debug("par id map: {}", master_engine.get_par_id_map().get_unfixed_par_id_map());
 
     for (const auto _ : std::views::iota(0UZ, n_runs))

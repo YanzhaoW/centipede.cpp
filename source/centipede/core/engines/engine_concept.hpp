@@ -2,6 +2,7 @@
 
 #include "centipede/core/config.hpp"
 #include "centipede/core/engines/base_engine.hpp"
+#include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
 #include "centipede/core/engines/result.hpp"
@@ -31,6 +32,7 @@ namespace centipede::core::engine
         { engine.add_to_result(result) } -> std::same_as<void>;
         { engine.analyze(double{}) } -> std::same_as<VoidError>;
         { engine.fill_data(Entry<DataType>{}, par_map) } -> std::same_as<VoidError>;
+        { engine.get_log() } -> std::same_as<const Log&>;
     };
 
 } // namespace centipede::core::engine

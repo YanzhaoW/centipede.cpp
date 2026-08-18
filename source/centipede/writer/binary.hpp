@@ -206,7 +206,7 @@ namespace centipede::writer
 
         for (const auto& [idx, local_deriv] : std::views::zip(std::views::iota(0), entry_point.get_locals()))
         {
-            has_entry |= fill_entrypoint_to_buffer(BufferPoint{ idx + 1, local_deriv }, true);
+            fill_entrypoint_to_buffer(BufferPoint{ idx + 1, local_deriv }, false);
         }
 
         fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_sigma() });

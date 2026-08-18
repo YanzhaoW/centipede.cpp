@@ -1,6 +1,7 @@
 #pragma once
 
 #include "centipede/core/config.hpp"
+#include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
 #include "centipede/core/engines/result.hpp"
@@ -8,7 +9,6 @@
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
-#include <cstdint>
 #include <expected>
 #include <gsl/gsl_cdf.h>
 #include <utility>
@@ -44,19 +44,6 @@ namespace centipede::core::engine
             std::size_t ndf = 0;               //!< Current degree of freedom for the local fitting.
             double chi2 = 0.;                  //!< Current \f$\chi^2\f$ square value for the local fitting.
             double p_value = 0.;               //!< Current p_value for the local fitting.
-        };
-
-        /**
-         * @brief Logging data during the whole run.
-         */
-        struct Log
-        {
-            uint64_t n_entries_read = 0;               //!< Total number of entries read.
-            uint64_t n_entries_success = 0;            //!< Total number of entries used for updating global parameters.
-            uint64_t n_entries_low_stat = 0;           //!< Total number of unused entries because of low stat.
-            uint64_t n_entries_local_rank_deficit = 0; //!< Total number of unused entries because of rank deficit.
-            uint64_t n_entries_rejected =
-                0; //!< Total number of unused entries because of p-value below the significance level.
         };
 
         /**

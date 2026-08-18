@@ -1,9 +1,13 @@
 #include "centipede/centipede.hpp"
+#include "centipede/cli/spdlog_stream.hpp"
 #include <Eigen/Core>
 #include <format>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+#include <sstream>
 
 namespace centipede::testing
 {
@@ -51,5 +55,16 @@ namespace centipede::testing
         auto mat = Eigen::Matrix3d{}.eval();
         const auto format_str = std::format("{}", mat);
         EXPECT_FALSE(format_str.empty());
+    }
+
+    TEST(format, spdlog_stream)
+    {
+        auto log = spdlog::level::level_enum{};
+        std::istringstream{ "err" } >> log;
+        EXPECT_EQ(log, spdlog::level::err);
+
+        auto isstream = std::istringstream{ "invalid" };
+        isstream >> log;
+        EXPECT_TRUE(isstream.fail());
     }
 } // namespace centipede::testing

@@ -119,7 +119,7 @@ namespace centipede::reader
          * Config::in_filename.
          * @see Config
          */
-        [[nodiscard]] auto init() -> EnumError<>;
+        [[nodiscard]] auto init() -> VoidStr;
 
         /**
          * @brief Manually close the input file handler.
@@ -132,7 +132,7 @@ namespace centipede::reader
          * @brief Reads one entry from file into the internal buffers.
          *
          * Reading an entry follows this crude sequence:
-         * 1. if #init() is not called once after instanciating, returns an error
+         * 1. if #init() is not called once after instantiating, returns an error
          * 2. Reads one entry to #raw_entry_buffer_, returns if read operation fails.
          * 3. Parses entry and stores individual entrypoints in #entry_buffer_, returns if file format is corrupted.
          * 4. Increases #n_entries_ for one entry is read and sets #size_ corresponding to the number of 32 Bit values
@@ -151,14 +151,13 @@ namespace centipede::reader
          * @brief Getter of #entry_buffer_.
          *
          * @return Returns a std::span of #entry_buffer_
-         **/
+         */
         [[nodiscard]] auto get_current_entry() const -> auto { return std::span{ entry_buffer_.begin(), size_ }; }
 
         /**
          * @brief Getter of the configuration.
          *
          * @return Returns a const reference to the member variable #config_.
-         * @see ref
          */
         [[nodiscard]] constexpr auto get_config() const -> const Config& { return config_; }
 
@@ -190,9 +189,14 @@ namespace centipede::reader
         /**
          * @brief Returns true if the last read was successful.
          *
-         * Note that this while return false on read error as well as incompleted read operation.
+         * Note that this while return false on read error as well as incomplete read operation.
          */
         [[nodiscard]] auto is_ok() const -> bool { return get_status() == ErrorCode::success; }
+
+        /**
+         * @brief Getter of raw_entry_buffer
+         */
+        [[nodiscard]] auto get_buffer() const -> const auto& { return raw_entry_buffer_; }
 
         using EntrySpan = std::span<const BufferType::value_type>;
 
