@@ -1,6 +1,7 @@
 #include "centipede/centipede.hpp"
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <gtest/gtest.h>
 #include <utility>
 #include <vector>
@@ -64,6 +65,23 @@ TEST(writer, read_entrypoint_normal)
     EXPECT_EQ(buffer.second, val_vec);
 }
 
+TEST(writer, read_entrypoint_local_zero)
+{
+    auto writer = Binary{ {} };
+    [[maybe_unused]] auto init_err = writer.init();
+
+    auto entry_point = centipede::EntryPoint<>{};
+    entry_point.set_locals(0.F, 1.0F)
+        .set_globals(std::pair{ 10U, 1.F }, std::pair{ 11U, 2.F })
+        .set_measurement(2.3F)
+        .set_sigma(1.2F);
+    auto is_ok = writer.add_entrypoint(entry_point);
+    ASSERT_TRUE(is_ok);
+    const auto buffer = writer.get_buffer();
+    EXPECT_EQ(buffer.second.size(), buffer.first.size());
+    EXPECT_EQ(buffer.first.size(), 7) << std::format("buffer: {}\n entrypoint: {}", buffer, entry_point);
+}
+
 TEST(writer, read_entrypoint_reject)
 {
     auto writer = Binary{ {} };
@@ -74,9 +92,9 @@ TEST(writer, read_entrypoint_reject)
         .set_globals(std::pair{ 10U, 0.F }, std::pair{ 11U, 0.F })
         .set_measurement(1.F)
         .set_sigma(1.F);
-    auto err = writer.add_entrypoint(entry_point);
-    ASSERT_FALSE(err.has_value());
-    EXPECT_TRUE(err.error() == ErrorCode::writer_entrypoint_rejected);
+    auto is_ok = writer.add_entrypoint(entry_point);
+    ASSERT_FALSE(is_ok);
+    EXPECT_TRUE(is_ok.error() == ErrorCode::writer_entrypoint_rejected);
 
     auto size = writer.write_current_entry();
     ASSERT_TRUE(size.has_value());

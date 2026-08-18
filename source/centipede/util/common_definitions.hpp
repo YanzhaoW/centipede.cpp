@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstddef>
+#include <string_view>
 
 namespace centipede::common
 {
+    constexpr auto LUA_PACKAGE_NAME = std::string_view{ "centipede" };
     constexpr auto DEFAULT_BUFFER_SIZE =
         std::size_t{ 10000 }; //!< Default maximum buffer size for binary readers/writers.
 

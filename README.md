@@ -26,6 +26,46 @@ git clone https://github.com/YanzhaoW/centipede.cpp.git centipede
 - CMake
 - Conan
 
+## CLI configuration
+
+```bash
+centipede -c config.lua
+```
+Inside `config.lua`, the default settings are:
+
+```lua
+require 'centipede'.setup
+{
+    num_of_runs = 1,
+    max_num_of_events = 0,
+
+    input = {
+        data_filename = "",
+        init_par = {
+            filename = "",
+            id = "",
+            value = "",
+        },
+    },
+
+    output = {
+        par_filename = "",
+        only_last_run = true,
+    },
+
+    engine = {
+        chi2_factor = 50.,
+        n_globals = 0,
+        fixed_parameter_ids = {},
+        alpha = 0.027,
+    },
+
+    hooks = {
+        post_entrypoint_read = nil,
+    },
+}
+```
+
 ## References
 
 - [Millepede-II program](https://www.desy.de/~kleinwrt/MP2/doc/html/)

@@ -13,7 +13,8 @@ namespace centipede
     /**
      * @brief Template alias for expected string results.
      */
-    using StrError = std::expected<void, std::string>;
+    template <typename T>
+    using StrError = std::expected<T, std::string>;
 
     /**
      * @brief Template alias for expected return values.
@@ -22,7 +23,12 @@ namespace centipede
     using EnumError = std::expected<T, ErrorCode>;
 
     /**
-     * @brief Template alias for expected void results.
+     * @brief Template alias for an expected void result or an enum class error.
      */
     using VoidError = std::expected<void, ErrorCode>;
+
+    /**
+     * @brief Template alias for an expected void result or a string error.
+     */
+    using VoidStr = std::expected<void, std::string>;
 } // namespace centipede

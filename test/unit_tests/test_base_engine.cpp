@@ -1,5 +1,6 @@
 #include "centipede/centipede.hpp"
 #include "centipede/core/config.hpp"
+#include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
 #include "shared.hpp"
 #include <cstddef>

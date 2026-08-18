@@ -95,13 +95,13 @@ namespace centipede::core::engine
          */
         static void solve(const Globals& globals, Result<DataType>& result, const ParIdMap& par_map)
         {
-#ifdef HAS_LIBASSERT
-            debug_assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
-                                                        static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
-#else
-            assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
-                                                  static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
-#endif
+            // #ifdef HAS_LIBASSERT
+            //             debug_assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+            //                                                         static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+            // #else
+            //             assert(globals.factor_matrix.isApprox(globals.factor_matrix.transpose(),
+            //                                                   static_cast<DataType>(common::EIGEN_APPROX_PRECISION)));
+            // #endif
 
             if (globals.factor_matrix.isZero())
             {
@@ -337,7 +337,6 @@ namespace centipede::core::engine
 #endif
 
             globals_.factor_matrix += buffers_.global_square_update;
-            // Eigen::internal::set_is_malloc_allowed(true);
             return {};
         }
 

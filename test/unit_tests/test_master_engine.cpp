@@ -1,4 +1,5 @@
 #include "centipede/centipede.hpp"
+#include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
 #include "shared.hpp"
 #include <cstddef>
@@ -7,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace
 {
@@ -19,6 +21,8 @@ namespace centipede::core::engine
     {
         struct GlobalsType
         {
+            std::vector<double> factor_matrix;
+            std::vector<double> rhs_vec;
         };
 
         template <typename DataType>
@@ -52,6 +56,7 @@ namespace centipede::core::engine
         MOCK_METHOD((VoidError), fill_data, (const Entry<DataType>& entry, const core::ParIdMap&), (const));
         MOCK_METHOD((void), add_to_result, (Result<DataType> & result), (const));
         MOCK_METHOD((EnumError<>), analyze, (double alpha), (const));
+        MOCK_METHOD((const core::engine::Log&), get_log, (), (const));
 
         static MockHelper<DataType>* mock_helper;
     };
@@ -203,8 +208,10 @@ namespace centipede::test
 
     TEST_F(master_engine, solve)
     {
+        const auto default_log = core::engine::Log{};
         EXPECT_CALL(*engine_class_, add_to_globals(testing::_)).Times(1);
         EXPECT_CALL(*engine_class_, add_to_result(testing::_)).Times(1);
+        EXPECT_CALL(*engine_class_, get_log()).WillOnce(::testing::ReturnRef(default_log));
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
             .WillOnce([](const auto&, ResultType& result, const auto&) { result.error_status = ErrorCode::success; });
@@ -214,8 +221,10 @@ namespace centipede::test
 
     TEST_F(master_engine, solve_fail)
     {
+        const auto default_log = core::engine::Log{};
         EXPECT_CALL(*engine_class_, add_to_globals(testing::_)).Times(1);
         EXPECT_CALL(*engine_class_, add_to_result(testing::_)).Times(1);
+        EXPECT_CALL(*engine_class_, get_log()).WillOnce(::testing::ReturnRef(default_log));
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
             .WillOnce([](const auto&, ResultType& result, const auto&)

@@ -1,17 +1,7 @@
 add_library(core SHARED)
 add_library(centipede::centipede ALIAS core)
 target_compile_features(core PUBLIC cxx_std_26)
-target_compile_options(
-    core
-    PRIVATE
-        -Wall
-        -Wconversion
-        -Werror
-        -Wextra
-        -Wshadow
-        -fno-exceptions
-        -fno-rtti
-)
+target_compile_options(core PRIVATE ${common_compile_flags})
 
 target_sources(
     core
@@ -34,6 +24,7 @@ add_subdirectory(core)
 add_subdirectory(util)
 add_subdirectory(writer)
 add_subdirectory(reader)
+add_subdirectory(cli)
 
 if(ENABLE_COVERAGE)
     target_compile_options(core PUBLIC --coverage)

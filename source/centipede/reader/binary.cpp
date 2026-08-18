@@ -1,5 +1,5 @@
 #include "binary.hpp"
-#include "centipede/data/entry.hpp"
+#include "centipede/data/entrypoint.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <algorithm>
@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <expected>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -86,7 +87,7 @@ namespace centipede::reader
             assert(chunk_ptr.entrypoint != nullptr);
             for (const auto& global : *(chunk_ptr.iter))
             {
-                chunk_ptr.entrypoint->add_global(std::get<0>(global), std::get<1>(global));
+                chunk_ptr.entrypoint->add_global(std::get<0>(global) - 1, std::get<1>(global));
             }
             return chunk_ptr;
         }
@@ -149,12 +150,12 @@ namespace centipede::reader
                                              return chunk_check_size_one(chunk_ptr)
                                                  .transform(chunk_handle_measurement<ChunkPtrType>)
                                                  .and_then(chunk_not_end_and_increment<ChunkPtrType>)
-                                                 .transform(chunk_handle_globals<ChunkPtrType>)
+                                                 .transform(chunk_handle_locals<ChunkPtrType>)
                                                  .and_then(chunk_not_end_and_increment<ChunkPtrType>)
                                                  .and_then(chunk_check_size_one<ChunkPtrType>)
                                                  .transform(chunk_handle_sigma<ChunkPtrType>)
                                                  .and_then(chunk_not_end_and_increment<ChunkPtrType>)
-                                                 .transform(chunk_handle_locals<ChunkPtrType>)
+                                                 .transform(chunk_handle_globals<ChunkPtrType>)
                                                  .and_then(chunk_end_after_increment<ChunkPtrType>)
                                                  .transform(
                                                      [&current_n_points](auto)
@@ -175,11 +176,11 @@ namespace centipede::reader
         }
     } // namespace
 
-    auto Binary::init() -> EnumError<>
+    auto Binary::init() -> VoidStr
     {
         if (config_.in_filename.empty())
         {
-            return std::unexpected{ ErrorCode::reader_invalid_filename };
+            return std::unexpected{ std::format("Binary reader: File name is empty!") };
         }
         entry_buffer_.resize(config_.max_bufferpoint_size);
         raw_entry_buffer_.first.reserve(config_.max_bufferpoint_size);
@@ -187,7 +188,8 @@ namespace centipede::reader
         input_file_.open(config_.in_filename, std::ios::binary | std::ios::in);
         if (!input_file_.is_open())
         {
-            return std::unexpected{ ErrorCode::reader_file_fail_to_open };
+            return std::unexpected{ std::format("Binary reader: Failed to open the file with filename {:?}.",
+                                                config_.in_filename) };
         }
         n_entries_ = 0Z;
         end_of_file_ = false;

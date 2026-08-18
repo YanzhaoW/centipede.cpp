@@ -43,3 +43,10 @@ namespace centipede::reader
 namespace centipede::common
 {
 }
+
+/**
+ * @brief CLI related classes and functions.
+ */
+namespace centipede::cli
+{
+}

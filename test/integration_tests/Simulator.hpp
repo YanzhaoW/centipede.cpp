@@ -135,9 +135,9 @@ namespace centipede::test
                     [[maybe_unused]] auto is_ok = binary_writer_.write_current_entry();
                 }
                 auto res = handler.analyze_current_entry();
-                const auto& state = handler.get_current_entry_state();
+                const auto& state = handler.get_slave_entry_state();
 
-                const auto& engine = handler.get_current_engine();
+                const auto& engine = handler.get_slave_engine();
                 const auto& buffers = engine.get_buffers();
 
                 spdlog::trace("global factor mat: {}", engine.get_global_factor_matrix());
