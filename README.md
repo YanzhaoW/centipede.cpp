@@ -69,3 +69,8 @@ require 'centipede'.setup
 ## References
 
 - [Millepede-II program](https://www.desy.de/~kleinwrt/MP2/doc/html/)
+
+
+## Acknowledgments
+
+This project was funded by the Bundesministerium für Forschung, Technologie und Raumfahrt (BMFTR) under funding reference **05P24PK1**. Responsibility for the content of this software lies with the authors.

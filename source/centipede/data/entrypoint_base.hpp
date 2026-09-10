@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include "centipede/util/common_traits.hpp"
 #include <algorithm>
 #include <concepts>
@@ -16,13 +17,12 @@ namespace centipede
      *
      * @tparam T Type of a std::pair.
      */
-    template <typename T>
+    template <typename T, typename U>
     concept EntryPointGlobalIdxPair = requires(T pair) {
         requires internal::IsPair<T>::value;
-        requires std::convertible_to<typename internal::IsPair<T>::first_type, uint32_t>;
         requires std::is_integral_v<typename internal::IsPair<T>::first_type>;
-        requires std::convertible_to<typename internal::IsPair<T>::second_type, float>;
-        requires std::is_floating_point_v<typename internal::IsPair<T>::second_type>;
+        requires std::convertible_to<typename internal::IsPair<T>::first_type, uint32_t>;
+        requires internal::ValueErrorConvertible<typename internal::IsPair<T>::second_type, U>;
     };
 
 } // namespace centipede
@@ -75,8 +75,7 @@ namespace centipede::internal
         constexpr auto reset(this auto&& self) -> auto&&
         {
             self.reset_derivs();
-            self.measurement_ = float{};
-            self.sigma_ = float{};
+            self.measurement_ = ValueError<data_type>{};
             return std::forward<decltype(self)>(self);
         }
 
@@ -96,7 +95,7 @@ namespace centipede::internal
          * @param locals Derivative values of local parameters.
          * @return Universal reference to the caller.
          */
-        template <std::floating_point... DataTypes>
+        template <internal::ValueErrorConvertible<data_type>... DataTypes>
         constexpr auto set_locals(this auto&& self, DataTypes... locals) -> auto&&
         {
             self.set_locals_imp(std::forward<DataTypes>(locals)...);
@@ -114,7 +113,7 @@ namespace centipede::internal
          */
         template <typename Gen>
             requires requires(Gen generator) {
-                { generator() } -> std::floating_point<>;
+                { generator() } -> internal::ValueErrorConvertible<data_type>;
             }
         constexpr auto set_locals(this auto&& self, Gen generator) -> auto&&
         {
@@ -139,7 +138,7 @@ namespace centipede::internal
          * @return Universal reference to the caller.
          * @see EntryPointGlobalIdxPair
          */
-        template <EntryPointGlobalIdxPair... DataTypes>
+        template <EntryPointGlobalIdxPair<data_type>... DataTypes>
         constexpr auto set_globals(this auto&& self, DataTypes... globals) -> auto&&
         {
             self.set_globals_imp(std::forward<DataTypes>(globals)...);
@@ -159,7 +158,7 @@ namespace centipede::internal
          */
         template <typename Gen>
             requires requires(Gen generator) {
-                { generator() } -> EntryPointGlobalIdxPair<>;
+                { generator() } -> EntryPointGlobalIdxPair<data_type>;
             }
         constexpr auto set_globals(this auto&& self, Gen generator) -> auto&&
         {
@@ -182,7 +181,7 @@ namespace centipede::internal
         template <typename IdxGen, typename ValGen>
             requires requires(IdxGen idx_gen, ValGen val_gen) {
                 { idx_gen() } -> std::integral<>;
-                { val_gen() } -> std::floating_point<>;
+                { val_gen() } -> internal::ValueErrorConvertible<data_type>;
             }
         constexpr auto set_globals(this auto&& self, IdxGen idx_gen, ValGen val_gen) -> auto&&
         {
@@ -195,23 +194,13 @@ namespace centipede::internal
          * @brief Set the measurement of the current entry point.
          * @param self The dynamic reference to the caller.
          * @param value Measurement value.
+         * @param error Measurement error.
          * @return Universal reference to the caller.
          */
-        constexpr auto set_measurement(this auto&& self, std::floating_point auto value) -> auto&&
+        constexpr auto set_measurement(this auto&& self, internal::ValueErrorConvertible<data_type> auto value_error)
+            -> auto&&
         {
-            self.measurement_ = static_cast<float>(value);
-            return std::forward<decltype(self)>(self);
-        }
-
-        /**
-         * @brief Set the sigma of the current entry point.
-         * @param self The dynamic reference to the caller.
-         * @param value Sigma value.
-         * @return Universal reference to the caller.
-         */
-        constexpr auto set_sigma(this auto&& self, std::floating_point auto value) -> auto&&
-        {
-            self.sigma_ = static_cast<float>(value);
+            self.measurement_ = ValueError<data_type>{ value_error };
             return std::forward<decltype(self)>(self);
         }
 
@@ -233,13 +222,7 @@ namespace centipede::internal
          * @brief Getter for the measurement value.
          * @return Value of the measurement.
          */
-        [[nodiscard]] auto get_measurement() const -> float { return measurement_; }
-
-        /**
-         * @brief Getter for the sigma value.
-         * @return Value of the sigma.
-         */
-        [[nodiscard]] auto get_sigma() const -> float { return sigma_; }
+        [[nodiscard]] auto get_measurement() const -> ValueError<data_type> { return measurement_; }
 
         /**
          * @brief Default spaceship comparison.
@@ -247,8 +230,7 @@ namespace centipede::internal
         constexpr auto operator<=>(const EntryPointBase& other) const = default;
 
       private:
-        float measurement_{}; //!< Measurement value.
-        float sigma_{};       //!< Error value.
+        ValueError<data_type> measurement_{}; //!< Measurement value.
     };
 
 } // namespace centipede::internal

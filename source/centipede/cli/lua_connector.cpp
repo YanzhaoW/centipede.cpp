@@ -1,6 +1,7 @@
 #include "lua_connector.hpp"
 #include "centipede/cli/config.hpp"
 #include "centipede/cli/location_identifier.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/return_types.hpp"
 #include <expected>
@@ -86,6 +87,23 @@ namespace centipede::cli
 
     void LuaConnector::setup_lua_usr_types()
     {
+        lua_state_.new_usertype<ValueErrorD>(
+            "ValueErrorD",
+            "value",
+            sol::readonly_property([](const ValueErrorD& value_error) { return value_error.value; }),
+            "error",
+            sol::readonly_property([](const ValueErrorD& value_error) { return value_error.error; })
+
+        );
+        lua_state_.new_usertype<ValueErrorF>(
+            "ValueErrorF",
+            "value",
+            sol::readonly_property([](const ValueErrorF& value_error) { return value_error.value; }),
+            "error",
+            sol::readonly_property([](const ValueErrorF& value_error) { return value_error.error; })
+
+        );
+
         lua_state_.new_usertype<EntryPoint<>>(
             "EntryPoint",
             "locals",
@@ -93,9 +111,7 @@ namespace centipede::cli
             "globals",
             sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_globals(); }),
             "meas",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_measurement(); }),
-            "sigma",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_sigma(); }));
+            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_measurement(); }));
     }
 
     void LuaConnector::setup_lua_warn_msg()

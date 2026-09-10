@@ -133,7 +133,6 @@ namespace centipede::core::engine
         self.resize_buffers();
 
         self.fill_measurements(entry.measurements);
-        self.fill_sigmas(entry.sigmas);
         self.fill_local_derivs(entry.local_derivs);
         auto res = self.fill_global_derivs(entry.global_derivs, unfixed_par_id_map);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint_base.hpp"
 #include <algorithm>
 #include <array>
@@ -26,8 +27,9 @@ namespace centipede
     class EntryPoint : public internal::EntryPointBase
     {
       public:
-        using LocalDerivs = std::vector<float>;                       //!< Data type of local deriv array.
-        using GlobalDerivs = std::vector<std::pair<uint32_t, float>>; //!< Data type of global deriv array.
+        using LocalDerivs = std::vector<ValueError<data_type>>; //!< Data type of local deriv array.
+        using GlobalDerivs =
+            std::vector<std::pair<uint32_t, ValueError<data_type>>>; //!< Data type of global deriv array.
 
         /**
          * @brief Default constructor.
@@ -51,12 +53,12 @@ namespace centipede
 
         /**
          * @brief Add a value to the local derivatives.
-         * @param value Local derivative value.
+         * @param value_error Local derivative value with its uncertainty.
          * @return Non-const reference to this object.
          */
-        constexpr auto add_local(std::floating_point auto value) -> auto&
+        constexpr auto add_local(internal::ValueErrorConvertible<data_type> auto value_error) -> auto&
         {
-            locals_.push_back(static_cast<float>(value));
+            locals_.emplace_back(value_error);
             return *this;
         }
 
@@ -64,11 +66,13 @@ namespace centipede
          * @brief Add an index-value pair to the global derivatives.
          * @param index Global parameter ID (0-based indexing).
          * @param value Global derivative value.
+         * @param error Uncertainty of global derivative value.
          * @return Non-const reference to this object.
          */
-        constexpr auto add_global(std::integral auto index, std::floating_point auto value) -> auto&
+        constexpr auto add_global(std::integral auto index, internal::ValueErrorConvertible<data_type> auto value)
+            -> auto&
         {
-            globals_.emplace_back(static_cast<uint32_t>(index), static_cast<float>(value));
+            globals_.emplace_back(static_cast<uint32_t>(index), static_cast<data_type>(value));
             return *this;
         }
 
@@ -86,11 +90,15 @@ namespace centipede
          * @return Universal reference to the caller.
          */
         template <std::ranges::input_range View>
-            requires EntryPointGlobalIdxPair<std::ranges::range_value_t<View>>
+            requires EntryPointGlobalIdxPair<std::ranges::range_value_t<View>, data_type>
         constexpr auto set_globals(View view) -> auto&&
         {
             globals_.clear();
-            std::ranges::copy(view, std::back_inserter(globals_));
+            std::ranges::copy(
+                view | std::views::transform(
+                           [](const auto& idx_ele)
+                           { return std::pair{ idx_ele.first, ValueError<data_type>{ idx_ele.second } }; }),
+                std::back_inserter(globals_));
             return *this;
         }
 
@@ -105,11 +113,13 @@ namespace centipede
          * @return Universal reference to the caller.
          */
         template <typename View>
-            requires std::same_as<std::ranges::range_value_t<View>, float>
+            requires internal::ValueErrorConvertible<std::ranges::range_value_t<View>, data_type>
         constexpr auto set_locals(View view) -> auto&&
         {
             locals_.clear();
-            std::ranges::copy(view, std::back_inserter(locals_));
+            std::ranges::copy(
+                view | std::views::transform([](const auto& ele) { return ValueError<data_type>{ ele }; }),
+                std::back_inserter(locals_));
             return *this;
         }
 
@@ -145,18 +155,18 @@ namespace centipede
         LocalDerivs locals_;   //!< Local derivatives.
         GlobalDerivs globals_; //!< Global label and derivatives pair. The label is using **0-based indexing**.
 
-        template <std::floating_point... DataTypes>
+        template <internal::ValueErrorConvertible<data_type>... DataTypes>
         constexpr void set_locals_imp(DataTypes... locals)
         {
             locals_.clear();
-            (locals_.push_back(locals), ...);
+            (locals_.push_back(ValueError<data_type>(locals)), ...);
         }
 
-        template <EntryPointGlobalIdxPair... DataTypes>
+        template <EntryPointGlobalIdxPair<data_type>... DataTypes>
         constexpr void set_globals_imp(DataTypes... globals)
         {
             globals_.clear();
-            (globals_.emplace_back(static_cast<uint32_t>(globals.first), static_cast<float>(globals.second)), ...);
+            (globals_.emplace_back(static_cast<uint32_t>(globals.first), ValueError<data_type>(globals.second)), ...);
         }
 
         constexpr void reset_derivs()
@@ -169,8 +179,8 @@ namespace centipede
     /**
      * @brief Structure of a entrypoint with static sizes.
      *
-     * Entrypoint contains the derivatives of local and global parameters, together with measurement and sigma values.
-     * The values are stored locally.
+     * Entrypoint contains the derivatives of local and global parameters, together with measurement and sigma
+     * values. The values are stored locally.
      * @anchor NLocals_DY_Entrypoint
      * @tparam NLocals Number of local parameters.
      * @anchor NGlobals_DY_Entrypoint
@@ -181,8 +191,9 @@ namespace centipede
     class EntryPoint<NLocals, NGlobals> : public internal::EntryPointBase
     {
       public:
-        using LocalDerivs = std::array<float, NLocals>;                        //!< Data type of local deriv array.
-        using GlobalDerivs = std::array<std::pair<uint32_t, float>, NGlobals>; //!< Data type of global deriv array.
+        using LocalDerivs = std::array<ValueError<data_type>, NLocals>; //!< Data type of local deriv array.
+        using GlobalDerivs =
+            std::array<std::pair<uint32_t, ValueError<data_type>>, NGlobals>; //!< Data type of global deriv array.
 
         /**
          * @brief Default constructor.
@@ -224,7 +235,7 @@ namespace centipede
          * @return Universal reference to the caller.
          */
         template <std::ranges::input_range View>
-            requires EntryPointGlobalIdxPair<std::ranges::range_value_t<View>>
+            requires EntryPointGlobalIdxPair<std::ranges::range_value_t<View>, data_type>
         constexpr auto set_globals(View view) -> auto&&
         {
             std::ranges::copy(view | std::views::take(NGlobals), globals_.begin());
@@ -234,7 +245,8 @@ namespace centipede
         /**
          * @brief Set local derivative values from a view.
          *
-         * The view must reference a value of DataType.  The size of the input view is assumed to be larger or equal to
+         * The view must reference a value of DataType.  The size of the input view is assumed to be larger or equal
+         * to
          * @ref NLocals_DY_Entrypoint "NLocals".
          *
          * @tparam View Types of the view.
@@ -242,7 +254,7 @@ namespace centipede
          * @return Universal reference to the caller.
          */
         template <typename View>
-            requires std::same_as<std::ranges::range_value_t<View>, float>
+            requires internal::ValueErrorConvertible<std::ranges::range_value_t<View>, data_type>
         constexpr auto set_locals(View view) -> auto&&
         {
             std::ranges::copy(view | std::views::take(NLocals), locals_.begin());
@@ -254,23 +266,23 @@ namespace centipede
         LocalDerivs locals_{};   //!< Local derivatives.
         GlobalDerivs globals_{}; //!< Global label and derivatives pair. The label is using **0-based indexing**.
 
-        template <std::floating_point... DataTypes>
+        template <internal::ValueErrorConvertible<data_type>... DataTypes>
         constexpr void set_locals_imp(DataTypes... locals)
         {
-            locals_ = std::array{ static_cast<float>(locals)... };
+            locals_ = std::array{ ValueError<data_type>(locals)... };
         }
 
-        template <EntryPointGlobalIdxPair... DataTypes>
+        template <EntryPointGlobalIdxPair<data_type>... DataTypes>
         constexpr void set_globals_imp(DataTypes... globals)
         {
-            globals_ =
-                std::array{ std::pair{ static_cast<uint32_t>(globals.first), static_cast<float>(globals.second) }... };
+            globals_ = std::array{ std::pair{ static_cast<uint32_t>(globals.first),
+                                              ValueError<data_type>(globals.second) }... };
         }
 
         constexpr void reset_derivs()
         {
-            locals_ = std::array<float, NLocals>{};
-            globals_ = std::array<std::pair<uint32_t, float>, NGlobals>{};
+            locals_ = std::array<ValueError<data_type>, NLocals>{};
+            globals_ = std::array<std::pair<uint32_t, ValueError<data_type>>, NGlobals>{};
         }
     };
 }; // namespace centipede
@@ -286,11 +298,19 @@ struct std::formatter<centipede::EntryPoint<NLocals, NGlobals>>
 
     static auto format(const centipede::EntryPoint<NLocals, NGlobals>& entry, std::format_context& ctx)
     {
-        return std::format_to(ctx.out(),
-                              "local derivatives: {}, global derivatives: {}, measurement: {}, sigma: {}",
-                              entry.get_locals(),
-                              entry.get_globals(),
-                              entry.get_measurement(),
-                              entry.get_sigma());
+        return std::format_to(
+            ctx.out(),
+            "local derivatives: {}, global derivatives: {}, measurement: {}",
+            entry.get_locals() | std::views::transform([](const auto& val_err) { return std::format("{}", val_err); }) |
+                std::views::join_with(','),
+            entry.get_globals() |
+                std::views::transform(
+                    [](const auto& idx_val_err)
+                    {
+                        const auto& [idx, val_err] = idx_val_err;
+                        return std::format("{{{}: {}}}", idx, val_err);
+                    }) |
+                std::views::join_with(','),
+            entry.get_measurement());
     }
 };

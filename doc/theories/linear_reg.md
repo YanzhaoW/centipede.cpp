@@ -92,9 +92,9 @@ Thus, the iteration update on the parameters @f$\mathbf{p}@f$, which is derived 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{flalign}{
-    & & \nabla_{\mathbf{p}}^2 \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta \mathbf{p} &= \nabla_{\mathbf{p}} \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
-    &\implies & \nabla_{\mathbf{p}}^2 \left(\sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= \nabla_{\mathbf{p}} \left( \sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
-    &\implies & \left(\sum^{n}_i \frac{\nabla_{\mathbf{p}} f(x_i, \mathbf{p}) \nabla_{\mathbf{p}}^{\dagger} f(x_i, \mathbf{p})}{\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= - \sum^{n}_i \frac{z(x_i, y_i, \mathbf{p}) \nabla_{\mathbf{p}} f(x_i, \mathbf{p})}{\sigma_i^2}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} &
+    & & \nabla_{\mathbf{p}}^2 \mathcal{F}\bigg\rvert_{\mathbf{p} = - \mathbf{p}_\text{init}} \, \delta \mathbf{p} &= \nabla_{\mathbf{p}} \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
+    &\implies & \nabla_{\mathbf{p}}^2 \left(\sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= - \nabla_{\mathbf{p}} \left( \sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
+    &\implies & \left(\sum^{n}_i \frac{\nabla_{\mathbf{p}} f(x_i, \mathbf{p}) \nabla_{\mathbf{p}}^{\dagger} f(x_i, \mathbf{p})}{\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= \sum^{n}_i \frac{z(x_i, y_i, \mathbf{p}) \nabla_{\mathbf{p}} f(x_i, \mathbf{p})}{\sigma_i^2}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} &
     \label{eq:hessian}
 \f}
 <!-- LTeX: enabled=true -->
