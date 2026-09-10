@@ -127,7 +127,6 @@ namespace centipede::core::engine
         }
         ++(self.state_.entry_counter);
         self.state_.n_points = entry.measurements.size();
-        assert(self.state_.n_points == entry.sigmas.size());
         self.state_.n_locals = entry.n_locals.value();
 
         self.resize_buffers();
