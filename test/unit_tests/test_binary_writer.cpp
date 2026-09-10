@@ -1,4 +1,5 @@
 #include "centipede/centipede.hpp"
+#include "centipede/data/ValueError.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <format>
@@ -44,18 +45,19 @@ namespace
 {
     const auto valid_meas = 1.F;
     const auto valid_sigma = 1.F;
+    const auto valid_measurement = centipede::ValueError<float>{ 1.F, 1.F };
     const auto valid_entry_point = centipede::EntryPoint<3, 2>{}
                                        .set_locals(1.F, 2.F, 3.F)
                                        .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
-                                       .set_measurement(valid_meas);
+                                       .set_measurement(valid_measurement);
 } // namespace
 TEST(writer, read_entrypoint_normal)
 {
     auto writer = Binary{ {} };
     [[maybe_unused]] auto init_err = writer.init();
 
-    auto err = writer.add_entrypoint(valid_entry_point);
-    ASSERT_TRUE(err.has_value());
+    auto is_ok = writer.add_entrypoint(valid_entry_point);
+    ASSERT_TRUE(is_ok) << std::format("{}", is_ok.error());
 
     const auto& buffer = writer.get_buffer();
     const auto idx_vec = std::vector<uint32_t>{ 0U, 0U, 1U, 2U, 3U, 0U, 11U, 12U };
@@ -70,9 +72,11 @@ TEST(writer, read_entrypoint_local_zero)
     [[maybe_unused]] auto init_err = writer.init();
 
     auto entry_point = centipede::EntryPoint<>{};
-    entry_point.set_locals(0.F, 1.0F).set_globals(std::pair{ 10U, 1.F }, std::pair{ 11U, 2.F }).set_measurement(2.3F);
+    entry_point.set_locals(0.F, 1.0F)
+        .set_globals(std::pair{ 10U, 1.F }, std::pair{ 11U, 2.F })
+        .set_measurement(valid_measurement);
     auto is_ok = writer.add_entrypoint(entry_point);
-    ASSERT_TRUE(is_ok);
+    ASSERT_TRUE(is_ok) << std::format("{}", is_ok.error());
     const auto buffer = writer.get_buffer();
     EXPECT_EQ(buffer.second.size(), buffer.first.size());
     EXPECT_EQ(buffer.first.size(), 7) << std::format("buffer: {}\n entrypoint: {}", buffer, entry_point);
@@ -84,9 +88,11 @@ TEST(writer, read_entrypoint_reject)
     [[maybe_unused]] auto init_err = writer.init();
 
     auto entry_point = centipede::EntryPoint<1, 2>{};
-    entry_point.set_locals(0.).set_globals(std::pair{ 10U, 0.F }, std::pair{ 11U, 0.F }).set_measurement(1.F);
+    entry_point.set_locals(0.)
+        .set_globals(std::pair{ 10U, 0.F }, std::pair{ 11U, 0.F })
+        .set_measurement(valid_measurement);
     auto is_ok = writer.add_entrypoint(entry_point);
-    ASSERT_FALSE(is_ok);
+    ASSERT_FALSE(is_ok) << std::format("{}", is_ok.error());
     EXPECT_TRUE(is_ok.error() == ErrorCode::writer_entrypoint_rejected);
 
     auto size = writer.write_current_entry();
@@ -98,10 +104,10 @@ TEST(writer, uninitialized)
 {
     auto writer = Binary{ {} };
 
-    auto err = writer.add_entrypoint(valid_entry_point);
+    auto is_ok = writer.add_entrypoint(valid_entry_point);
 
-    ASSERT_FALSE(err.has_value());
-    EXPECT_EQ(err.error(), ErrorCode::writer_uninitialized);
+    ASSERT_FALSE(is_ok.has_value());
+    EXPECT_EQ(is_ok.error(), ErrorCode::writer_uninitialized) << std::format("{}", is_ok.error());
 
     auto size = writer.write_current_entry();
     ASSERT_FALSE(size.has_value());
@@ -117,7 +123,7 @@ TEST(writer, read_entrypoint_zero_sigma)
     auto entry_point = centipede::EntryPoint<3, 2>{}
                            .set_locals(1.F, 2.F, 3.F)
                            .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
-                           .set_measurement(1.F);
+                           .set_measurement(valid_measurement);
 
     auto err = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(err.has_value());

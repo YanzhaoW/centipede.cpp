@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/util/formatter_helper.hpp"
 #include <concepts>
 #include <format>
 #include <type_traits>
@@ -110,10 +111,15 @@ template <typename T>
 // NOLINTNEXTLINE (bugprone-std-namespace-modification)
 struct std::formatter<centipede::ValueError<T>>
 {
-    static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+    std::formatter<T> parse_option;
 
-    static auto format(const centipede::ValueError<T>& value_error, std::format_context& ctx)
+    constexpr auto parse(std::format_parse_context& ctx) { return parse_option.parse(ctx); }
+
+    constexpr auto format(const centipede::ValueError<T>& value_error, std::format_context& ctx) const
     {
-        return std::format_to(ctx.out(), "{}+/-{}", value_error.value, value_error.error);
+        return std::format_to(ctx.out(),
+                              "{} +/- {}",
+                              centipede::FormatHelper{ value_error.value, parse_option },
+                              centipede::FormatHelper{ value_error.error, parse_option });
     }
 };

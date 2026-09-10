@@ -72,15 +72,23 @@ TEST(static_entrypoint, format)
     auto entry = centipede::EntryPoint<1, 1>{}.set_locals(1.F).set_globals(std::pair{ 1U, 1.F }).set_measurement(1.);
 
     auto format_str = std::format("{}", entry);
-    EXPECT_STREQ(format_str.data(), "local derivatives: [1], global derivatives: [(1, 1)], measurement: 1, sigma: 1");
+    EXPECT_STREQ(format_str.data(),
+                 "local derivatives: [1 +/- 0], global derivatives: [{1: 1 +/- 0}], measurement: 1 +/- 0")
+        << format_str;
 }
 
 TEST(dynamic_entrypoint, format)
 {
-    auto entry = centipede::EntryPoint{}.set_locals(1.F).set_globals(std::pair{ 1U, 1.F }).set_measurement(1.);
+    auto entry = centipede::EntryPoint{}
+                     .set_locals(1.23232F)
+                     .set_globals(std::pair{ 1U, 3.87864F })
+                     .set_measurement(ValueError{ 1.23456F, 0.2345234F });
 
-    auto format_str = std::format("{}", entry);
-    EXPECT_STREQ(format_str.data(), "local derivatives: [1], global derivatives: [(1, 1)], measurement: 1, sigma: 1");
+    auto format_str = std::format("{:.2f}", entry);
+    EXPECT_STREQ(
+        format_str.data(),
+        "local derivatives: [1.23 +/- 0.00], global derivatives: [{1: 3.88 +/- 0.00}], measurement: 1.23 +/- 0.23")
+        << format_str;
 }
 
 // NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers)

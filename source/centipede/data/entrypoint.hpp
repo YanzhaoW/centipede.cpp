@@ -2,6 +2,7 @@
 
 #include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint_base.hpp"
+#include "centipede/util/formatter_helper.hpp"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -11,6 +12,7 @@
 #include <format>
 #include <iterator>
 #include <ranges>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -294,23 +296,30 @@ template <std::size_t NLocals, std::size_t NGlobals>
 // NOLINTNEXTLINE (bugprone-std-namespace-modification)
 struct std::formatter<centipede::EntryPoint<NLocals, NGlobals>>
 {
-    static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+    using data_type = centipede::EntryPoint<NLocals, NGlobals>::data_type;
+    std::formatter<centipede::ValueError<data_type>> value_error_parse_option;
 
-    static auto format(const centipede::EntryPoint<NLocals, NGlobals>& entry, std::format_context& ctx)
+    constexpr auto parse(std::format_parse_context& ctx) { return value_error_parse_option.parse(ctx); }
+
+    auto format(const centipede::EntryPoint<NLocals, NGlobals>& entry, std::format_context& ctx) const
     {
         return std::format_to(
             ctx.out(),
-            "local derivatives: {}, global derivatives: {}, measurement: {}",
-            entry.get_locals() | std::views::transform([](const auto& val_err) { return std::format("{}", val_err); }) |
-                std::views::join_with(','),
+            "local derivatives: [{:s}], global derivatives: [{:s}], measurement: {}",
+            entry.get_locals() |
+                std::views::transform(
+                    [this](const auto& val_err)
+                    { return std::format("{}", centipede::FormatHelper{ val_err, value_error_parse_option }); }) |
+                std::views::join_with(std::string_view{ ", " }),
             entry.get_globals() |
                 std::views::transform(
-                    [](const auto& idx_val_err)
+                    [this](const auto& idx_val_err)
                     {
                         const auto& [idx, val_err] = idx_val_err;
-                        return std::format("{{{}: {}}}", idx, val_err);
+                        return std::format(
+                            "{{{}: {}}}", idx, centipede::FormatHelper{ val_err, value_error_parse_option });
                     }) |
-                std::views::join_with(','),
-            entry.get_measurement());
+                std::views::join_with(std::string_view{ ", " }),
+            centipede::FormatHelper{ entry.get_measurement(), value_error_parse_option });
     }
 };
