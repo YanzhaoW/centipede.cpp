@@ -123,7 +123,7 @@ TEST(writer, read_entrypoint_zero_sigma)
     auto entry_point = centipede::EntryPoint<3, 2>{}
                            .set_locals(1.F, 2.F, 3.F)
                            .set_globals(std::pair{ 10U, 2.F }, std::pair{ 11U, 3.F })
-                           .set_measurement(valid_measurement);
+                           .set_measurement(1.F);
 
     auto err = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(err.has_value());
