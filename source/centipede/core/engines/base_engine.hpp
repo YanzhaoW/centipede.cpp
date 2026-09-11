@@ -127,13 +127,11 @@ namespace centipede::core::engine
         }
         ++(self.state_.entry_counter);
         self.state_.n_points = entry.measurements.size();
-        assert(self.state_.n_points == entry.sigmas.size());
         self.state_.n_locals = entry.n_locals.value();
 
         self.resize_buffers();
 
         self.fill_measurements(entry.measurements);
-        self.fill_sigmas(entry.sigmas);
         self.fill_local_derivs(entry.local_derivs);
         auto res = self.fill_global_derivs(entry.global_derivs, unfixed_par_id_map);
 

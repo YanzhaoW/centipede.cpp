@@ -4,6 +4,7 @@
 #include "centipede/core/engines/engine_types.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
 #include "centipede/core/engines/result.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entry.hpp"
 #include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
@@ -87,7 +88,7 @@ namespace centipede::core::engine
         [[nodiscard]] auto get_buffers() const -> const auto& { return buffers_; }
         [[nodiscard]] auto get_local_derivs() const -> const auto& { return local_deriv_t_; }
         [[nodiscard]] auto get_global_derivs() const -> const auto& { return global_deriv_t_; }
-        [[nodiscard]] auto get_sigmas() const -> const auto& { return sigmas_; }
+        [[nodiscard]] auto get_sigmas() const -> const auto& { return weights_; }
         [[nodiscard]] auto get_measurements() const -> const auto& { return measurements_; }
 
         /**
@@ -168,8 +169,8 @@ namespace centipede::core::engine
         Eigen::SparseMatrix<DataType>
             global_deriv_t_{}; //!< Transpose of the global derivs matrix. The row size is number of
                                //!< global parameters and column size is the number of entrypoints.
-        Eigen::Matrix<DataType, Eigen::Dynamic, 1> sigmas_{};       //!< Sigma values
-        Eigen::Matrix<DataType, Eigen::Dynamic, 1> measurements_{}; //!< Sigma values
+        Eigen::Matrix<DataType, Eigen::Dynamic, 1> weights_{};      //!< weight values
+        Eigen::Matrix<DataType, Eigen::Dynamic, 1> measurements_{}; //!< measurement values
 
         Globals globals_;
 
@@ -209,7 +210,7 @@ namespace centipede::core::engine
             buffers_.residual_values.resize(entrypoint_size);
             buffers_.local_weighted_square_inv.resize(n_locals, n_locals);
             buffers_.local_solutions.resize(n_locals);
-            sigmas_.resize(entrypoint_size);
+            weights_.resize(entrypoint_size);
             measurements_.resize(entrypoint_size);
 
             // NOTE: resize initializes the sparse matrix to zero values
@@ -221,15 +222,15 @@ namespace centipede::core::engine
             buffers_.sigmas_sparse_view.resize(entrypoint_size, entrypoint_size);
         }
 
-        void fill_sigmas(const std::vector<DataType>& data)
+        void fill_measurements(const std::vector<ValueError<DataType>>& data)
         {
-            std::ranges::copy(
-                std::views::transform(data,
-                                      [](DataType val) -> DataType { return static_cast<DataType>(1.) / (val * val); }),
-                sigmas_.begin());
+            for (auto [val_err, meas, sigma] : std::views::zip(data, measurements_, weights_))
+            {
+                const auto [val, err] = val_err;
+                meas = val;
+                sigma = static_cast<DataType>(1.) / (err * err);
+            }
         }
-
-        void fill_measurements(const std::vector<DataType>& data) { std::ranges::copy(data, measurements_.begin()); }
 
         void fill_local_derivs(const std::vector<typename Entry<DataType>::Deriv>& data)
         {
@@ -242,7 +243,7 @@ namespace centipede::core::engine
                 assert(point_idx < local_t_.cols());
                 assert(deriv.first < local_t_.rows());
 #endif
-                local_deriv_t_(deriv.first, point_idx) = deriv.second;
+                local_deriv_t_(deriv.first, point_idx) = deriv.second.value;
             }
         }
 
@@ -262,7 +263,7 @@ namespace centipede::core::engine
                     assert(point_idx < global_deriv_t_.cols());
                     assert(unfixed_par_id < global_deriv_t_.rows());
 #endif
-                    triplets_.emplace_back(unfixed_par_id.value(), point_idx, par_id_deriv.second);
+                    triplets_.emplace_back(unfixed_par_id.value(), point_idx, par_id_deriv.second.value);
                 }
             }
             global_deriv_t_.setFromSortedTriplets(triplets_.begin(), triplets_.end());
@@ -273,7 +274,7 @@ namespace centipede::core::engine
         {
             // NOTE: Multiplications will trigger temporary object (memory allocation later during the assignment.)
             auto _ = EigenMemGuard{};
-            buffers_.local_weighted_t.noalias() = local_deriv_t_ * sigmas_.asDiagonal();
+            buffers_.local_weighted_t.noalias() = local_deriv_t_ * weights_.asDiagonal();
 
             buffers_.local_weighted_square.noalias() =
                 buffers_.local_weighted_t.lazyProduct(local_deriv_t_.transpose());
@@ -306,7 +307,7 @@ namespace centipede::core::engine
 
             buffers_.residual_values.noalias() =
                 measurements_ - (local_deriv_t_.transpose() * buffers_.local_solutions);
-            const auto chi_square = buffers_.residual_values.dot(sigmas_.asDiagonal() * buffers_.residual_values);
+            const auto chi_square = buffers_.residual_values.dot(weights_.asDiagonal() * buffers_.residual_values);
             return std::pair{ ndf, chi_square };
         }
 
@@ -315,7 +316,7 @@ namespace centipede::core::engine
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
             // Eigen::internal::set_is_malloc_allowed(false);
-            buffers_.sigmas_sparse_view = sigmas_.asDiagonal();
+            buffers_.sigmas_sparse_view = weights_.asDiagonal();
             buffers_.global_local_weighted_t = local_deriv_t_.sparseView();
             buffers_.global_local_weighted_t =
                 buffers_.global_local_weighted_t * buffers_.sigmas_sparse_view * global_deriv_t_.transpose();
@@ -344,7 +345,7 @@ namespace centipede::core::engine
         {
             // TODO: Perform the production using index accessing.
             // NOTE: Seems that there is no way to prevent memory allocation with sparse matrices.
-            buffers_.global_rhs_vector_update = (sigmas_.asDiagonal() * measurements_).sparseView();
+            buffers_.global_rhs_vector_update = (weights_.asDiagonal() * measurements_).sparseView();
             buffers_.global_rhs_vector_update = global_deriv_t_ * buffers_.global_rhs_vector_update;
             globals_.rhs_vec += buffers_.global_rhs_vector_update;
             buffers_.global_rhs_vector_update = buffers_.local_solutions.sparseView();

@@ -95,7 +95,9 @@ namespace centipede::reader
         auto chunk_handle_sigma(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            chunk_ptr.entrypoint->set_sigma(std::get<1>(*(*(chunk_ptr.iter)).begin()));
+            auto val = chunk_ptr.entrypoint->get_measurement();
+            val.error = std::get<1>(*(*(chunk_ptr.iter)).begin());
+            chunk_ptr.entrypoint->set_measurement(val);
             return chunk_ptr;
         }
 
