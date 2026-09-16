@@ -6,7 +6,7 @@ The millepede algorithm is fundamentally a linear regression model, which minimi
 
 ## Simple linear regression
 
-### Objective functions
+### Objective functions {#linear_objective}
 
 In the simplest case of linear regression on a calibration equation:
 
@@ -92,7 +92,7 @@ Thus, the iteration update on the parameters @f$\mathbf{p}@f$, which is derived 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{flalign}{
-    & & \nabla_{\mathbf{p}}^2 \mathcal{F}\bigg\rvert_{\mathbf{p} = - \mathbf{p}_\text{init}} \, \delta \mathbf{p} &= \nabla_{\mathbf{p}} \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
+    & & \nabla_{\mathbf{p}}^2 \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta \mathbf{p} &= - \nabla_{\mathbf{p}} \mathcal{F}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
     &\implies & \nabla_{\mathbf{p}}^2 \left(\sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= - \nabla_{\mathbf{p}} \left( \sum^{n}_{i}\frac{\left(y_i - f(x_i, \mathbf{p})\right)^2}{2\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \notag & \\
     &\implies & \left(\sum^{n}_i \frac{\nabla_{\mathbf{p}} f(x_i, \mathbf{p}) \nabla_{\mathbf{p}}^{\dagger} f(x_i, \mathbf{p})}{\sigma_i^2} \right)\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} \, \delta\mathbf{p} &= \sum^{n}_i \frac{z(x_i, y_i, \mathbf{p}) \nabla_{\mathbf{p}} f(x_i, \mathbf{p})}{\sigma_i^2}\bigg\rvert_{\mathbf{p} = \mathbf{p}_\text{init}} &
     \label{eq:hessian}
@@ -343,26 +343,4 @@ Throughout the whole process, it can be found that
 
 ### Millepede on calibration relation
 
-## Regression with both x and y errors
-
-To introduce @f$x@f$ errors both in the objective function and minimization step, some changes are required when calculating the maximum probability in equation @f$\eqref{eq:MLE}@f$. Assuming both @f$x@f$ and @f$y@f$ values follow the Gaussian distribution, and they are independent, the probability for the observed data points can be expressed as:
-
-<!-- prettier-ignore-start -->
-<!-- LTeX: enabled=false -->
-\f{equation}{
-    Prob(\mathbf{x}, \mathbf{y}) \sim \prod^{n}_{i} \exp{ -\frac{\left(y_i - f(\mu_i, \mathbf{p})\right)^2}{2(\sigma^y_i)^2}} \exp{ -\frac{\left(x_i - \mu_i\right)^2}{2(\sigma^x_i)^2}}
-\f}
-<!-- LTeX: enabled=true -->
-<!-- prettier-ignore-end -->
-
-where @f$\mu_i@f$ represents the true @f$x@f$ values and @f$f(\mu_i, \mathbf{p})@f$ the true @f$y@f$ values. Following a similar derivation, the objective function can then be expressed as
-
-<!-- prettier-ignore-start -->
-<!-- LTeX: enabled=false -->
-\f{equation}{
-    \mathcal{F}(\mathbf{p}, \boldsymbol{\mu}) = \sum^{n}_{i}\left(\frac{\left(y_i - f(\mu_i, \mathbf{p})\right)^2}{2(\sigma^y_i)^2} + \frac{\left(x_i - \mu_i\right)^2}{2(\sigma^x_i)^2} \right)
-\f}
-<!-- LTeX: enabled=true -->
-<!-- prettier-ignore-end -->
-
-It can be seen here that the @f$x@f$ true values @f$\boldsymbol{\mu}@f$ are treated as additional optimization parameters and its form is exactly the same as the objective function derived in the _Orthogonal Distance Regression_ (ODR)\cite boggs1989orthogonal.
+@include{doc} theories/implicit_equation.md
