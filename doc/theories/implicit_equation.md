@@ -9,13 +9,15 @@ In many cases, it's not easy to have one variable on one side of the equation an
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
-    f(\mathbf{x}, \mathbf{q}) = \sum^n_i x_i q_i = 0
+
+    f(\mathbf{x}, \mathbf{p}) = \sum^n_i x_i p_i = 0
     \label{eq:imp_func}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-where @f$\mathbf{x}@f$ represents the variables/measurements @f$(x_0, x_1, \ldots, x_n)@f$, each of which could have different error values (standard deviation), and @f$\mathbf{q}@f$ represents fitting parameters @f$(q_0, q_1, \ldots, q_n)@f$. Note that both variables and parameters could be fixed and behave as a constant value.
+where @f$\mathbf{x}@f$ represents the variables/measurements @f$(x_0, x_1, \ldots, x_n)@f$, each of which could have different error values (standard deviation), and @f$\mathbf{q}@f$ represents fitting parameters @f$(p_0, p_1, \ldots, p_n)@f$. Note that both variables and parameters could be fixed and behave as a constant value.
 
 ### Objective function for the implicit equation
 
@@ -24,7 +26,9 @@ The objective function can still be obtained via the Maximal Likelihood Method, 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
-    Prob(\mathbf{\hat{x}}^0, \ldots, \mathbf{\hat{x}}^m, \mathbf{q}) \sim \prod^{m}_{j} \prod^{n}_{i} \exp{ -\frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2}} 
+
+    Prob(\mathbf{\hat{x}}^0, \ldots, \mathbf{\hat{x}}^m, \mathbf{p}) \sim \prod^{m}_{j} \prod^{n}_{i} \exp{ -\frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2}} 
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -34,7 +38,9 @@ subjugated by the equation @f$\eqref{eq:imp_func}@f$ for each index @f$j@f$
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation*}{
-    \sum^n_i (\hat{x}^j_i + x^j_i) q_i = 0
+
+    \sum^n_i (\hat{x}^j_i + x^j_i) p_i = 0
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -46,7 +52,9 @@ A trivial choice for the objective function would just be the one following the 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
-    \sum^m_j \sum^n_i \frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2} + \sum^m_j \eta_j \sum^n_i (\hat{x}^j_i + x^j_i) q_i
+
+    \sum^m_j \sum^n_i \frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2} + \sum^m_j \eta_j \sum^n_i (\hat{x}^j_i + x^j_i) p_i
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -56,14 +64,14 @@ However, choosing this formula as the objective function has two major drawbacks
 1. Introducing Lagrange multipliers as additional fitting parameters further increases the computation complexity.
 2. The Lagrange multiplier terms cause the Hessian matrix of the objective function not to be positive definite.
 
-The first one can be solved by set the all multiplier factors to be one very large constant value, multiplying the squared value of @f$f(\mathbf{x}, \mathbf{q})@f$, such that the subjugation still matters a lot for the minimization. The second one can be resolved by introducing _L2 regularizations_ for all fitting parameters, which essentially adds a random value to the eigen values of the Hessian matrix and force it to be positive definite. Thus, a better form of the objective function could be expressed as
+The first one can be solved by set the all multiplier factors to be one very large constant value, multiplying the squared value of @f$f(\mathbf{x}, \mathbf{p})@f$, such that the subjugation still matters a lot for the minimization. The second one can be resolved by introducing _L2 regularizations_ for all fitting parameters, which essentially adds a random value to the eigen values of the Hessian matrix and force it to be positive definite. Thus, a better form of the objective function could be expressed as
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{align}{
 
-    \mathcal{F}(\mathbf{\hat{x}}^0, \ldots, \mathbf{\hat{x}}^m, \mathbf{q}) =& \sum_{i,\ j} \frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2} + \frac{\eta}{2} \sum_j \left(\sum_i (\hat{x}^j_i + x^j_i) q_i\right)^2 \notag \\
-   & + \frac{\lambda}{2} \left(\sum_{i,\ j} (\hat{x}^j_i)^2 + \sum_i (q_i)^2 \right)
+    \mathcal{F}(\mathbf{\hat{x}}^0, \ldots, \mathbf{\hat{x}}^m, \mathbf{p}) =& \sum_{i,\ j} \frac{(\hat{x}^j_i)^2}{2(\sigma^j_i)^2} + \frac{\eta}{2} \sum_j \left(\sum_i (\hat{x}^j_i + x^j_i) p_i\right)^2 \notag \\
+   & + \frac{\lambda}{2} \left(\sum_{i,\ j} (\hat{x}^j_i)^2 + \sum_i (p_i)^2 \right)
     \label{eq:impl_objective}
 
 \f}
@@ -82,16 +90,16 @@ As is seen from equation @f$\eqref{eq:hessian}@f$, minimization using Newton's m
 
     \newcommand{\elementHeight}{\rule[-2em]{0pt}{4em}}
     \begin{bmatrix}
-        \elementHeight \dfrac{\partial^2\mathcal{F}}{\partial q_i \partial q_{i'}} & \dfrac{\partial^2\mathcal{F}}{\partial q_i \partial \hat{x}_{i'}^{j'}} \\ 
-        \elementHeight \dfrac{\partial^2\mathcal{F}}{\partial q_i \partial \hat{x}_{i'}^j} & \dfrac{\partial^2\mathcal{F}}{\partial \hat{x}_{i}^{j} \partial \hat{x}_{i'}^{j'}}
+        \elementHeight \dfrac{\partial^2\mathcal{F}}{\partial p_i \partial p_{i'}} & \dfrac{\partial^2\mathcal{F}}{\partial p_i \partial \hat{x}_{i'}^{j'}} \\ 
+        \elementHeight \dfrac{\partial^2\mathcal{F}}{\partial p_i \partial \hat{x}_{i'}^j} & \dfrac{\partial^2\mathcal{F}}{\partial \hat{x}_{i}^{j} \partial \hat{x}_{i'}^{j'}}
     \end{bmatrix}
     \begin{bmatrix}
-        \elementHeight \delta q_i \\
+        \elementHeight \delta p_i \\
         \elementHeight \delta \hat{x}^j_i
     \end{bmatrix}
     = -
     \begin{bmatrix}
-    \elementHeight \dfrac{\partial\mathcal{F}}{\partial q_i} \\
+    \elementHeight \dfrac{\partial\mathcal{F}}{\partial p_i} \\
     \elementHeight \dfrac{\partial\mathcal{F}}{\partial \hat{x}_i^j}
     \end{bmatrix}
 
@@ -105,9 +113,9 @@ Using the definition from equation @f$\eqref{eq:impl_objective}@f$, the first-or
 <!-- LTeX: enabled=false -->
 \f{align}{
 
-    \frac{\partial\mathcal{F}}{\partial q_i} &= \lambda q_i + \eta \sum^m_j \left( \sum^n_{i'} q_{i'} (\hat{x}^j_{i'} + x^j_{i'}) \right) (\hat{x}^j_i + x^j_i) \\
-    \frac{\partial\mathcal{F}}{\partial \hat{x}^j_i} &= \lambda \hat{x}_i^j + \frac{\hat{x}_i^j}{(\sigma_i^j)^2} + \eta \left( \sum_{i'}^n q_{i'} (\hat{x}^j_{i'} + x^j_{i'}) \right) q_i
-
+    \frac{\partial\mathcal{F}}{\partial p_i} &= \lambda p_i + \eta \sum^m_j \left( \sum^n_{i'} p_{i'} (\hat{x}^j_{i'} + x^j_{i'}) \right) (\hat{x}^j_i + x^j_i) \notag \\
+    \frac{\partial\mathcal{F}}{\partial \hat{x}^j_i} &= \lambda \hat{x}_i^j + \frac{\hat{x}_i^j}{(\sigma_i^j)^2} + \eta \left( \sum_{i'}^n p_{i'} (\hat{x}^j_{i'} + x^j_{i'}) \right) p_i
+    \label{eq:impli_first_order}
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -118,12 +126,13 @@ Further second-order derivatives on the left-side of the equation can be express
 <!-- LTeX: enabled=false -->
 \f{align}{
 
-    \frac{\partial^2\mathcal{F}}{\partial q_i \partial q_{i'}} &= \delta_{ii'} \lambda + \eta \sum^m_j (\hat{x}_i^j + x_i^j)(\hat{x}_{i'}^j + x_{i'}^j)  \\
-    \frac{\partial^2\mathcal{F}}{\partial q_i \partial \hat{x}_{i'}^{j'}} &= \delta_{ii'} \eta \left( \sum^n_{i'} q_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta q_{i'} (\hat{x}_i^j + x_i^j) \\
-    \frac{\partial^2\mathcal{F}}{\partial \hat{x}_{i}^{j} \partial \hat{x}_{i'}^{j'}} &= \delta_{jj'}\delta_{ii'} \left(\lambda + \frac{1}{(\sigma_i^j)^2} \right) + \delta_{jj'} \eta q_i q_{i'}
+    \frac{\partial^2\mathcal{F}}{\partial p_i \partial p_{i'}} &= \delta_{ii'} \lambda + \eta \sum^m_j (\hat{x}_i^j + x_i^j)(\hat{x}_{i'}^j + x_{i'}^j) \notag  \\
+    \frac{\partial^2\mathcal{F}}{\partial p_i \partial \hat{x}_{i'}^{j'}} &= \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta p_{i'} (\hat{x}_i^j + x_i^j) \notag \\
+    \frac{\partial^2\mathcal{F}}{\partial \hat{x}_{i}^{j} \partial \hat{x}_{i'}^{j'}} &= \delta_{jj'}\delta_{ii'} \left(\lambda + \frac{1}{(\sigma_i^j)^2} \right) + \delta_{jj'} \eta p_i p_{i'}
+    \label{eq:impli_second_order}
 
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-It can be observed that the values of both of first-order and the second-order derivatives depend on the parameters themselves, unlike the case with linear regression where all derivative values are constants. Thus, it's necessary to replace the parameters values in the equation with their initial values during the first calculation of the parameter step updates, @f$\delta \mathbf{q}@f$, and repeat the same calculation using the new updated parameter values until the update values are smaller than a certain threshold.
+It can be observed that the values of both of first-order and the second-order derivatives depend on the parameters themselves, unlike the case with linear regression where all derivative values are constants. Thus, it's necessary to replace the parameters values in the equation with their initial values during the first calculation of the parameter step updates, @f$\delta \mathbf{p}@f$, and repeat the same calculation using the new updated parameter values until the update values are smaller than a certain threshold.
