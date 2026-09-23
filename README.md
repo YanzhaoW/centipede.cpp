@@ -8,7 +8,7 @@
 
 ## Documentation
 
-Please see [the official documentation site](https://yanzhaow.github.io/centipede.cpp/) for usages and references.
+Please see [the documentation site](https://yanzhaow.github.io/centipede.cpp/) for usages and references.
 
 ## Download
 

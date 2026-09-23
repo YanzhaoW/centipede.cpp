@@ -9,7 +9,9 @@ Calibration parameters can characterize different factors. One of the common fac
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     0 = f(\mathbf{x}; \mathbf{p})
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -30,8 +32,10 @@ For example, imagine a set of detector modules located along the x-axis and sepa
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     y_\text{track} = y_\text{meas} + y_\text{offset}
     \label{eq:trackeq1}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -41,8 +45,10 @@ Here the observable is simple a value @f$y_\text{meas}@f$ and x position of the 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     y_\text{track} = a \cdot x_\text{meas} + b
     \label{eq:trackeq2}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -52,7 +58,9 @@ where @f$a@f$ and @f$b@f$ are the slope and offset of the particle track and @f$
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     0 = a \cdot x_\text{meas} + b - y_\text{meas} - y_\text{offset}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -63,12 +71,13 @@ Equations @f$\eqref{eq:trackeq1}@f$ and @f$\eqref{eq:trackeq2}@f$ can be general
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
-
 \f{flalign}{
-& &\mathbf{y}_\text{track} &= \mathbf{f}(\mathbf{y}, \mathbf{p}) \notag &\\
-& &\mathbf{y}_\text{track} &= \mathbf{g}(\mathbf{x}, \mathbf{q}) \notag &\\
-&\implies & 0 &= \mathbf{g}(\mathbf{x}, \mathbf{q}) - \mathbf{f}(\mathbf{y}, \mathbf{p}) &
-\label{eq:track_gen}
+
+    & &\mathbf{y}_\text{track} &= \mathbf{f}(\mathbf{y}, \mathbf{p}) \notag &\\
+    & &\mathbf{y}_\text{track} &= \mathbf{g}(\mathbf{x}, \mathbf{q}) \notag &\\
+    &\implies & 0 &= \mathbf{g}(\mathbf{x}, \mathbf{q}) - \mathbf{f}(\mathbf{y}, \mathbf{p}) &
+    \label{eq:track_gen}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -78,8 +87,10 @@ where @f$\mathbf{x}@f$ and @f$\mathbf{y}@f$ are all observables, @f$\mathbf{p}@f
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     0 = \mathbf{g}(\mathbf{x}^{j,k}, \mathbf{q}^k) - \mathbf{f}(\mathbf{y}^{j,k}, \mathbf{p}^j)
     \label{eq:gen_cal}
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -89,7 +100,9 @@ Suppose the total number of tracks is @f$n_\text{track}@f$, the total number of 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
+
     \texttt{dim} \ \mathcal{H} = n_p + n_\text{track} \cdot n_q
+
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->

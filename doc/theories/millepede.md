@@ -186,17 +186,20 @@ The x and y observables are
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
-\f{equation}{
+\f{align*}{
 
-    x_i = 
+    x_i &= 
     \begin{cases}
     -y_\text{meas} & i = 2k, \quad &k \in \mathbb{Z} \\
     -1 & i = 2k + 1, \quad &k \in \mathbb{Z}
-    \end{cases}
+    \end{cases} \\
+    y_0 &= x_\text{meas} \\
+    y_1 &= 1
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
+#### Factor matrices and RHS vector
 
 The three matrices used to construct the factor matrix in equation @f$\eqref{eq:factorMat}@f$ can be evaluated using the first- and second-order derivatives shown in equations @f$\eqref{eq:impli_first_order}@f$ and @f$\eqref{eq:impli_second_order}@f$. The matrix @f$\mathcal{C}_k^1@f$ can be expressed as:
 
@@ -221,15 +224,16 @@ The expression of @f$\mathcal{C}_k^2@f$ is more complicated as the distances to 
 
     \mathcal{C}_k^2 = 
     \begin{bmatrix}
-        \mathcal{M}^k_{11} & \mathcal{M}^k_{12} \\
-        \mathcal{M}^k_{12} & \mathcal{M}^k_{22}
+        \mathcal{M}^k_{11} & \mathcal{M}^k_{12} & \mathcal{M}^k_{13} \\
+        \mathcal{M}^k_{12} & \mathcal{M}^k_{22} & \mathcal{M}^k_{23} \\
+        \mathcal{M}^k_{13} & \mathcal{M}^k_{23} & \mathcal{M}^k_{33} \\
     \end{bmatrix}_{jj',\,n_q \times n_q}^{-1}\\
 
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-where the matrix blocks are:
+Here the square matrix is partitioned into three rows and columns of block matrices. The first row or column relates to the local parameter in the calibration equation. The second row or column relates to the distance parameters for global parameter coefficients while the third relates to local parameter coefficients. From the second derivatives of the ODR regression shown in equation @f$\eqref{eq:impli_second_order}@f$
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
