@@ -80,11 +80,17 @@ namespace centipede
 
     namespace internal
     {
+        /**
+         * @brief Default false when type is not ValueError
+         */
         template <typename T>
         struct IsValueError : std::false_type
         {
         };
 
+        /**
+         * @brief True when type is ValueError
+         */
         template <typename T>
         struct IsValueError<ValueError<T>> : std::true_type
         {

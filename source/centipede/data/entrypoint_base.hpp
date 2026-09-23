@@ -67,7 +67,7 @@ namespace centipede::internal
         /**
          * @brief Reset all values to the default values.
          *
-         * In this base class, only member variables #measurement_ and #sigma_ are resetted to their default values.
+         * In this base class, only member variables #measurement_ are resetted to their default values.
          * `reset_derivs` method implemented from derived classes is called to reset the derivative values.
          * @param self The dynamic reference to the caller.
          * @return Universal reference to the caller.
@@ -193,8 +193,7 @@ namespace centipede::internal
         /**
          * @brief Set the measurement of the current entry point.
          * @param self The dynamic reference to the caller.
-         * @param value Measurement value.
-         * @param error Measurement error.
+         * @param value_error Measurement value with uncertainty.
          * @return Universal reference to the caller.
          */
         constexpr auto set_measurement(this auto&& self, internal::ValueErrorConvertible<data_type> auto value_error)

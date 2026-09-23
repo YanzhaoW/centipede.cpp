@@ -127,7 +127,7 @@ Further second-order derivatives on the left-side of the equation can be express
 \f{align}{
 
     \frac{\partial^2\mathcal{F}}{\partial p_i \partial p_{i'}} &= \delta_{ii'} \lambda + \eta \sum^m_j (\hat{x}_i^j + x_i^j)(\hat{x}_{i'}^j + x_{i'}^j) \notag  \\
-    \frac{\partial^2\mathcal{F}}{\partial p_i \partial \hat{x}_{i'}^{j'}} &= \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta p_{i'} (\hat{x}_i^j + x_i^j) \notag \\
+    \frac{\partial^2\mathcal{F}}{\partial p_i \partial \hat{x}_{i'}^{j'}} &= \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^{j'} + x_{i'}^{j'}) \right) + \eta p_{i'} (\hat{x}_i^{j'} + x_i^{j'}) \notag \\
     \frac{\partial^2\mathcal{F}}{\partial \hat{x}_{i}^{j} \partial \hat{x}_{i'}^{j'}} &= \delta_{jj'}\delta_{ii'} \left(\lambda + \frac{1}{(\sigma_i^j)^2} \right) + \delta_{jj'} \eta p_i p_{i'}
     \label{eq:impli_second_order}
 

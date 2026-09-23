@@ -94,7 +94,11 @@ Thus, the factor matrix @f$\mathcal{C}@f$ needed to be inverted in the end is co
 
 If the calibration equation can be expressed in an explicit form, as is shown in equation @f$\eqref{eq:cal}@f$, the local parameters would just be the track related parameters representing its orientation and offset. Thus, all track have a fixed number of local parameters, @f$n_q@f$.
 
-The total objective function would be the summation of the objective functions defined in equation @f$\eqref{eq:basic_obj}@f$ for each track. By using the first-order and the second-order derivatives of such objective function in equation @f$\eqref{eq:first_deriv}@f$ and @f$\eqref{eq:first_deriv}@f$, the factor matrices in equation @f$\eqref{eq:factorMat}@f$ become:
+The total objective function would be the summation of the objective functions defined in equation @f$\eqref{eq:basic_obj}@f$ for each track. 
+
+#### Factor matrices and RHS vector
+
+By using the first-order and the second-order derivatives of such objective function in equation @f$\eqref{eq:first_deriv}@f$ and @f$\eqref{eq:first_deriv}@f$, the factor matrices in equation @f$\eqref{eq:factorMat}@f$ become:
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
@@ -120,6 +124,21 @@ The total objective function would be the summation of the objective functions d
 <!-- prettier-ignore-end -->
 
 It should be explained that here the index @f$k@f$ represents the track index, @f$k'@f$ represents the data point index along the track and subscript index @f$i@f$ (or @f$i'@f$) and @f$j@f$ (or @f$j'@f$) represent the global and local parameter index respectively in the calibration equation of the data point. Thus value @f$x^{k'k}_i@f$ represents the coefficient value for @f$i@f$-th global parameter at @f$k'@f$-th equation (data point) when analyzing @f$k@f$-th track.
+
+Similarly, the RHS vector can be expressed as:
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{equation}{
+
+    \mathbf{g} = 
+    \begin{bmatrix}
+        \sum_k^m \dfrac{\left(y^k - \sum^n_{i'} (x^k_{i'} p_{i'})\right)x^k_i}{(\sigma^k)^2}
+    \end{bmatrix}_{i}
+
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
 
 ### Millepede on implicit calibration equation
 
@@ -207,50 +226,126 @@ The three matrices used to construct the factor matrix in equation @f$\eqref{eq:
 <!-- LTeX: enabled=false -->
 \f{equation}{
 
-    \mathcal{C}_k^1 =  
+    \mathcal{C}^1 =  
     \begin{bmatrix}
-    \delta_{ii'}\cdot \lambda + \sum_{k'}^m ( \hat{x}^{k'k}_i + x^{k'k}_i) (\hat{x}^{k'k}_{i'} + x^{k'k}_{i'})
+    \delta_{ii'}\cdot \lambda + \sum_k^m ( \hat{x}^k_i + x^k_i) (\hat{x}^k_{i'} + x^k_{i'})
     \end{bmatrix}_{ii',\,n_p \times n_p}
 
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-The expression of @f$\mathcal{C}_k^2@f$ is more complicated as the distances to true values also become local parameters:
+The expression of @f$\mathcal{C}^2@f$ is more complicated as the distances to true values also become local parameters:
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{equation}{
 
-    \mathcal{C}_k^2 = 
+    \mathcal{C}^2 = 
     \begin{bmatrix}
-        \mathcal{M}^k_{11} & \mathcal{M}^k_{12} & \mathcal{M}^k_{13} \\
-        \mathcal{M}^k_{12} & \mathcal{M}^k_{22} & \mathcal{M}^k_{23} \\
-        \mathcal{M}^k_{13} & \mathcal{M}^k_{23} & \mathcal{M}^k_{33} \\
-    \end{bmatrix}_{jj',\,n_q \times n_q}^{-1}\\
+        \mathcal{M}_{11} & \mathcal{M}_{12} & \mathcal{M}_{13} \\
+        \mathcal{M}_{12} & \mathcal{M}_{22} & \mathcal{M}_{23} \\
+        \mathcal{M}_{13} & \mathcal{M}_{23} & \mathcal{M}_{33} \\
+    \end{bmatrix}\\
 
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-Here the square matrix is partitioned into three rows and columns of block matrices. The first row or column relates to the local parameter in the calibration equation. The second row or column relates to the distance parameters for global parameter coefficients while the third relates to local parameter coefficients. From the second derivatives of the ODR regression shown in equation @f$\eqref{eq:impli_second_order}@f$
+Here the square matrix is partitioned into three rows and columns of block matrices. The first row or column relates to the local parameter in the calibration equation. The second row or column relates to the distance parameters for global parameter coefficients while the third relates to local parameter coefficients. From the second derivatives of the ODR regression shown in equation @f$\eqref{eq:impli_second_order}@f$, the diagonal matrix blocks can be expressed as:
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
 \f{align}{
 
-    \mathcal{M}^k_{11} &=
+    \mathcal{M}_{11} &=
     \begin{bmatrix}
-        \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta p_{i'} (\hat{x}_i^j + x_i^j)
-    \end{bmatrix}_{ii'} \\
-    \mathcal{M}^k_{12} &=
+        \delta_{jj'} \lambda + \eta \sum^m_k (\hat{y}_j^k + y_j^k)(\hat{y}_{j'}^k + y_{j'}^k)
+    \end{bmatrix}_{jj'} \notag\\
+    \mathcal{M}_{22} &= 
     \begin{bmatrix}
-        \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta p_{i'} (\hat{x}_i^j + x_i^j)
-    \end{bmatrix}_{ii'} \\
-    \mathcal{M}^k_{22} &=
+        \delta_{ii'}\delta_{kk'} \left(\lambda + \frac{1}{(\sigma_i^k)^2} \right) + \delta_{kk'} \eta p_i p_{i'}
+    \end{bmatrix}_{(i, k)(i', k')} \notag\\
+    \mathcal{M}_{33} &= 
     \begin{bmatrix}
-        \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^j + x_{i'}^j) \right) + \eta p_{i'} (\hat{x}_i^j + x_i^j)
-    \end{bmatrix}_{ii'} \\
+        \delta_{jj'}\delta_{kk'} \left(\lambda + \frac{1}{(\sigma_i^k)^2} \right) + \delta_{kk'} \eta p_j p_{j'}
+    \end{bmatrix}_{(j, k)(j', k')} \\
+
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
+
+The off-diagonal matrix blocks in @f$\mathcal{C}^2@f$ can be expressed as
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{align}{
+
+    \mathcal{M}_{12} &=
+    \begin{bmatrix}
+        \eta p_{i'} (\hat{y}_j^{k'} + y_j^{k'})
+    \end{bmatrix}_{j(i',k')} \notag \\
+    \mathcal{M}_{13} &= 
+    \begin{bmatrix}
+        \delta_{jj'} \eta \left( \sum^{n_l}_k q_k (\hat{y}_k^{k'} + y_k^{k'}) \right) + \eta p_{j'} (\hat{y}_j^{k'} + y_j^{k'})
+    \end{bmatrix}_{j(j', k')} \notag \\
+    \mathcal{M}_{23} &= 
+    \begin{bmatrix}
+        \delta_{kk'} \eta p_i q_{j'}
+    \end{bmatrix}_{(i, k)(j', k')} \\
+
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
+
+The off-diagonal matrix block @f$G@f$ in equation @f$\eqref{eq:factorMat}@f$ can be similarly partitioned into three parts:
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{equation*}{
+
+    G = 
+    \begin{bmatrix}
+        \mathcal{G}_1 & \mathcal{G}_2 & \mathcal{G}_3
+    \end{bmatrix}\\
+
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
+
+Those matrix blocks relate to the second-order derivative between the global parameters and local parameters, global coefficient distances and local coefficient distances respectively and can be expressed as:
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{align}{
+
+    \mathcal{G}_1 &=
+    \begin{bmatrix}
+        \eta \sum^m_k (\hat{x}_i^k + x_i^k)(\hat{y}_j^k + y_j^k)
+    \end{bmatrix}_{ij} \notag \\
+    \mathcal{G}_2 &= 
+    \begin{bmatrix}
+        \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^{k'} + x_{i'}^{k'}) \right) + \eta p_{i'} (\hat{x}_i^{k'} + x_i^{k'})
+    \end{bmatrix}_{i(i', k')} \notag \\
+    \mathcal{G}_3 &= 
+    \begin{bmatrix}
+         \eta q_{j'} (\hat{x}_i^{k'} + x_i^{k'})
+    \end{bmatrix}_{i(j', k')} \\
+
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
+
+The RHS vector, relating to the first-order derivative with respect to global parameters, can be expressed as:
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{equation}{
+
+    \mathbf{g} = 
+    \begin{bmatrix}
+        \lambda p_i + \eta \sum^m_k \left( \sum^n_{i'} p_{i'} (\hat{x}^k_{i'} + x^k_{i'}) \right) (\hat{x}^k_i + x^k_i)
+    \end{bmatrix}_{i}
 
 \f}
 <!-- LTeX: enabled=true -->

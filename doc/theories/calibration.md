@@ -24,7 +24,9 @@ where @f$\mathbf{x} = (x_1, \ldots, x_n)@f$ is a set of observables from the det
 
 @htmlonly
 <div align="center">
-  <img src="track_detector.svg" alt="Diagram" width="600">
+  <div style="display:inline-block; background:white; padding:12px;">
+      <img src="track_detector.svg" alt="Diagram" width="600">
+  </div>
   <br>
   <em>Figure 1: Conceptual scheme of a particle track through a detector.</em>
 </div>

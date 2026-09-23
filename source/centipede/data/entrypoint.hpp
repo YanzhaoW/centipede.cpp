@@ -67,8 +67,7 @@ namespace centipede
         /**
          * @brief Add an index-value pair to the global derivatives.
          * @param index Global parameter ID (0-based indexing).
-         * @param value Global derivative value.
-         * @param error Uncertainty of global derivative value.
+         * @param value Global derivative value with uncertainty.
          * @return Non-const reference to this object.
          */
         constexpr auto add_global(std::integral auto index, internal::ValueErrorConvertible<data_type> auto value)
