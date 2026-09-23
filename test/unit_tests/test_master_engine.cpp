@@ -1,6 +1,7 @@
 #include "centipede/centipede.hpp"
 #include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "shared.hpp"
 #include <cstddef>
 #include <expected>
@@ -105,15 +106,13 @@ namespace centipede::test
     TEST_F(master_engine, add_entrypoint_dynamic)
     {
         const auto entrypoint = EntryPoint<>{}
-                                    .set_measurement(3.F)
-                                    .set_sigma(2.F)
+                                    .set_measurement(ValueError{ 3.F, 0.1F })
                                     .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                     .set_locals(1.5F, 2.5F);
         const auto& state = master_->get_current_state();
         EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
-        EXPECT_EQ(state.entry.sigmas.size(), 0);
         EXPECT_EQ(state.entry.local_derivs.size(), 0);
         EXPECT_EQ(state.entry.global_derivs.size(), 0);
 
@@ -123,38 +122,35 @@ namespace centipede::test
         ASSERT_TRUE(state.entry.n_locals);
         EXPECT_EQ(state.entry.n_locals.value(), 2);
         EXPECT_EQ(state.entry.measurements.size(), 1);
-        EXPECT_EQ(state.entry.sigmas.size(), 1);
         EXPECT_EQ(state.entry.local_derivs.size(), 2);
 
         EXPECT_EQ(state.entry.local_derivs.at(0).first, 0);
         EXPECT_EQ(state.entry.local_derivs.at(0).second.first, 0);
-        EXPECT_EQ(state.entry.local_derivs.at(0).second.second, 1.5F);
+        EXPECT_EQ(state.entry.local_derivs.at(0).second.second.value, 1.5F);
 
         EXPECT_EQ(state.entry.local_derivs.at(1).first, 0);
         EXPECT_EQ(state.entry.local_derivs.at(1).second.first, 1);
-        EXPECT_EQ(state.entry.local_derivs.at(1).second.second, 2.5F);
+        EXPECT_EQ(state.entry.local_derivs.at(1).second.second.value, 2.5F);
 
         EXPECT_EQ(state.entry.global_derivs.size(), 2);
 
         EXPECT_EQ(state.entry.global_derivs.at(0).first, 0);
         EXPECT_EQ(state.entry.global_derivs.at(0).second.first, 2);
-        EXPECT_EQ(state.entry.global_derivs.at(0).second.second, 3.F);
+        EXPECT_EQ(state.entry.global_derivs.at(0).second.second.value, 3.F);
 
         EXPECT_EQ(state.entry.global_derivs.at(1).first, 0);
         EXPECT_EQ(state.entry.global_derivs.at(1).second.first, 9);
-        EXPECT_EQ(state.entry.global_derivs.at(1).second.second, 2.F);
+        EXPECT_EQ(state.entry.global_derivs.at(1).second.second.value, 2.F);
     }
 
     TEST_F(master_engine, add_entrypoint_incomp_n_locals)
     {
         const auto first_entrypoint = EntryPoint<>{}
-                                          .set_measurement(3.F)
-                                          .set_sigma(2.F)
+                                          .set_measurement(ValueError{ 3.F, 0.1F })
                                           .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                           .set_locals(1.5F, 2.5F);
         const auto second_entrypoint = EntryPoint<>{}
-                                           .set_measurement(3.F)
-                                           .set_sigma(2.F)
+                                           .set_measurement(ValueError{ 3.F, 0.1F })
                                            .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                            .set_locals(1.5F, 2.5F, 3.4F);
 
@@ -168,7 +164,6 @@ namespace centipede::test
     {
         const auto first_entrypoint = EntryPoint<>{}
                                           .set_measurement(3.F)
-                                          .set_sigma(2.F)
                                           .set_globals(std::pair{ 9, 2.F }, std::pair{ DEFAULT_MAX_GLOBAL_ID + 1, 3.F })
                                           .set_locals(1.5F, 2.5F);
 
@@ -189,7 +184,6 @@ namespace centipede::test
         EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
-        EXPECT_EQ(state.entry.sigmas.size(), 0);
         EXPECT_EQ(state.entry.local_derivs.size(), 0);
         EXPECT_EQ(state.entry.global_derivs.size(), 0);
     }

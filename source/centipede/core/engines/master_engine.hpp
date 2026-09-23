@@ -86,7 +86,6 @@ namespace centipede::core::engine
                     {
                         current_state_.entry.n_locals = entry_point.get_n_locals();
                         add_measurement(entry_point);
-                        add_sigma(entry_point);
                         add_locals(entry_point);
                         add_globals(entry_point);
                         ++current_state_.next_point_index;
@@ -192,7 +191,6 @@ namespace centipede::core::engine
             current_state_.entry.global_derivs.clear();
             current_state_.entry.local_derivs.clear();
             current_state_.entry.measurements.clear();
-            current_state_.entry.sigmas.clear();
             current_state_.entry.n_locals.reset();
         }
 
@@ -219,13 +217,12 @@ namespace centipede::core::engine
                 entry_point.get_globals() |
                     std::views::transform(
                         [this](const auto& idx_value) -> DataType
-                        { return idx_value.second * config_.global_init_values.at(idx_value.first); }),
+                        { return idx_value.second.value * config_.global_init_values.at(idx_value.first); }),
                 DataType{},
                 std::plus{});
-            current_state_.entry.measurements.push_back(entry_point.get_measurement() - initial_value_offset);
+            current_state_.entry.measurements.emplace_back(entry_point.get_measurement().value - initial_value_offset,
+                                                           entry_point.get_measurement().error);
         }
-
-        auto add_sigma(const auto& entry_point) { current_state_.entry.sigmas.push_back(entry_point.get_sigma()); }
 
         auto add_locals(const auto& entry_point)
         {

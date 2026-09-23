@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
@@ -110,10 +111,7 @@ namespace centipede::test
                 for (const auto& entrypoint : entry_span)
                 {
                     entry_point_input.reset();
-                    entry_point_input
-                        .set_measurement(entrypoint.measurement)
-                        // entry_point_input.set_measurement(0.)
-                        .set_sigma(entrypoint.sigma)
+                    entry_point_input.set_measurement(ValueError<float>{ entrypoint.measurement, entrypoint.sigma })
                         .set_globals(entrypoint.globals |
                                      std::views::transform([](const auto& globals)
                                                            { return std::pair{ globals.first - 1, globals.second }; }))

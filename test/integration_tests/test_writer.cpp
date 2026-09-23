@@ -1,3 +1,4 @@
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/writer/binary.hpp"
 #include <cstdio> // IWYU pragma: keep
@@ -42,8 +43,7 @@ auto main() -> int
         {
             entry_point.set_locals(generate_float_rnd)
                 .set_globals(generate_int_rnd, generate_float_rnd)
-                .set_measurement(generate_float_rnd())
-                .set_sigma(generate_float_rnd());
+                .set_measurement(centipede::ValueError<float>{ generate_float_rnd(), generate_float_rnd() });
             auto err = writer.add_entrypoint(entry_point);
             if (not err.has_value())
             {

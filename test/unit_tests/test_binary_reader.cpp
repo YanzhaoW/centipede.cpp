@@ -1,4 +1,5 @@
 #include "centipede/centipede.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "centipede/reader/binary.hpp"
 #include "centipede/util/error_types.hpp"
 #include <algorithm>
@@ -103,26 +104,24 @@ namespace centipede::test
     {
         // NOLINTBEGIN
         // (cppcoreguidelines-avoid-magic-numbers)
-        auto valid_measurement = float{ 1. };
-        auto valid_sigma = float{ 1. };
+        auto valid_measurement = ValueError<float>{ 1.F, 1.F };
         auto valid_locals_data = Binary::RawBufferType{ { 1, 2, 3 }, { 1.F, 2.F, 3.F } };
         auto valid_globals_data = Binary::RawBufferType{ { 3, 4, 5 }, { 3.F, 4.F, 5.F } };
         // NOLINTEND
         // (cppcoreguidelines-avoid-magic-numbers)
 
         auto fill_buffer(Binary::RawBufferType& output,
-                         const float measurement,
+                         const ValueError<float> measurement,
                          const Binary::RawBufferType& locals_data,
-                         const float sigma,
                          const Binary::RawBufferType& globals_data)
         {
             output.first.push_back(uint32_t{ 0 });
-            output.second.push_back(measurement);
+            output.second.push_back(measurement.value);
             std::ranges::copy(globals_data.first, std::back_inserter(output.first));
             std::ranges::copy(globals_data.second, std::back_inserter(output.second));
 
             output.first.push_back(uint32_t{ 0 });
-            output.second.push_back(sigma);
+            output.second.push_back(measurement.error);
             std::ranges::copy(locals_data.first, std::back_inserter(output.first));
             std::ranges::copy(locals_data.second, std::back_inserter(output.second));
         }
@@ -146,8 +145,8 @@ namespace centipede::test
         auto file_name = std::string{ "valid_single_entry.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_sigma, valid_locals_data);
-        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_sigma, valid_locals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_locals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_globals_data, valid_locals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
@@ -158,15 +157,23 @@ namespace centipede::test
             ASSERT_FALSE(entry.empty());
             for (const auto& entrypoint : entry)
             {
-                EXPECT_EQ(valid_locals_data.second, entrypoint.get_locals());
+                const auto local_data =
+                    entrypoint.get_locals() |
+                    std::views::transform([](const auto& val_err) -> float { return val_err.value; }) |
+                    std::ranges::to<std::vector<float>>();
+                EXPECT_EQ(valid_locals_data.second, local_data);
                 auto expected_globals = std::views::zip_transform([](const auto& index, const auto& value) -> auto
                                                                   { return std::pair{ index - 1, value }; },
                                                                   valid_globals_data.first,
                                                                   valid_globals_data.second) |
                                         std::ranges::to<std::vector>();
-                EXPECT_EQ(expected_globals, entrypoint.get_globals());
+                const auto global_data =
+                    entrypoint.get_globals() |
+                    std::views::transform([](const auto& idx_val_err)
+                                          { return std::pair{ idx_val_err.first, idx_val_err.second.value }; }) |
+                    std::ranges::to<std::vector>();
+                EXPECT_EQ(expected_globals, global_data);
                 EXPECT_EQ(entrypoint.get_measurement(), valid_measurement);
-                EXPECT_EQ(entrypoint.get_sigma(), valid_sigma);
             }
         }
         EXPECT_TRUE(reader.is_ok());
@@ -181,8 +188,8 @@ namespace centipede::test
         auto file_name = std::string{ "reader_reset.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
@@ -197,8 +204,7 @@ namespace centipede::test
             {
                 EXPECT_TRUE(entrypoint.get_globals().empty());
                 EXPECT_TRUE(entrypoint.get_locals().empty());
-                EXPECT_EQ(entrypoint.get_measurement(), 0U);
-                EXPECT_EQ(entrypoint.get_sigma(), 0U);
+                EXPECT_EQ(entrypoint.get_measurement().value, 0U);
             }
         }
         EXPECT_TRUE(reader.is_ok());
@@ -304,7 +310,7 @@ namespace centipede::test
         auto file_name = std::string{ "reader_invalid_file_begin.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 1 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
@@ -325,7 +331,7 @@ namespace centipede::test
         auto file_name = std::string{ "invalid_measurement.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
         output_buffer.first.at(1) = 1U;
         write_to_file(file, output_buffer);
         file.close();
@@ -383,8 +389,8 @@ namespace centipede::test
         auto file_name = std::string{ "file_resize_buffer.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name, .max_bufferpoint_size = 1U } };
@@ -399,8 +405,8 @@ namespace centipede::test
         auto file_name = std::string{ "reader_end_of_file.bin" };
         auto file = std::ofstream{ file_name, std::ios::out | std::ios::binary | std::ios::trunc };
         auto output_buffer = Binary::RawBufferType{ { uint32_t{ 0 } }, { 0.F } };
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
-        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_sigma, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
+        fill_buffer(output_buffer, valid_measurement, valid_locals_data, valid_globals_data);
         write_to_file(file, output_buffer);
         file.close();
         auto reader = Binary{ { .in_filename = file_name } };
@@ -443,13 +449,9 @@ namespace centipede::test
         auto is_writer_init_ok = writer.init();
         ASSERT_TRUE(is_writer_init_ok);
 
-        const auto entrypoint = EntryPoint{}
-                                    .add_global(4, 2.3)
-                                    .add_global(15, 2.0)
-                                    .add_local(2.0)
-                                    .add_local(1.0)
-                                    .set_measurement(3.4)
-                                    .set_sigma(2.1);
+        const auto entrypoint =
+            EntryPoint{}.add_global(4, 2.3).add_global(15, 2.0).add_local(2.0).add_local(1.0).set_measurement(
+                ValueError{ 3.4F, 2.1F });
         auto is_add_ok = writer.add_entrypoint(entrypoint);
         ASSERT_TRUE(is_add_ok);
 

@@ -8,6 +8,7 @@
 #include "centipede/util/common_traits.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
+#include <concepts>
 #include <cstddef>
 #include <expected>
 #include <memory>
@@ -20,7 +21,7 @@ namespace centipede
     template <typename DataType, core::engine::MasterOpt opt>
     class Handler;
 
-    template <typename DataType = double, core::engine::MasterOpt opt = {}>
+    template <typename DataType = float, core::engine::MasterOpt opt = {}>
     static auto create(const Config<DataType>& config = {}) -> std::expected<Handler<DataType, opt>, std::string>;
 
     /**
@@ -28,7 +29,7 @@ namespace centipede
      *
      * This class should handle all inputs and configurations from users
      */
-    template <typename DataType = double, core::engine::MasterOpt opt = {}>
+    template <typename DataType = float, core::engine::MasterOpt opt = {}>
     class Handler
     {
       public:
@@ -40,6 +41,7 @@ namespace centipede
         using Conf = Config<DataType>;
 
         template <std::size_t NLocals, std::size_t NGlobals>
+            requires(std::same_as<typename EntryPoint<NLocals, NGlobals>::data_type, DataType>)
         [[nodiscard]] auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError
         {
             return master_engine_->add_entrypoint(entry_point);
