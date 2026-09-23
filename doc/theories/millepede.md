@@ -190,8 +190,8 @@ The x and y observables are
 
     x_i &= 
     \begin{cases}
-    -y_\text{meas} & i = 2k, \quad &k \in \mathbb{Z} \\
-    -1 & i = 2k + 1, \quad &k \in \mathbb{Z}
+    -y_\text{meas} & i = 2k, \quad k \in \mathbb{Z} \\
+    -1 & i = 2k + 1, \quad k \in \mathbb{Z}
     \end{cases} \\
     y_0 &= x_\text{meas} \\
     y_1 &= 1

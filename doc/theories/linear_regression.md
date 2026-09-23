@@ -51,8 +51,8 @@ Thus, a probability maximization turns into the minimization of a function, the 
 \f{equation}{
 
     z = y - f(\mathbf{x}, \mathbf{p})
+    \label{eq:residual}
 
-\label{eq:residual}
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->

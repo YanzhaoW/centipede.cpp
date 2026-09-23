@@ -21,11 +21,23 @@ where @f$\mathbf{x} = (x_1, \ldots, x_n)@f$ is a set of observables from the det
 ### Example
 
 @anchor fig_track
+
+@htmlonly
 <div align="center">
   <img src="track_detector.svg" alt="Diagram" width="600">
   <br>
   <em>Figure 1: Conceptual scheme of a particle track through a detector.</em>
 </div>
+@endhtmlonly
+
+@latexonly
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{track_detector.pdf}
+  \caption{Conceptual scheme of a particle track through a detector.}
+\end{figure}
+@endlatexonly
+
 
 For example, imagine a set of detector modules located along the x-axis and separated from each other at a certain distance (see @ref fig_track "figure 1"). Each module is capable of measuring y value by itself, but is displaced along the y direction with an unknown distance. Thus, the y value measured by each module is inaccurate and its relation to the correct y value of the track can be depicted by the equation:
 
