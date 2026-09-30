@@ -111,7 +111,7 @@ namespace centipede::writer
          * Config::out_filename.
          * @see Config
          */
-        [[nodiscard]] auto init() -> VoidError;
+        [[nodiscard]] auto init() -> VoidStr;
 
         /**
          * @brief Add an entrypoint to the internal data buffer.
@@ -141,7 +141,7 @@ namespace centipede::writer
          *
          * @return Number of bytes written to the binary file.
          */
-        auto write_current_entry() -> EnumError<std::size_t>;
+        auto write_current_entry() -> StrError<std::size_t>;
 
         /**
          * @brief Manually close the output file handler.
@@ -154,7 +154,6 @@ namespace centipede::writer
          * @brief Getter of the configuration.
          *
          * @return Returns a const reference to the member variable #config_.
-         * @see ref
          */
         constexpr auto get_config() const -> const Config& { return config_; }
 

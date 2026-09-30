@@ -1,11 +1,11 @@
 #include "binary.hpp"
-#include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <expected>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <vector>
@@ -47,7 +47,7 @@ namespace centipede::writer
         return false;
     }
 
-    auto Binary::init() -> VoidError
+    auto Binary::init() -> VoidStr
     {
         data_buffer_.first.reserve(config_.max_bufferpoint_size);
         data_buffer_.second.reserve(config_.max_bufferpoint_size);
@@ -55,17 +55,17 @@ namespace centipede::writer
         output_file_.open(config_.out_filename, std::ios::binary | std::ios::out | std::ios::trunc);
         if (!output_file_.is_open())
         {
-            return std::unexpected{ ErrorCode::writer_file_fail_to_open };
+            return std::unexpected{ std::format("Failed to open the binary file {:?}", config_.out_filename) };
         }
         return {};
     }
 
-    auto Binary::write_current_entry() -> EnumError<std::size_t>
+    auto Binary::write_current_entry() -> StrError<std::size_t>
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
         if (data_buffer_.first.empty())
         {
-            return std::unexpected{ ErrorCode::writer_uninitialized };
+            return std::unexpected{ "Binary writer is not initialized." };
         }
         if (not has_entry_)
         {

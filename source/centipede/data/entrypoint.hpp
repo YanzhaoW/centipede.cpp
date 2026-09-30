@@ -41,6 +41,14 @@ namespace centipede
          */
         EntryPoint() = default;
 
+        template <std::size_t NLs, std::size_t NGs>
+        EntryPoint(const EntryPoint<NLs, NGs>& entrypoint)
+        {
+            set_measurement(entrypoint.get_measurement());
+            set_globals(entrypoint.get_globals());
+            set_locals(entrypoint.get_locals());
+        }
+
         /**
          * @brief Getter for local parameter sizes.
          * @return Sizes of local parameters.

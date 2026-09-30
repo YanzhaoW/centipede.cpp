@@ -1,5 +1,5 @@
 #include "centipede/cli/application.hpp"
-#include "centipede/cli/spdlog_stream.hpp" // IWYU pragma: keep
+#include "centipede/cli/cxxopts_formatter.hpp" // IWYU pragma: keep
 #include "centipede/util/return_types.hpp"
 #include <cstdio>
 #include <cstdlib>

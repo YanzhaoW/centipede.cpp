@@ -1,5 +1,5 @@
 #include "centipede/centipede.hpp"
-#include "centipede/cli/spdlog_stream.hpp"
+#include "centipede/cli/cxxopts_formatter.hpp"
 #include <Eigen/Core>
 #include <format>
 #include <gmock/gmock.h>

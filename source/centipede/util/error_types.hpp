@@ -18,7 +18,6 @@ namespace centipede
         writer_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref writer::Binary.
         writer_entrypoint_rejected, //!< Entrypoint is rejected due to absence of non-zero derivs. See @ref
                                     //!< writer::Binary.
-        writer_file_fail_to_open,   //!< File failed to be open.
         writer_uninitialized,       //!< Write is not initialized.
         analysis_local_fit_rank_deficit,
         analysis_local_fit_low_stat,
@@ -69,8 +68,6 @@ struct std::formatter<centipede::ErrorCode>
             case writer_entrypoint_rejected:
                 return std::format_to(ctx.out(),
                                       "Writer: Entry point is rejected due to the derivative values are all zeros!");
-            case writer_file_fail_to_open:
-                return std::format_to(ctx.out(), "Writer: Failed to open the file.");
             case writer_uninitialized:
                 return std::format_to(ctx.out(), "Writer: Must be initialized beforehand!");
             case analysis_local_fit_rank_deficit:
