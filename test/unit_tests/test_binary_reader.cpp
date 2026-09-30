@@ -61,7 +61,7 @@ namespace centipede::test
         auto reader = Binary{ { .in_filename = file_name } };
         auto is_ok = reader.read_one_entry();
         EXPECT_FALSE(is_ok);
-        EXPECT_EQ(is_ok.error(), ErrorCode::reader_uninitialized);
+        EXPECT_EQ(is_ok.error(), ErrorType::reader_uninitialized);
     }
 
     TEST(reader, file_invalid_idx_size)
@@ -80,7 +80,7 @@ namespace centipede::test
         EXPECT_TRUE(is_init_ok);
         auto is_read_ok = reader.read_one_entry();
         EXPECT_FALSE(is_read_ok);
-        EXPECT_EQ(is_read_ok.error(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(is_read_ok.error(), ErrorType::reader_file_fail_to_read);
     }
 
     TEST(reader, file_invalid_val_size)
@@ -97,7 +97,7 @@ namespace centipede::test
         EXPECT_TRUE(init_err);
         auto read_err = reader.read_one_entry();
         EXPECT_FALSE(read_err);
-        EXPECT_EQ(read_err.error(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(read_err.error(), ErrorType::reader_file_fail_to_read);
     }
 
     namespace
@@ -177,7 +177,7 @@ namespace centipede::test
             }
         }
         EXPECT_TRUE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::success);
+        EXPECT_EQ(reader.get_status(), ErrorType::success);
         reader.close();
         // NOLINTEND(readability-function-cognitive-complexity)
     }
@@ -208,7 +208,7 @@ namespace centipede::test
             }
         }
         EXPECT_TRUE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::success);
+        EXPECT_EQ(reader.get_status(), ErrorType::success);
         reader.close();
         // NOLINTEND(readability-function-cognitive-complexity)
     }
@@ -229,7 +229,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -251,7 +251,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -275,7 +275,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -301,7 +301,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -321,7 +321,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -343,7 +343,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -380,7 +380,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 
@@ -436,7 +436,7 @@ namespace centipede::test
         }
         EXPECT_EQ(reader.get_n_entries(), 0U);
         EXPECT_FALSE(reader.is_ok());
-        EXPECT_EQ(reader.get_status(), ErrorCode::reader_file_fail_to_read);
+        EXPECT_EQ(reader.get_status(), ErrorType::reader_file_fail_to_read);
         reader.close();
     }
 

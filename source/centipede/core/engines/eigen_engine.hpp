@@ -106,12 +106,12 @@ namespace centipede::core::engine
 
             if (globals.factor_matrix.isZero())
             {
-                result.error_status = ErrorCode::analysis_factor_matrix_zero;
+                result.error_status = ErrorType::analysis_factor_matrix_zero;
                 return;
             }
             if (globals.rhs_vec.isZero())
             {
-                result.error_status = ErrorCode::analysis_rhs_vector_zero;
+                result.error_status = ErrorType::analysis_rhs_vector_zero;
                 return;
             }
 
@@ -130,7 +130,7 @@ namespace centipede::core::engine
                 {
                     result.parameters.try_emplace(par_map.get_par_id(idx), val);
                 }
-                result.error_status = ErrorCode::success;
+                result.error_status = ErrorType::success;
             }
             // else
             // {
@@ -284,7 +284,7 @@ namespace centipede::core::engine
             buffers_.cholesky_solver.solveInPlace(buffers_.local_weighted_square_inv);
             if (buffers_.cholesky_solver.info() != Eigen::ComputationInfo::Success)
             {
-                return std::unexpected{ ErrorCode::analysis_local_fit_rank_deficit };
+                return ErrorCode::Error( ErrorType::analysis_local_fit_rank_deficit );
             }
 
             buffers_.local_solutions.noalias() =
@@ -302,7 +302,7 @@ namespace centipede::core::engine
 
             if (ndf < 1)
             {
-                return std::unexpected{ ErrorCode::analysis_local_fit_low_stat };
+                return ErrorCode::Error( ErrorType::analysis_local_fit_low_stat );
             }
 
             buffers_.residual_values.noalias() =
@@ -401,7 +401,7 @@ namespace centipede::core::engine
             {
                 if (val + std::numeric_limits<DataType>::epsilon() < 0)
                 {
-                    result.error_status = ErrorCode::analysis_global_negative_definite;
+                    result.error_status = ErrorType::analysis_global_negative_definite;
                     return;
                 }
                 if (std::abs(val) < std::numeric_limits<DataType>::epsilon())
@@ -412,7 +412,7 @@ namespace centipede::core::engine
 
             if (result.rank_deficit != 0)
             {
-                result.error_status = ErrorCode::analysis_rank_deficit;
+                result.error_status = ErrorType::analysis_rank_deficit;
                 find_redundant_parameter_idx(eigen_solver, result);
                 return;
             }

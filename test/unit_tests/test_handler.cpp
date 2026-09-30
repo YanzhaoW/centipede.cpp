@@ -49,7 +49,7 @@ namespace centipede::test
         ASSERT_TRUE(handler);
         auto res = handler.value().analyze_current_entry();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_empty_entry);
+        EXPECT_EQ(res.error(), ErrorType::analysis_empty_entry);
     }
 
     TEST(handler, local_derivs_incomp_numbers)
@@ -69,7 +69,7 @@ namespace centipede::test
         {
             auto err = handler.value().add_entrypoint(entry_point);
             ASSERT_FALSE(err.has_value());
-            EXPECT_EQ(err.error(), centipede::ErrorCode::handler_incomp_n_locals);
+            EXPECT_EQ(err.error(), centipede::ErrorType::handler_incomp_n_locals);
         }
     }
 

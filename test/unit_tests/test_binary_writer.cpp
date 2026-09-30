@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-using centipede::ErrorCode;
+using centipede::ErrorType;
 using centipede::writer::Binary;
 namespace fs = std::filesystem;
 
@@ -37,7 +37,7 @@ TEST(writer, init_error)
     auto error = writer.init();
 
     EXPECT_TRUE(not error.has_value());
-    // EXPECT_EQ(error.error(), ErrorCode::writer_file_fail_to_open);
+    // EXPECT_EQ(error.error(), ErrorType::writer_file_fail_to_open);
     EXPECT_FALSE(fs::exists(fs::path(writer.get_config().out_filename)));
 }
 
@@ -93,7 +93,7 @@ TEST(writer, read_entrypoint_reject)
         .set_measurement(valid_measurement);
     auto is_ok = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(is_ok) << std::format("{}", is_ok.error());
-    EXPECT_TRUE(is_ok.error() == ErrorCode::writer_entrypoint_rejected);
+    EXPECT_TRUE(is_ok.error() == ErrorType::writer_entrypoint_rejected);
 
     auto size = writer.write_current_entry();
     ASSERT_TRUE(size.has_value());
@@ -107,11 +107,11 @@ TEST(writer, uninitialized)
     auto is_ok = writer.add_entrypoint(valid_entry_point);
 
     ASSERT_FALSE(is_ok.has_value());
-    EXPECT_EQ(is_ok.error(), ErrorCode::writer_uninitialized) << std::format("{}", is_ok.error());
+    EXPECT_EQ(is_ok.error(), ErrorType::writer_uninitialized) << std::format("{}", is_ok.error());
 
     auto size = writer.write_current_entry();
     ASSERT_FALSE(size.has_value());
-    // EXPECT_EQ(size.error(), ErrorCode::writer_uninitialized);
+    // EXPECT_EQ(size.error(), ErrorType::writer_uninitialized);
 }
 
 TEST(writer, read_entrypoint_zero_sigma)
@@ -127,7 +127,7 @@ TEST(writer, read_entrypoint_zero_sigma)
 
     auto err = writer.add_entrypoint(entry_point);
     ASSERT_FALSE(err.has_value());
-    EXPECT_TRUE(err.error() == ErrorCode::writer_neg_or_zero_sigma);
+    EXPECT_TRUE(err.error() == ErrorType::writer_neg_or_zero_sigma);
 }
 
 TEST(writer, read_entrypoint_buffer_overflow)
@@ -138,7 +138,7 @@ TEST(writer, read_entrypoint_buffer_overflow)
 
     auto err = writer.add_entrypoint(valid_entry_point);
     ASSERT_FALSE(err.has_value());
-    EXPECT_TRUE(err.error() == ErrorCode::writer_buffer_overflow);
+    EXPECT_TRUE(err.error() == ErrorType::writer_buffer_overflow);
 }
 
 TEST(writer, write_current_entry)

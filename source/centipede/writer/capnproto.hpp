@@ -30,7 +30,7 @@ namespace centipede::writer
         {
         }
 
-        [[nodiscard]] auto init() -> VoidStr;
+        [[nodiscard]] auto init() -> VoidError;
 
         template <std::size_t NLocals, std::size_t NGlobals>
         auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError;
@@ -44,7 +44,7 @@ namespace centipede::writer
 
         constexpr auto get_buffer() const -> const std::vector<EntryPoint<>>& { return entrypoints_; }
 
-        auto write_current_entry() -> StrError<std::size_t>;
+        auto write_current_entry() -> EnumError<std::size_t>;
 
         void close() { output_file_.close(); };
 

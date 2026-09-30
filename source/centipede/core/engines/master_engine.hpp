@@ -10,12 +10,12 @@
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entry.hpp"
 #include "centipede/data/entrypoint.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <algorithm>
 #include <assert.hpp>
 #include <cstddef>
-#include <expected>
 #include <functional>
 #include <ranges>
 #include <unordered_map>
@@ -47,6 +47,8 @@ namespace centipede::core::engine
         };
 
         ~Master() = default;
+        auto operator=(const Master&) -> Master& = delete;
+        auto operator=(Master&&) -> Master& = delete;
         Master(const Master& other) = delete;
         Master(const Master&& other) = delete;
         auto operator()(const Master& other) -> Master& = delete;
@@ -63,9 +65,10 @@ namespace centipede::core::engine
             , slave_engine_{ config_ }
         {
             result_.parameters.reserve(config_.n_globals);
-            config_.global_init_values = std::views::iota(0UZ, config_.n_globals) |
-                                         std::views::transform([](auto idx) { return std::pair{ idx, DataType{} }; }) |
-                                         std::ranges::to<std::unordered_map<std::size_t, DataType>>();
+            config_.global_init_values =
+                std::views::iota(0UZ, config_.n_globals) |
+                std::views::transform([](auto idx) -> auto { return std::pair{ idx, DataType{} }; }) |
+                std::ranges::to<std::unordered_map<std::size_t, DataType>>();
         }
 
         /**
@@ -126,14 +129,14 @@ namespace centipede::core::engine
 
             log_ += slave_engine_.get_log();
 
-            return (result.error_status == ErrorCode::success) ? VoidError{} : std::unexpected{ result.error_status };
+            return (result.error_status == ErrorType::success) ? VoidError{} : ErrorCode::Error(result.error_status);
         }
 
-        auto set_global_init_value(std::size_t global_par_idx, DataType val) -> VoidStr
+        auto set_global_init_value(std::size_t global_par_idx, DataType val) -> VoidError
         {
             if (global_par_idx >= config_.n_globals)
             {
-                return std::unexpected{ "Global parameter index (0-based)" };
+                return ErrorCode::Error("Global parameter index (0-based)");
             }
 #ifdef HAS_LIBASSERT
             debug_assert(config_.fixed_parameter_ids.contains(global_par_idx));
@@ -145,7 +148,7 @@ namespace centipede::core::engine
             return {};
         }
 
-        auto set_global_init_values(const auto& global_init_values) -> VoidStr
+        auto set_global_init_values(const auto& global_init_values) -> VoidError
         {
 
             for (auto& [key, value] : config_.global_init_values)
@@ -199,14 +202,14 @@ namespace centipede::core::engine
             const auto n_locals = entry_point.get_n_locals();
             if (current_state_.entry.n_locals.has_value() and current_state_.entry.n_locals.value() != n_locals)
             {
-                return std::unexpected{ ErrorCode::handler_incomp_n_locals };
+                return ErrorCode::Error(ErrorType::handler_incomp_n_locals);
             }
             const auto n_globals = config_.n_globals;
             if (std::ranges::any_of(entry_point.get_globals(),
                                     [n_globals](const auto& idx_value) -> bool
                                     { return idx_value.first >= n_globals; }))
             {
-                return std::unexpected{ ErrorCode::analysis_global_idx_too_large };
+                return ErrorCode::Error(ErrorType::analysis_global_idx_too_large);
             }
             return {};
         }

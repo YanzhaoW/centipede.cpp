@@ -14,18 +14,18 @@
 
 namespace centipede::writer
 {
-    auto Capnproto::init() -> VoidStr
+    auto Capnproto::init() -> VoidError
     {
         output_file_.open(config_.out_filename, std::ios::out | std::ios::binary);
         if (not output_file_.is_open())
         {
-            return std::unexpected{ std::format("Cannot open the file {:?}", config_.out_filename) };
+            return ErrorCode::Error( std::format("Cannot open the file {:?}", config_.out_filename) );
         }
 
         return {};
     }
 
-    auto Capnproto::write_current_entry() -> StrError<std::size_t>
+    auto Capnproto::write_current_entry() -> EnumError<std::size_t>
     {
         auto entry = message_.initRoot<capnproto::Entry>();
 

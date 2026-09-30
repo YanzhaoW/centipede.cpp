@@ -134,7 +134,7 @@ namespace centipede::test
 
         EXPECT_CALL(engine, fit_local_pars())
             .Times(1)
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_local_fit_rank_deficit }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_local_fit_rank_deficit )));
         EXPECT_CALL(engine, calculate_local_fit_chi_square()).Times(0);
         EXPECT_CALL(engine, update_global_factor_matrix()).Times(0);
         EXPECT_CALL(engine, update_global_rhs_vector()).Times(0);
@@ -143,7 +143,7 @@ namespace centipede::test
         auto res = engine.analyze(alpha);
         ASSERT_FALSE(res);
         EXPECT_EQ(engine.get_log().n_entries_local_rank_deficit, 1);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_local_fit_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_local_fit_rank_deficit);
     }
 
     TEST(base_engine, analyze_low_state)
@@ -153,7 +153,7 @@ namespace centipede::test
 
         EXPECT_CALL(engine, fit_local_pars())
             .Times(1)
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_local_fit_low_stat }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_local_fit_low_stat )));
         EXPECT_CALL(engine, calculate_local_fit_chi_square()).Times(0);
         EXPECT_CALL(engine, update_global_factor_matrix()).Times(0);
         EXPECT_CALL(engine, update_global_rhs_vector()).Times(0);
@@ -162,7 +162,7 @@ namespace centipede::test
         auto res = engine.analyze(alpha);
         ASSERT_FALSE(res);
         EXPECT_EQ(engine.get_log().n_entries_low_stat, 1);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_local_fit_low_stat);
+        EXPECT_EQ(res.error(), ErrorType::analysis_local_fit_low_stat);
     }
 
     TEST(base_engine, analyze_reject)
@@ -180,7 +180,7 @@ namespace centipede::test
         const auto alpha = 0.0001;
         auto err = engine.analyze(alpha);
         ASSERT_FALSE(err);
-        EXPECT_EQ(err.error(), ErrorCode::analysis_local_fit_rejected);
+        EXPECT_EQ(err.error(), ErrorType::analysis_local_fit_rejected);
         EXPECT_EQ(engine.get_log().n_entries_rejected, 1);
     }
     // NOLINTEND (cppcoreguidelines-avoid-magic-numbers)

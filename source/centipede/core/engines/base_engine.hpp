@@ -6,10 +6,10 @@
 #include "centipede/core/engines/par_id_map.hpp"
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entry.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
-#include <expected>
 #include <gsl/gsl_cdf.h>
 #include <utility>
 
@@ -160,21 +160,21 @@ namespace centipede::core::engine
                         self.state_.is_rejected = false;
                         return self.update_global_factor_matrix()
                             .and_then([&self] -> VoidError { return self.update_global_rhs_vector(); })
-                            .transform([&self] { ++self.log_.n_entries_success; });
+                            .transform([&self] -> void { ++self.log_.n_entries_success; });
                     }
                     self.state_.is_rejected = true;
                     ++self.log_.n_entries_rejected;
-                    return std::unexpected{ ErrorCode::analysis_local_fit_rejected };
+                    return ErrorCode::Error(ErrorType::analysis_local_fit_rejected);
                 })
             .transform_error(
-                [&self](ErrorCode err) -> auto
+                [&self](const ErrorCode& err) -> ErrorCode
                 {
-                    switch (err)
+                    switch (err.error())
                     {
-                        case ErrorCode::analysis_local_fit_rank_deficit:
+                        case ErrorType::analysis_local_fit_rank_deficit:
                             ++self.log_.n_entries_local_rank_deficit;
                             break;
-                        case ErrorCode::analysis_local_fit_low_stat:
+                        case ErrorType::analysis_local_fit_low_stat:
                             ++self.log_.n_entries_low_stat;
                             break;
                         default:

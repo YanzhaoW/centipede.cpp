@@ -75,13 +75,13 @@ namespace centipede::test
             }
         }
 
-        auto init(auto& mps) -> VoidStr
+        auto init(auto& mps) -> VoidError
         {
             output_pars_.true_pars_t = mps.get_true_pars_t();
             output_pars_.true_pars = mps.get_true_pars();
 
             auto is_ok = binary_writer_.visit(
-                []<typename T>(T& writer) -> VoidStr
+                []<typename T>(T& writer) -> VoidError
                 {
                     if constexpr (not std::same_as<T, std::monostate>)
                     {
@@ -164,7 +164,7 @@ namespace centipede::test
                 if (run_idx == 0)
                 {
                     [[maybe_unused]] auto is_ok = binary_writer_.visit(
-                        []<typename T>(T& writer) -> StrError<std::size_t>
+                        []<typename T>(T& writer) -> EnumError<std::size_t>
                         {
                             if constexpr (not std::same_as<T, std::monostate>)
                             {
@@ -189,7 +189,7 @@ namespace centipede::test
 
                 if (not res)
                 {
-                    if (res.error() != centipede::ErrorCode::analysis_empty_entry)
+                    if (res.error() != centipede::ErrorType::analysis_empty_entry)
                     {
                         spdlog::error("Error from analyzing the current entry: {}", res.error());
                         spdlog::info("p-value: {}, chi2: {}", state.p_value, state.chi2);

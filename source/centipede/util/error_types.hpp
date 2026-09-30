@@ -2,17 +2,19 @@
 
 #include <cstdint>
 #include <format>
+#include <string_view>
 
 namespace centipede
 {
     /**
      * @brief Enumerations for the centipede program
      */
-    enum class ErrorCode : uint8_t
+    enum class ErrorType : uint8_t
     {
         // TODO: duplication of comments
         invalid,                    //!< Error due to no evaluation!
         success,                    //!< No error. All good!
+        any,                        //!< general error types with custom message
         handler_incomp_n_locals,    //!< Incompatible number of local variables from the current entrypoint.
         writer_neg_or_zero_sigma,   //!< Zero or negative sigma occurs. See @ref writer::Binary.
         writer_buffer_overflow,     //!< Buffer size is too small for a new entry occurs. See @ref writer::Binary.
@@ -37,27 +39,30 @@ namespace centipede
         cli_env_not_defined,      //!< Environment variable not defined.
     };
 
+    auto convert_error_type_to_str(ErrorType error_type) -> std::string_view;
+
 } // namespace centipede
 
 /**
- * @brief Formatter for @ref centipede::ErrorCode "ErrorCode"
- *
+ * @brief Formatter for @ref centipede::ErrorType "ErrorType"
  */
 template <>
 // NOLINTNEXTLINE (bugprone-std-namespace-modification)
-struct std::formatter<centipede::ErrorCode>
+struct std::formatter<centipede::ErrorType>
 {
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
 
-    static constexpr auto format(const centipede::ErrorCode& error_code, std::format_context& ctx)
+    static constexpr auto format(const centipede::ErrorType& error_type, std::format_context& ctx)
     {
-        using enum centipede::ErrorCode;
-        switch (error_code)
+        using enum centipede::ErrorType;
+        switch (error_type)
         {
             // TODO: the error messages here are duplicated from the comments in the enum class. Maybe there is a better
             // way to put them together?
             case success:
                 return std::format_to(ctx.out(), "No error. All good!");
+            case any:
+                return std::format_to(ctx.out(), "General error");
             case handler_incomp_n_locals:
                 return std::format_to(ctx.out(),
                                       "Handler: Incompatible number of local variables from the current entrypoint.");
@@ -107,7 +112,7 @@ struct std::formatter<centipede::ErrorCode>
             case invalid:
                 return std::format_to(ctx.out(), "Error due to no evaluation!");
             default:
-                break;
+                return std::format_to(ctx.out(), "No default error message available");
         }
         return std::format_to(ctx.out(), "invalid error code");
     }

@@ -17,6 +17,7 @@ target_sources(
 )
 
 target_link_libraries(core PUBLIC Eigen3::Eigen GSL::gsl)
+target_link_libraries(core PRIVATE magic_enum::magic_enum)
 
 if(libassert_FOUND)
     message(STATUS "Libassert is available")

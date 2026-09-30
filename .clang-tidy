@@ -28,4 +28,4 @@ FormatStyle: 'file'
 HeaderFilterRegex: '.*'
 
 CheckOptions:
-  - readability-identifier-length.IgnoredExceptionVariableNames: '^(e|_)$'
+  readability-identifier-length.IgnoredExceptionVariableNames: '^(e|_)$'

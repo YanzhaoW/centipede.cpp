@@ -6,13 +6,13 @@
 #include "centipede/core/engines/result.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_traits.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <concepts>
 #include <cstddef>
 #include <expected>
 #include <memory>
-#include <optional>
 #include <string>
 
 namespace centipede
@@ -22,7 +22,7 @@ namespace centipede
     class Handler;
 
     template <typename DataType = float, core::engine::MasterOpt opt = {}>
-    static auto create(const Config<DataType>& config = {}) -> std::expected<Handler<DataType, opt>, std::string>;
+    static auto create(const Config<DataType>& config = {}) -> EnumError<Handler<DataType, opt>>;
 
     /**
      * @brief Main frontend handler to the library
@@ -52,7 +52,7 @@ namespace centipede
             master_engine_->set_global_init_values(global_init_values);
         }
 
-        auto set_global_init_value(std::size_t global_idx, DataType val) -> VoidStr
+        auto set_global_init_value(std::size_t global_idx, DataType val) -> VoidError
         {
             return master_engine_->set_global_init_value(global_idx, val);
         }
@@ -63,7 +63,7 @@ namespace centipede
 
             if (n_points == 0)
             {
-                return std::unexpected{ ErrorCode::analysis_empty_entry };
+                return ErrorCode::Error(ErrorType::analysis_empty_entry);
             }
 
             return master_engine_->analyze().transform([n_points]() -> std::size_t { return n_points; });
@@ -100,30 +100,30 @@ namespace centipede
         {
         }
 
-        static auto check_config(const Conf& config) -> std::optional<std::string>
+        static auto check_config(const Conf& config) -> VoidError
         {
             if (config.fixed_parameter_ids.size() >= config.n_globals)
             {
-                return std::format("Invalid configuration: the number of global parameters ({}) should be larger than "
-                                   "the number of fixed global parameters ({})",
-                                   config.n_globals,
-                                   config.fixed_parameter_ids.size());
+                return ErrorCode::Error(
+                    std::format("Invalid configuration: the number of global parameters ({}) should be larger than "
+                                "the number of fixed global parameters ({})",
+                                config.n_globals,
+                                config.fixed_parameter_ids.size()));
             }
             return {};
         }
 
-        friend auto create<DataType, opt>(const Config<DataType>& config)
-            -> std::expected<Handler<DataType, opt>, std::string>;
+        friend auto create<DataType, opt>(const Config<DataType>& config) -> EnumError<Handler<DataType, opt>>;
     };
 
     template <typename DataType, core::engine::MasterOpt opt>
-    auto create(const Config<DataType>& config) -> std::expected<Handler<DataType, opt>, std::string>
+    auto create(const Config<DataType>& config) -> EnumError<Handler<DataType, opt>>
     {
-        auto has_error = Handler<DataType, opt>::check_config(config);
-        if (has_error)
+        auto is_ok = Handler<DataType, opt>::check_config(config);
+        if (not is_ok)
         {
-            return std::unexpected{ has_error.value() };
+            return ErrorCode::Error(is_ok.error());
         }
-        return Handler{ config };
+        return Handler<DataType, opt>{ config };
     }
 } // namespace centipede

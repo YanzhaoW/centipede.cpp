@@ -1,14 +1,14 @@
 #pragma once
 
+#include "centipede/util/error_code.hpp"
+#include "centipede/util/return_types.hpp"
 #include <cstdint>
-#include <expected>
 #include <filesystem>
 #include <string>
 #include <string_view>
 #include <system_error>
 
 #if defined(__APPLE__)
-#include <limits.h>
 #include <mach-o/dyld.h>
 #elif defined(__linux__)
 #include <unistd.h>
@@ -18,12 +18,12 @@ namespace centipede::cli
 {
     constexpr auto init_path_size = 100;
 
-    inline auto get_current_exe_location() -> std::expected<std::filesystem::path, std::string>
+    inline auto get_current_exe_location() -> EnumError<std::filesystem::path>
     {
         auto exe_str = std::string{};
         auto exe_path_size = uint32_t{ init_path_size };
         exe_str.resize(exe_path_size);
-#if defined(__APPLE__)
+#ifdef __APPLE__
         while (_NSGetExecutablePath(exe_str.data(), &exe_path_size) != 0)
         {
             if (exe_path_size != exe_str.size())
@@ -32,17 +32,17 @@ namespace centipede::cli
             }
             else
             {
-                return std::unexpected{ std::string{ "Failed to retrieve the location of the current executable!" } };
+                return ErrorCode::Error(std::string{ "Failed to retrieve the location of the current executable!" });
             }
         }
 
-#elif defined(__linux__)
+#elifdef __linux__
         while (true)
         {
             auto size = readlink("/proc/self/exe", exe_str.data(), exe_str.size());
             if (size == -1)
             {
-                return std::unexpected{ std::string{ "Failed to retrieve the location of the current executable!" } };
+                return ErrorCode::Error(std::string{ "Failed to retrieve the location of the current executable!" });
             }
             if (size < exe_str.size())
             {
@@ -59,7 +59,7 @@ namespace centipede::cli
 
         if (err)
         {
-            return std::unexpected{ err.message() };
+            return ErrorCode::Error(err.message());
         }
         return full_path;
     }

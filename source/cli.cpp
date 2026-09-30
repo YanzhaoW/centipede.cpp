@@ -11,7 +11,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-using centipede::VoidStr;
+using centipede::VoidError;
 
 auto main(int argc, char** argv) -> int
 {
@@ -48,9 +48,9 @@ auto main(int argc, char** argv) -> int
                                          .output = { .par_filename = output_par_filename } } };
 
     auto is_ok = app.use_config(config_filename)
-                     .and_then([&app] -> VoidStr { return app.init(); })
-                     .and_then([&app] -> VoidStr { return app.run(); })
-                     .and_then([&app] -> VoidStr { return app.save_output(); });
+                     .and_then([&app] -> VoidError { return app.init(); })
+                     .and_then([&app] -> VoidError { return app.run(); })
+                     .and_then([&app] -> VoidError { return app.save_output(); });
 
     if (not is_ok)
     {

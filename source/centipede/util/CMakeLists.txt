@@ -7,5 +7,7 @@ target_sources(
                 common_traits.hpp
                 eigen_formatter.hpp
                 error_types.hpp
+                error_code.hpp
                 return_types.hpp
+    PRIVATE error_types.cpp
 )

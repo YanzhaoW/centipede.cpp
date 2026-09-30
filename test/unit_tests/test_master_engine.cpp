@@ -157,7 +157,7 @@ namespace centipede::test
         EXPECT_TRUE_RES(master_->add_entrypoint(first_entrypoint));
         auto res = master_->add_entrypoint(second_entrypoint);
         ASSERT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::handler_incomp_n_locals);
+        EXPECT_EQ(res.error(), ErrorType::handler_incomp_n_locals);
     }
 
     TEST_F(master_engine, add_entrypoint_global_idx_too_large)
@@ -169,7 +169,7 @@ namespace centipede::test
 
         auto res = master_->add_entrypoint(first_entrypoint);
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_global_idx_too_large);
+        EXPECT_EQ(res.error(), ErrorType::analysis_global_idx_too_large);
     }
 
     TEST_F(master_engine, analyze)
@@ -192,12 +192,12 @@ namespace centipede::test
     {
         const auto& engine = master_->get_engine();
         EXPECT_CALL(engine, analyze(testing::_))
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_rank_deficit }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_rank_deficit )));
         EXPECT_CALL(engine, fill_data(testing::_, testing::_));
 
         auto res = master_->analyze();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_rank_deficit);
     }
 
     TEST_F(master_engine, solve)
@@ -208,7 +208,7 @@ namespace centipede::test
         EXPECT_CALL(*engine_class_, get_log()).WillOnce(::testing::ReturnRef(default_log));
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
-            .WillOnce([](const auto&, ResultType& result, const auto&) { result.error_status = ErrorCode::success; });
+            .WillOnce([](const auto&, ResultType& result, const auto&) { result.error_status = ErrorType::success; });
 
         EXPECT_TRUE_RES(master_->solve());
     }
@@ -222,10 +222,10 @@ namespace centipede::test
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
             .WillOnce([](const auto&, ResultType& result, const auto&)
-                      { result.error_status = ErrorCode::analysis_rank_deficit; });
+                      { result.error_status = ErrorType::analysis_rank_deficit; });
 
         auto res = master_->solve();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_rank_deficit);
     }
 } // namespace centipede::test

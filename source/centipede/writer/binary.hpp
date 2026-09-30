@@ -2,13 +2,13 @@
 
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_definitions.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <fstream>
 #include <ranges>
 #include <string>
@@ -111,7 +111,7 @@ namespace centipede::writer
          * Config::out_filename.
          * @see Config
          */
-        [[nodiscard]] auto init() -> VoidStr;
+        [[nodiscard]] auto init() -> VoidError;
 
         /**
          * @brief Add an entrypoint to the internal data buffer.
@@ -141,7 +141,7 @@ namespace centipede::writer
          *
          * @return Number of bytes written to the binary file.
          */
-        auto write_current_entry() -> StrError<std::size_t>;
+        auto write_current_entry() -> EnumError<std::size_t>;
 
         /**
          * @brief Manually close the output file handler.
@@ -185,15 +185,15 @@ namespace centipede::writer
 
         if (entry_point.get_measurement().error <= 0.)
         {
-            return std::unexpected{ ErrorCode::writer_neg_or_zero_sigma };
+            return ErrorCode::Error(ErrorType::writer_neg_or_zero_sigma);
         }
         if (data_buffer_.first.empty())
         {
-            return std::unexpected{ ErrorCode::writer_uninitialized };
+            return ErrorCode::Error(ErrorType::writer_uninitialized);
         }
         if (not check_buffer_size(NLocals + NGlobals + 2))
         {
-            return std::unexpected{ ErrorCode::writer_buffer_overflow };
+            return ErrorCode::Error(ErrorType::writer_buffer_overflow);
         }
 
         auto old_size = data_buffer_.first.size();
@@ -219,7 +219,7 @@ namespace centipede::writer
         if (not has_entry)
         {
             resize_data_buffer(old_size);
-            return std::unexpected{ ErrorCode::writer_entrypoint_rejected };
+            return ErrorCode::Error(ErrorType::writer_entrypoint_rejected);
         }
         return {};
     }
