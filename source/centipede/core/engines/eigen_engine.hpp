@@ -293,7 +293,7 @@ namespace centipede::core::engine
             return {};
         }
 
-        auto calculate_local_fit_chi_square() -> EnumError<std::pair<std::size_t, double>>
+        auto calculate_local_fit_chi_square() -> ResultError<std::pair<std::size_t, double>>
         {
             auto _ = EigenMemGuard{};
             const auto entrypoint_size = Base<DataType>::get_current_state().n_points;

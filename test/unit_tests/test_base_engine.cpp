@@ -115,7 +115,7 @@ namespace centipede::test
         const auto config = Config<float>{ .n_globals = 10UZ };
         auto engine = DerivedBaseEngine<float>{ config };
 
-        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, calculate_local_fit_chi_square())
             .Times(1)
             .WillOnce(testing::Return(std::pair<std::size_t, double>{ 1.F, 0.999 }));
@@ -170,7 +170,7 @@ namespace centipede::test
         const auto config = Config<float>{ .n_globals = 10UZ };
         auto engine = DerivedBaseEngine<float>{ config };
 
-        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, calculate_local_fit_chi_square())
             .Times(1)
             .WillOnce(testing::Return(std::pair<std::size_t, double>{ 10, 1000000 }));

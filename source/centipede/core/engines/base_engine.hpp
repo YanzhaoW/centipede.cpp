@@ -143,7 +143,7 @@ namespace centipede::core::engine
     auto Base<DataType>::analyze(this auto&& self, double alpha) -> VoidError
     {
         return self.fit_local_pars()
-            .and_then([&self]() -> EnumError<std::pair<std::size_t, double>>
+            .and_then([&self]() -> ResultError<std::pair<std::size_t, double>>
                       { return self.calculate_local_fit_chi_square(); })
             .and_then(
                 [&self, alpha](const auto& ndf_chi2) -> VoidError

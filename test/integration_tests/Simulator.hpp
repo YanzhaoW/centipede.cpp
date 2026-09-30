@@ -164,7 +164,7 @@ namespace centipede::test
                 if (run_idx == 0)
                 {
                     [[maybe_unused]] auto is_ok = binary_writer_.visit(
-                        []<typename T>(T& writer) -> EnumError<std::size_t>
+                        []<typename T>(T& writer) -> ResultError<std::size_t>
                         {
                             if constexpr (not std::same_as<T, std::monostate>)
                             {

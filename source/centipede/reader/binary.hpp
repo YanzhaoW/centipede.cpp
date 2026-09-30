@@ -146,7 +146,7 @@ namespace centipede::reader
          * - ErrorCode::reader_file_fail_to_read if the file stream is broken or file format is corrupted.
          * - #size_ on success
          */
-        [[maybe_unused]] auto read_one_entry() -> EnumError<std::size_t>;
+        [[maybe_unused]] auto read_one_entry() -> ResultError<std::size_t>;
 
         /**
          * @brief Getter of #entry_buffer_.
@@ -333,6 +333,6 @@ namespace centipede::reader
         ErrorCode status_{ ErrorType::invalid };
 
         void reset();
-        auto read_entry_to_buffer(uint32_t read_size) -> EnumError<>;
+        auto read_entry_to_buffer(uint32_t read_size) -> ResultError<>;
     };
 } // namespace centipede::reader

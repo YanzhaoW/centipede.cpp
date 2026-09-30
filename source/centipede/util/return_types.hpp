@@ -14,7 +14,7 @@ namespace centipede
      * @brief Template alias for expected return values.
      */
     template <typename T = void>
-    using EnumError = std::expected<T, ErrorCode>;
+    using ResultError = std::expected<T, ErrorCode>;
 
     /**
      * @brief Template alias for an expected void result or an enum class error.

@@ -44,7 +44,7 @@ namespace centipede::writer
 
         constexpr auto get_buffer() const -> const std::vector<EntryPoint<>>& { return entrypoints_; }
 
-        auto write_current_entry() -> EnumError<std::size_t>;
+        auto write_current_entry() -> ResultError<std::size_t>;
 
         void close() { output_file_.close(); };
 

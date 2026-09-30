@@ -27,7 +27,7 @@ namespace centipede::reader
     {
         template <typename T>
             requires(sizeof(T) == sizeof(uint32_t) and std::is_trivially_copyable_v<T>)
-        auto read_from_file(std::ifstream& input_file, T& data) -> EnumError<std::size_t>
+        auto read_from_file(std::ifstream& input_file, T& data) -> ResultError<std::size_t>
         {
             const auto read_size = sizeof(data);
             // NOLINTBEGIN (cppcoreguidelines-pro-type-reinterpret-cast)
@@ -42,7 +42,7 @@ namespace centipede::reader
 
         template <typename T>
             requires(sizeof(T) == sizeof(uint32_t) and std::is_trivially_copyable_v<T>)
-        auto read_from_file(std::ifstream& input_file, std::vector<T>& data) -> EnumError<std::size_t>
+        auto read_from_file(std::ifstream& input_file, std::vector<T>& data) -> ResultError<std::size_t>
         {
             assert(!data.empty());
             const auto read_size = data.size() * sizeof(T);
@@ -119,7 +119,7 @@ namespace centipede::reader
         }
 
         auto parse_entry_points(const Binary::RawBufferType& input, Binary::BufferType& output)
-            -> EnumError<std::size_t>
+            -> ResultError<std::size_t>
         {
             if (input.first.at(0) != 0U)
             {
@@ -199,7 +199,7 @@ namespace centipede::reader
         return {};
     }
 
-    auto Binary::read_one_entry() -> EnumError<std::size_t>
+    auto Binary::read_one_entry() -> ResultError<std::size_t>
     {
         if (entry_buffer_.empty())
         {
@@ -245,7 +245,7 @@ namespace centipede::reader
         size_ = 0U;
     }
 
-    auto Binary::read_entry_to_buffer(uint32_t read_size) -> EnumError<>
+    auto Binary::read_entry_to_buffer(uint32_t read_size) -> ResultError<>
     {
         raw_entry_buffer_.first.resize(read_size / 2U);
         raw_entry_buffer_.second.resize(read_size / 2U);

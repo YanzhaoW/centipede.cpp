@@ -141,7 +141,7 @@ namespace centipede::writer
          *
          * @return Number of bytes written to the binary file.
          */
-        auto write_current_entry() -> EnumError<std::size_t>;
+        auto write_current_entry() -> ResultError<std::size_t>;
 
         /**
          * @brief Manually close the output file handler.

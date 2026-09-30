@@ -56,7 +56,7 @@ namespace centipede::core::engine
         MOCK_METHOD(void, add_to_globals, (Globals & globals), (const));
         MOCK_METHOD((VoidError), fill_data, (const Entry<DataType>& entry, const core::ParIdMap&), (const));
         MOCK_METHOD((void), add_to_result, (Result<DataType> & result), (const));
-        MOCK_METHOD((EnumError<>), analyze, (double alpha), (const));
+        MOCK_METHOD((ResultError<>), analyze, (double alpha), (const));
         MOCK_METHOD((const core::engine::Log&), get_log, (), (const));
 
         static MockHelper<DataType>* mock_helper;
@@ -175,7 +175,7 @@ namespace centipede::test
     TEST_F(master_engine, analyze)
     {
         const auto& engine = master_->get_engine();
-        EXPECT_CALL(engine, analyze(testing::_)).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, analyze(testing::_)).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, fill_data(testing::_, testing::_));
 
         EXPECT_TRUE_RES(master_->analyze());

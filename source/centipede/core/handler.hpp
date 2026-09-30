@@ -11,9 +11,7 @@
 #include "centipede/util/return_types.hpp"
 #include <concepts>
 #include <cstddef>
-#include <expected>
 #include <memory>
-#include <string>
 
 namespace centipede
 {
@@ -22,7 +20,7 @@ namespace centipede
     class Handler;
 
     template <typename DataType = float, core::engine::MasterOpt opt = {}>
-    static auto create(const Config<DataType>& config = {}) -> EnumError<Handler<DataType, opt>>;
+    static auto create(const Config<DataType>& config = {}) -> ResultError<Handler<DataType, opt>>;
 
     /**
      * @brief Main frontend handler to the library
@@ -57,7 +55,7 @@ namespace centipede
             return master_engine_->set_global_init_value(global_idx, val);
         }
 
-        auto analyze_current_entry() -> EnumError<std::size_t>
+        auto analyze_current_entry() -> ResultError<std::size_t>
         {
             auto n_points = master_engine_->get_current_state().entry.measurements.size();
 
@@ -113,11 +111,11 @@ namespace centipede
             return {};
         }
 
-        friend auto create<DataType, opt>(const Config<DataType>& config) -> EnumError<Handler<DataType, opt>>;
+        friend auto create<DataType, opt>(const Config<DataType>& config) -> ResultError<Handler<DataType, opt>>;
     };
 
     template <typename DataType, core::engine::MasterOpt opt>
-    auto create(const Config<DataType>& config) -> EnumError<Handler<DataType, opt>>
+    auto create(const Config<DataType>& config) -> ResultError<Handler<DataType, opt>>
     {
         auto is_ok = Handler<DataType, opt>::check_config(config);
         if (not is_ok)

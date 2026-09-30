@@ -18,7 +18,7 @@ namespace centipede::cli
 {
     constexpr auto init_path_size = 100;
 
-    inline auto get_current_exe_location() -> EnumError<std::filesystem::path>
+    inline auto get_current_exe_location() -> ResultError<std::filesystem::path>
     {
         auto exe_str = std::string{};
         auto exe_path_size = uint32_t{ init_path_size };

@@ -60,7 +60,7 @@ namespace centipede::writer
         return {};
     }
 
-    auto Binary::write_current_entry() -> EnumError<std::size_t>
+    auto Binary::write_current_entry() -> ResultError<std::size_t>
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
         if (data_buffer_.first.empty())

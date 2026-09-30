@@ -25,7 +25,7 @@ namespace centipede::writer
         return {};
     }
 
-    auto Capnproto::write_current_entry() -> EnumError<std::size_t>
+    auto Capnproto::write_current_entry() -> ResultError<std::size_t>
     {
         auto entry = message_.initRoot<capnproto::Entry>();
 
