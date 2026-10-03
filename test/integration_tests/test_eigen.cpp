@@ -2,14 +2,11 @@
 #include "centipede/centipede.hpp"
 #include "centipede/cli/cxxopts_formatter.hpp" // IWYU pragma: keep
 #include "centipede/util/common_definitions.hpp"
-#include <Eigen/Core>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cxxopts.hpp>
 #include <format>
-#include <glaze/core/opts.hpp>
-#include <glaze/glaze.hpp>
-#include <glaze/json/write.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <mps/MPS.hpp>
@@ -26,7 +23,7 @@
 
 namespace
 {
-    enum class ResStatus
+    enum class ResStatus : uint8_t
     {
         succeed,
         fail,
@@ -63,7 +60,7 @@ auto main(int argc, char** argv) -> int
 
     auto result = app.parse(argc, argv);
 
-    if (result.count("help"))
+    if (result.contains("help"))
     {
         std::println("{}", app.help());
         return EXIT_SUCCESS;

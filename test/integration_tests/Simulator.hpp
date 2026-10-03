@@ -57,19 +57,24 @@ namespace centipede::test
             std::size_t n_events = 0;
         };
 
-        Simulator(const Config& config)
+        explicit Simulator(const Config& config)
             : config_{ config }
-            , binary_writer_{}
         {
             switch (config.output_format)
             {
                 using enum common::IO;
                 case proto:
+                {
                     binary_writer_.emplace<writer::Capnproto>(
                         writer::Capnproto::Config{ .out_filename = std::string{ config.output_data_filename } });
+                    break;
+                }
                 case binary:
+                {
                     binary_writer_.emplace<writer::Binary>(
                         writer::Binary::Config{ .out_filename = std::string{ config.output_data_filename } });
+                    break;
+                }
                 case none:
                 default:
             }
@@ -226,7 +231,7 @@ namespace centipede::test
             }
             spdlog::info("Fitting processes finished. Parameters are written to the file {:?}.", config_.par_filename);
 
-            [[maybe_unused]] auto ec = glz::write_file_json(output_pars_, config_.par_filename, std::string{});
+            [[maybe_unused]] auto has_error = glz::write_file_json(output_pars_, config_.par_filename, std::string{});
         }
 
         void print_result(const auto& handler)
@@ -293,9 +298,9 @@ namespace centipede::test
         OutputPars output_pars_;
         OutputTypes binary_writer_;
 
-        std::vector<mps::Data> sim_data{};
-        std::vector<EntryData> entries{};
-        std::vector<mps::MillePedeAdaptor::FitInput> local_fit_data{};
+        std::vector<mps::Data> sim_data;
+        std::vector<EntryData> entries;
+        std::vector<mps::MillePedeAdaptor::FitInput> local_fit_data;
 
         void add_pars(const auto& mps, const auto& handler)
         {
@@ -316,7 +321,7 @@ namespace centipede::test
                 errs.resize(key_val.second.size());
                 for (const auto [par_idx, par_val] : std::views::zip(std::views::iota(0UZ), key_val.second))
                 {
-                    auto iter = result.parameters.find(idx + par_idx * 2);
+                    auto iter = result.parameters.find(idx + (par_idx * 2));
                     if (iter == result.parameters.end())
                     {
                         val.push_back(par_val);
@@ -346,13 +351,13 @@ namespace centipede::test
         template <typename T>
         void save_data_to_file(const std::vector<T>& data, std::string_view filename)
         {
-            [[maybe_unused]] auto ec =
+            [[maybe_unused]] auto has_error =
                 glz::write_file_json<glz::opts{ .minified = true }>(data, filename, std::string{});
         }
 
         void save_config_to_file(const auto& data, std::string_view filename)
         {
-            [[maybe_unused]] auto ec =
+            [[maybe_unused]] auto has_error =
                 glz::write_file_json<glz::opts{ .minified = true }>(data, filename, std::string{});
         }
     };
