@@ -10,9 +10,14 @@ target_sources(
             TYPE HEADERS
             BASE_DIRS ${CMAKE_SOURCE_DIR}/source
             FILES centipede.hpp
+    PRIVATE
+        FILE_SET privateHeaders
+            TYPE HEADERS
+            BASE_DIRS ${CMAKE_BINARY_DIR}/source
 )
 
 target_link_libraries(core PUBLIC Eigen3::Eigen GSL::gsl)
+target_link_libraries(core PRIVATE magic_enum::magic_enum)
 
 if(libassert_FOUND)
     message(STATUS "Libassert is available")

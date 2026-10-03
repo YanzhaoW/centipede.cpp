@@ -1,14 +1,12 @@
 #include "Simulator.hpp"
 #include "centipede/centipede.hpp"
-#include "centipede/cli/spdlog_stream.hpp" // IWYU pragma: keep
-#include <Eigen/Core>
+#include "centipede/cli/cxxopts_formatter.hpp" // IWYU pragma: keep
+#include "centipede/util/common_definitions.hpp"
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cxxopts.hpp>
 #include <format>
-#include <glaze/core/opts.hpp>
-#include <glaze/glaze.hpp>
-#include <glaze/json/write.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <mps/MPS.hpp>
@@ -25,7 +23,7 @@
 
 namespace
 {
-    enum class ResStatus
+    enum class ResStatus : uint8_t
     {
         succeed,
         fail,
@@ -40,27 +38,29 @@ auto main(int argc, char** argv) -> int
 
     auto app = cxxopts::Options{ "Testing with simulated data from MPS" };
 
-    auto has_json_output = false;
-    auto has_mille_output = false;
     auto n_events = 1000UZ;
     auto n_runs = 1UZ;
     auto log_level = spdlog::level::info;
+    auto output_format = centipede::common::IO::proto;
 
     app.add_options()("h,help", "Print usage");
 
     app.add_options()(
-        "json-output", "Output event data to a json file", cxxopts::value(has_json_output)->default_value("false"))(
-        "mille-output", "Output event data to a mille file", cxxopts::value(has_mille_output)->default_value("false"))(
         "r,n-runs", "Set the number of runs", cxxopts::value(n_runs)->default_value(std::format("{}", n_runs)))(
-        "n,n_events", "Set the number of events", cxxopts::value(n_events)->default_value(std::format("{}", n_events)));
+        "n,n-events", "Set the number of events", cxxopts::value(n_events)->default_value(std::format("{}", n_events)));
 
     app.add_options()("l,log",
                       std::format("Set the log level among: {}", magic_enum::enum_names<spdlog::level::level_enum>()),
                       cxxopts::value(log_level)->default_value(std::string{ magic_enum::enum_name(log_level) }));
 
+    app.add_options()(
+        "output-format",
+        std::format("Set the output format: {}", magic_enum::enum_names<centipede::common::IO>()),
+        cxxopts::value(output_format)->default_value(std::string{ magic_enum::enum_name(output_format) }));
+
     auto result = app.parse(argc, argv);
 
-    if (result.count("help"))
+    if (result.contains("help"))
     {
         std::println("{}", app.help());
         return EXIT_SUCCESS;
@@ -82,8 +82,7 @@ auto main(int argc, char** argv) -> int
     mps.init();
 
     auto simulator = centipede::test::Simulator{ {
-        .has_json_output = has_json_output,
-        .has_mille_output = has_mille_output,
+        .output_format = output_format,
         .par_filename = par_filename,
         .output_data_filename = output_data_filename,
         .n_events = n_events,

@@ -2,6 +2,7 @@
 
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_definitions.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cstddef>
@@ -119,7 +120,7 @@ namespace centipede::reader
          * Config::in_filename.
          * @see Config
          */
-        [[nodiscard]] auto init() -> VoidStr;
+        [[nodiscard]] auto init() -> VoidError;
 
         /**
          * @brief Manually close the input file handler.
@@ -145,7 +146,7 @@ namespace centipede::reader
          * - ErrorCode::reader_file_fail_to_read if the file stream is broken or file format is corrupted.
          * - #size_ on success
          */
-        [[maybe_unused]] auto read_one_entry() -> EnumError<std::size_t>;
+        [[maybe_unused]] auto read_one_entry() -> ResultError<std::size_t>;
 
         /**
          * @brief Getter of #entry_buffer_.
@@ -191,7 +192,7 @@ namespace centipede::reader
          *
          * Note that this while return false on read error as well as incomplete read operation.
          */
-        [[nodiscard]] auto is_ok() const -> bool { return get_status() == ErrorCode::success; }
+        [[nodiscard]] auto is_ok() const -> bool { return get_status() == ErrorType::success; }
 
         /**
          * @brief Getter of raw_entry_buffer
@@ -239,7 +240,7 @@ namespace centipede::reader
             explicit Iterator(Binary* reader_ptr)
                 : reader_{ reader_ptr }
             {
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorType::invalid;
                 ++(*this);
             }
 
@@ -275,12 +276,12 @@ namespace centipede::reader
 
                 if (reader_->is_end_of_file() or result.value() == 0U)
                 {
-                    reader_->status_ = ErrorCode::success;
+                    reader_->status_ = ErrorType::success;
                     return *this;
                 }
 
                 current_ = reader_->get_current_entry();
-                reader_->status_ = ErrorCode::invalid;
+                reader_->status_ = ErrorType::invalid;
                 return *this;
             }
             /**
@@ -300,11 +301,11 @@ namespace centipede::reader
              *
              * @return Returns true while iteration is not finished.
              */
-            auto operator!=(const Sentinel&) const -> bool { return reader_->status_ == ErrorCode::invalid; }
+            auto operator!=(const Sentinel& /*unused*/) const -> bool { return reader_->status_ == ErrorType::invalid; }
 
           private:
-            Binary* reader_{};    //!< Associated Binary reader instance.
-            EntrySpan current_{}; //!< Current iterator value.
+            Binary* reader_{};  //!< Associated Binary reader instance.
+            EntrySpan current_; //!< Current iterator value.
         };
 
         /**
@@ -319,7 +320,7 @@ namespace centipede::reader
          *
          * @return Sentinel representing the end of the range.
          */
-        auto end() const -> Sentinel { return Sentinel{}; }
+        static auto end() -> Sentinel { return Sentinel{}; }
 
       private:
         BufferType entry_buffer_;        //!< A vector containing all entrypoints of the current entry.
@@ -329,9 +330,9 @@ namespace centipede::reader
         std::size_t size_{};             //!< Number of Entrypoints in the current entry
         std::size_t n_entries_{};        //!< Total number of entries read by this instance
         bool end_of_file_{ false };      //!< Indicates if end of file is reached. Gets updated on read.
-        ErrorCode status_{ ErrorCode::invalid };
+        ErrorCode status_{ ErrorType::invalid };
 
         void reset();
-        auto read_entry_to_buffer(uint32_t read_size) -> EnumError<>;
+        auto read_entry_to_buffer(uint32_t read_size) -> ResultError<>;
     };
 } // namespace centipede::reader

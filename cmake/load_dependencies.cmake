@@ -9,6 +9,7 @@ find_package(spdlog REQUIRED CONFIG)
 find_package(glaze REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(libassert REQUIRED)
+find_package(CapnProto)
 
 if(BUILD_TESTING)
     find_package(GTest CONFIG REQUIRED)

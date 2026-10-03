@@ -22,6 +22,14 @@ FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 set(DOXYGEN_PROJECT_NAME "Centipede")
 set(DOXYGEN_PROJECT_BRIEF "Centipede program")
 
+set(DOXYGEN_GENERATE_LATEX YES)
+set(DOXYGEN_USE_PDFLATEX YES)
+set(DOXYGEN_LATEX_OUTPUT pdf)
+set(DOXYGEN_PDF_HYPERLINKS YES)
+set(DOXYGEN_LATEX_BATCHMODE YES)
+set(DOXYGEN_EXTRA_PACKAGES amsmath)
+set(DOXYGEN_LATEX_EXTRA_FILES "${PROJECT_SOURCE_DIR}/doc/pics/track_detector.pdf")
+
 # set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_SOURCE_BROWSER YES)
 # set(DOXYGEN_UML_LOOK YES)
@@ -44,7 +52,8 @@ set(DOXYGEN_TOC_INCLUDE_HEADINGS 6)
 set(DOXYGEN_MARKDOWN_SUPPORT YES)
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${PROJECT_SOURCE_DIR}/doc/main.md")
 set(DOXYGEN_IMAGE_PATH "${PROJECT_SOURCE_DIR}/doc/pics")
-# set(DOXYGEN_EXAMPLE_PATH "${PROJECT_SOURCE_DIR}/neuland/docs/figs")
+
+set(DOXYGEN_EXAMPLE_PATH "${PROJECT_SOURCE_DIR}/doc")
 set(DOXYGEN_PYTHON_DOCSTRING NO)
 
 # Code
@@ -59,6 +68,7 @@ set(DOXYGEN_HIDE_SCOPE_NAMES YES)
 set(DOXYGEN_EXCLUDE
     "${PROJECT_SOURCE_DIR}/test"
     "${PROJECT_SOURCE_DIR}/source/centipede/cli/spdlog_stream.hpp"
+    "${PROJECT_SOURCE_DIR}/doc/theories"
 )
 
 set(DOXYGEN_HIDE_UNDOC_MEMBERS YES)
@@ -72,9 +82,6 @@ set(DOXYGEN_HTML_EXTRA_FILES
 )
 set(DOXYGEN_HTML_EXTRA_STYLESHEET
     "${AWESOME_CSS_DIR}/doxygen-awesome.css"
-    # "${AWESOME_CSS_DIR}/doxygen-awesome.css"
-    # "${AWESOME_CSS_DIR}/doxygen-awesome-darkmode-toggle.css"
-    # "${AWESOME_CSS_DIR}/doxygen-awesome-sidebar-only.css"
     # "${AWESOME_CSS_DIR}/doxygen-awesome-sidebar-only-darkmode-toggle.css"
 )
 set(DOXYGEN_HTML_HEADER "${PROJECT_SOURCE_DIR}/util/doxygen_header.html")

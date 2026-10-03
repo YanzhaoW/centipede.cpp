@@ -1,5 +1,6 @@
 #include "binary.hpp"
 #include "centipede/data/entrypoint.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include <algorithm>
@@ -26,7 +27,7 @@ namespace centipede::reader
     {
         template <typename T>
             requires(sizeof(T) == sizeof(uint32_t) and std::is_trivially_copyable_v<T>)
-        auto read_from_file(std::ifstream& input_file, T& data) -> EnumError<std::size_t>
+        auto read_from_file(std::ifstream& input_file, T& data) -> ResultError<std::size_t>
         {
             const auto read_size = sizeof(data);
             // NOLINTBEGIN (cppcoreguidelines-pro-type-reinterpret-cast)
@@ -34,14 +35,14 @@ namespace centipede::reader
             // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
             if (input_file.gcount() != static_cast<std::streamsize>(read_size))
             {
-                return std::unexpected{ ErrorCode::reader_file_fail_to_read };
+                return ErrorCode::Error(ErrorType::reader_file_fail_to_read);
             }
             return read_size;
         }
 
         template <typename T>
             requires(sizeof(T) == sizeof(uint32_t) and std::is_trivially_copyable_v<T>)
-        auto read_from_file(std::ifstream& input_file, std::vector<T>& data) -> EnumError<std::size_t>
+        auto read_from_file(std::ifstream& input_file, std::vector<T>& data) -> ResultError<std::size_t>
         {
             assert(!data.empty());
             const auto read_size = data.size() * sizeof(T);
@@ -50,7 +51,7 @@ namespace centipede::reader
             // NOLINTEND (cppcoreguidelines-pro-type-reinterpret-cast)
             if (input_file.gcount() != static_cast<std::streamsize>(read_size))
             {
-                return std::unexpected{ ErrorCode::reader_file_fail_to_read };
+                return ErrorCode::Error(ErrorType::reader_file_fail_to_read);
             }
             return read_size;
         }
@@ -66,26 +67,26 @@ namespace centipede::reader
         auto chunk_check_size_one(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            return (srs::size(*(chunk_ptr.iter)) == 1U) ? std::optional{ chunk_ptr } : std::nullopt;
+            return (srs::size(*chunk_ptr.iter) == 1U) ? std::optional{ chunk_ptr } : std::nullopt;
         }
 
         auto chunk_not_end_and_increment(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            return (++(chunk_ptr.iter) != chunk_ptr.end) ? std::optional{ chunk_ptr } : std::nullopt;
+            return (++chunk_ptr.iter != chunk_ptr.end) ? std::optional{ chunk_ptr } : std::nullopt;
         }
 
         auto chunk_handle_measurement(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            (chunk_ptr.entrypoint)->set_measurement(std::get<1>(*(*(chunk_ptr.iter)).begin()));
+            chunk_ptr.entrypoint->set_measurement(std::get<1>(*(*chunk_ptr.iter).begin()));
             return chunk_ptr;
         }
 
         auto chunk_handle_globals(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            for (const auto& global : *(chunk_ptr.iter))
+            for (const auto& global : *chunk_ptr.iter)
             {
                 chunk_ptr.entrypoint->add_global(std::get<0>(global) - 1, std::get<1>(global));
             }
@@ -95,14 +96,16 @@ namespace centipede::reader
         auto chunk_handle_sigma(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            chunk_ptr.entrypoint->set_sigma(std::get<1>(*(*(chunk_ptr.iter)).begin()));
+            auto val = chunk_ptr.entrypoint->get_measurement();
+            val.error = std::get<1>(*(*chunk_ptr.iter).begin());
+            chunk_ptr.entrypoint->set_measurement(val);
             return chunk_ptr;
         }
 
         auto chunk_handle_locals(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            for (const auto& local : *(chunk_ptr.iter) | svs::values)
+            for (const auto& local : *chunk_ptr.iter | svs::values)
             {
                 chunk_ptr.entrypoint->add_local(local);
             }
@@ -112,15 +115,15 @@ namespace centipede::reader
         auto chunk_end_after_increment(auto chunk_ptr)
         {
             assert(chunk_ptr.entrypoint != nullptr);
-            return (++(chunk_ptr.iter) == chunk_ptr.end) ? std::optional{ chunk_ptr } : std::nullopt;
+            return (++chunk_ptr.iter == chunk_ptr.end) ? std::optional{ chunk_ptr } : std::nullopt;
         }
 
         auto parse_entry_points(const Binary::RawBufferType& input, Binary::BufferType& output)
-            -> EnumError<std::size_t>
+            -> ResultError<std::size_t>
         {
             if (input.first.at(0) != 0U)
             {
-                return std::unexpected{ ErrorCode::reader_file_fail_to_read };
+                return ErrorCode::Error(ErrorType::reader_file_fail_to_read);
             }
             constexpr auto chunk_size{ 4 };
             auto current_n_points = std::size_t{};
@@ -129,7 +132,7 @@ namespace centipede::reader
                                         { return std::get<0>(current) != 0U and std::get<0>(next) != 0U; });
             if (zipped.begin() == zipped.end())
             {
-                return std::unexpected{ ErrorCode::reader_file_fail_to_read };
+                return ErrorCode::Error(ErrorType::reader_file_fail_to_read);
             }
             // TODO: Use chunk_view after libc++ supports it.
             auto chunks =
@@ -158,7 +161,7 @@ namespace centipede::reader
                                                  .transform(chunk_handle_globals<ChunkPtrType>)
                                                  .and_then(chunk_end_after_increment<ChunkPtrType>)
                                                  .transform(
-                                                     [&current_n_points](auto)
+                                                     [&current_n_points](auto) -> bool
                                                      {
                                                          ++current_n_points;
                                                          return true;
@@ -170,17 +173,17 @@ namespace centipede::reader
                                      std::identity{});
             if (not is_ok)
             {
-                return std::unexpected{ ErrorCode::reader_file_fail_to_read };
+                return ErrorCode::Error(ErrorType::reader_file_fail_to_read);
             }
             return current_n_points;
         }
     } // namespace
 
-    auto Binary::init() -> VoidStr
+    auto Binary::init() -> VoidError
     {
         if (config_.in_filename.empty())
         {
-            return std::unexpected{ std::format("Binary reader: File name is empty!") };
+            return ErrorCode::Error(std::format("Binary reader: File name is empty!"));
         }
         entry_buffer_.resize(config_.max_bufferpoint_size);
         raw_entry_buffer_.first.reserve(config_.max_bufferpoint_size);
@@ -188,19 +191,19 @@ namespace centipede::reader
         input_file_.open(config_.in_filename, std::ios::binary | std::ios::in);
         if (!input_file_.is_open())
         {
-            return std::unexpected{ std::format("Binary reader: Failed to open the file with filename {:?}.",
-                                                config_.in_filename) };
+            return ErrorCode::Error(
+                std::format("Binary reader: Failed to open the file with filename {:?}.", config_.in_filename));
         }
         n_entries_ = 0Z;
         end_of_file_ = false;
         return {};
     }
 
-    auto Binary::read_one_entry() -> EnumError<std::size_t>
+    auto Binary::read_one_entry() -> ResultError<std::size_t>
     {
         if (entry_buffer_.empty())
         {
-            return std::unexpected{ ErrorCode::reader_uninitialized };
+            return ErrorCode::Error(ErrorType::reader_uninitialized);
         }
         reset();
         auto read_size = uint32_t{};
@@ -211,11 +214,11 @@ namespace centipede::reader
                 end_of_file_ = true;
                 return 0U;
             }
-            return std::unexpected{ result.error() };
+            return result;
         }
         if (auto result = read_entry_to_buffer(read_size); !result)
         {
-            return std::unexpected{ result.error() };
+            return ErrorCode::Error(result.error());
         }
         if (read_size > config_.max_bufferpoint_size)
         {
@@ -224,7 +227,7 @@ namespace centipede::reader
         auto size = parse_entry_points(raw_entry_buffer_, entry_buffer_);
         if (not size)
         {
-            return std::unexpected{ size.error() };
+            return ErrorCode::Error(size.error());
         }
         ++n_entries_;
         size_ = size.value();
@@ -242,17 +245,17 @@ namespace centipede::reader
         size_ = 0U;
     }
 
-    auto Binary::read_entry_to_buffer(uint32_t read_size) -> EnumError<>
+    auto Binary::read_entry_to_buffer(uint32_t read_size) -> ResultError<>
     {
         raw_entry_buffer_.first.resize(read_size / 2U);
         raw_entry_buffer_.second.resize(read_size / 2U);
         if (auto result = read_from_file(input_file_, raw_entry_buffer_.second); !result)
         {
-            return std::unexpected{ result.error() };
+            return ErrorCode::Error(result.error());
         }
         if (auto result = read_from_file(input_file_, raw_entry_buffer_.first); !result)
         {
-            return std::unexpected{ result.error() };
+            return ErrorCode::Error(result.error());
         }
         return {};
     }

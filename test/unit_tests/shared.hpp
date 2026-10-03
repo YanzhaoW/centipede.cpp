@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -29,7 +30,7 @@ namespace centipede::test
     {
         static auto rand_dev = std::random_device{};
         static auto engine = std::mt19937{ rand_dev() };
-        static auto value_gen = std::uniform_real_distribution<double>(1., MAX_VAL);
+        static auto value_gen = std::uniform_real_distribution<float>(1., MAX_VAL);
 
         auto global_ids = sv::iota(0, DEFAULT_MAX_GLOBAL_ID) | sr::to<std::vector<int>>();
 
@@ -37,7 +38,8 @@ namespace centipede::test
                std::views::transform(
                    [&](const auto) -> auto
                    {
-                       auto entrypoint = EntryPoint<>{}.set_measurement(value_gen(engine)).set_sigma(value_gen(engine));
+                       auto entrypoint =
+                           EntryPoint<>{}.set_measurement(ValueError{ value_gen(engine), value_gen(engine) });
                        sr::shuffle(global_ids, engine);
                        for (const auto global_id : global_ids | sv::take(n_globals))
                        {

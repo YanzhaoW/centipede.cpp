@@ -1,0 +1,13 @@
+name: centipede-env
+channels:
+  - conda-forge
+dependencies:
+  - python == 3.12
+  - pip
+  - pip:
+      - odrpack<=0.6.1
+      - pycapnp
+  - numpy < 1.28.0
+  - pandas
+  - seaborn
+  - ipykernel

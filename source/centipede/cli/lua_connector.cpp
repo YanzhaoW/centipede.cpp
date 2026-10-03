@@ -1,9 +1,10 @@
 #include "lua_connector.hpp"
 #include "centipede/cli/config.hpp"
 #include "centipede/cli/location_identifier.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/return_types.hpp"
-#include <expected>
 #include <filesystem>
 #include <format>
 #include <lua.h>
@@ -19,7 +20,7 @@
 namespace centipede::cli
 {
 
-    auto LuaConnector::init(Config& config) -> VoidStr
+    auto LuaConnector::init(Config& config) -> VoidError
     {
         lua_state_.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math, sol::lib::table);
         return setup_lua_pkg_path().transform(
@@ -31,23 +32,22 @@ namespace centipede::cli
             });
     }
 
-    auto LuaConnector::read_user_config(const std::string& filename, Config& config) -> VoidStr
+    auto LuaConnector::read_user_config(const std::string& filename, Config& config) -> VoidError
     {
         auto res = lua_state_.safe_script_file(filename);
         if (not res.valid())
         {
-            return std::unexpected{ std::format(
-                "Error occurred when reading the lua file {:?}: \n\t{}", filename, res.get<sol::error>().what()) };
+            return ErrorCode::Error(std::format(
+                "Error occurred when reading the lua file {:?}: \n\t{}", filename, res.get<sol::error>().what()));
         }
         read_struct_from_user_config(config);
         return {};
     }
 
-    auto LuaConnector::setup_lua_pkg_path() -> VoidStr
+    auto LuaConnector::setup_lua_pkg_path() -> VoidError
     {
-
         return get_current_exe_location().and_then(
-            [this](const auto& current_exe_path) -> VoidStr
+            [this](const auto& current_exe_path) -> VoidError
             {
                 spdlog::debug("Successfully identified the current executable path: {}", current_exe_path.c_str());
                 const auto rel_dir_paths = std::vector<std::filesystem::path>{ "../../scripts" };
@@ -63,7 +63,7 @@ namespace centipede::cli
 
                     if (err)
                     {
-                        return std::unexpected{ err.message() };
+                        return ErrorCode::Error(err.message());
                     }
                 }
                 return {};
@@ -86,16 +86,33 @@ namespace centipede::cli
 
     void LuaConnector::setup_lua_usr_types()
     {
-        lua_state_.new_usertype<EntryPoint<>>(
-            "EntryPoint",
-            "locals",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_locals(); }),
-            "globals",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_globals(); }),
-            "meas",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_measurement(); }),
-            "sigma",
-            sol::readonly_property([](const EntryPoint<>& entrypoint) { return entrypoint.get_sigma(); }));
+        lua_state_.new_usertype<ValueErrorD>(
+            "ValueErrorD",
+            "value",
+            sol::readonly_property([](const ValueErrorD& value_error) -> double { return value_error.value; }),
+            "error",
+            sol::readonly_property([](const ValueErrorD& value_error) -> double { return value_error.error; })
+
+        );
+        lua_state_.new_usertype<ValueErrorF>(
+            "ValueErrorF",
+            "value",
+            sol::readonly_property([](const ValueErrorF& value_error) -> float { return value_error.value; }),
+            "error",
+            sol::readonly_property([](const ValueErrorF& value_error) -> float { return value_error.error; })
+
+        );
+
+        lua_state_.new_usertype<EntryPoint<>>("EntryPoint",
+                                              "locals",
+                                              sol::readonly_property([](const EntryPoint<>& entrypoint) -> const auto&
+                                                                     { return entrypoint.get_locals(); }),
+                                              "globals",
+                                              sol::readonly_property([](const EntryPoint<>& entrypoint) -> const auto&
+                                                                     { return entrypoint.get_globals(); }),
+                                              "meas",
+                                              sol::readonly_property([](const EntryPoint<>& entrypoint) -> auto
+                                                                     { return entrypoint.get_measurement(); }));
     }
 
     void LuaConnector::setup_lua_warn_msg()
