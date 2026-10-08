@@ -1,7 +1,6 @@
 #include "Simulator.hpp"
 #include "centipede/centipede.hpp"
 #include "centipede/cli/cxxopts_formatter.hpp" // IWYU pragma: keep
-#include "centipede/util/common_definitions.hpp"
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>

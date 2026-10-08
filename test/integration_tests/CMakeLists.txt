@@ -37,8 +37,6 @@ set_tests_properties(
 )
 #===================================eigen core===============================
 
-find_package(mps)
-
 if(mps_FOUND)
     message(STATUS "Testing with simulated data from mps is enabled!")
     add_executable(test_eigen test_eigen.cpp)

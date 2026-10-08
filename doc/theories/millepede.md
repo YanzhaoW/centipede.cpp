@@ -268,7 +268,7 @@ Here the square matrix is partitioned into three rows and columns of block matri
     \end{bmatrix}_{(i, k)(i', k')} \notag\\
     \mathcal{M}_{33} &= 
     \begin{bmatrix}
-        \delta_{jj'}\delta_{kk'} \left(\lambda + \frac{1}{(\sigma_i^k)^2} \right) + \delta_{kk'} \eta p_j p_{j'}
+        \delta_{jj'}\delta_{kk'} \left(\lambda + \frac{1}{(\sigma_j^k)^2} \right) + \delta_{kk'} \eta q_j q_{j'}
     \end{bmatrix}_{(j, k)(j', k')} \\
 
 \f}
@@ -287,7 +287,7 @@ The off-diagonal matrix blocks in @f$\mathcal{C}^2@f$ can be expressed as
     \end{bmatrix}_{j(i',k')} \notag \\
     \mathcal{M}_{13} &= 
     \begin{bmatrix}
-        \delta_{jj'} \eta \left( \sum^{n_l}_k q_k (\hat{y}_k^{k'} + y_k^{k'}) \right) + \eta p_{j'} (\hat{y}_j^{k'} + y_j^{k'})
+        \delta_{jj'} \eta \left( \sum^{n_l}_{j''} q_{j''} (\hat{y}_{j''}^{k'} + y_{j''}^{k'}) \right) + \eta q_{j'} (\hat{y}_j^{k'} + y_j^{k'})
     \end{bmatrix}_{j(j', k')} \notag \\
     \mathcal{M}_{23} &= 
     \begin{bmatrix}
