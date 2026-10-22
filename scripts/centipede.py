@@ -3,6 +3,7 @@ import math
 import os
 import sys
 from dataclasses import dataclass, field
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +39,7 @@ class Buffer:
     mat_c_1: np.ndarray = field(
         default_factory=lambda: np.array([], dtype=np.float64)
     )
-    mat_lambda: np.ndarray = field(
+    mat_gamma: np.ndarray = field(
         default_factory=lambda: np.array([], dtype=np.float64)
     )
     mat_g: np.ndarray = field(
@@ -56,29 +57,40 @@ class Buffer:
 
 class Centipede:
     def __init__(
-        self, schema_path: str, n_globals: int, v_lambda: float, v_eta: float
+        self,
+        schema_path: str,
+        n_globals: int,
+        v_lambda: float,
+        v_eta: float,
+        fixed_pars: list[int] = [],
     ):
-        self._n_globals = n_globals
-        self._entry_capnp = self._setup_schema_path(schema_path)
-        self._data_filename: str = ""
-        self._global_init_pars = {
-            par_id: 0.0 for par_id in range(0, n_globals)
-        }
-        self._lambda = v_lambda
-        self._eta = v_eta
-        self._buffer = Buffer()
-        self._losses = pd.DataFrame()
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO)
         self._logger.propagate = False
-        self._factor_mat = np.zeros(shape=(self._n_globals, self._n_globals))
-        self._rhs = np.zeros(shape=(self._n_globals, 1))
         if not self._logger.handlers:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(
                 logging.Formatter("%(levelname)s:%(name)s:%(message)s")
             )
             self._logger.addHandler(handler)
+
+        self._n_globals = n_globals
+        self.fixed_globals = fixed_pars
+
+        self._entry_capnp = self._setup_schema_path(schema_path)
+        self._data_filename: str = ""
+        self._global_init_pars: dict[int, float] = {
+            par_id: 0.0 for par_id in range(0, n_globals)
+        }
+        self._lambda = v_lambda
+        self._eta = v_eta
+        self._buffer = Buffer()
+        self._losses = pd.DataFrame()
+        self._rhs = np.zeros(shape=(self._n_fit_globals, 1))
+        self._par_results: dict[int, float] = {}
+        self._factor_mat = np.zeros(
+            shape=(self._n_fit_globals, self._n_fit_globals)
+        )
 
     def set_log_level(self, level):
         self._logger.setLevel(level)
@@ -103,9 +115,12 @@ class Centipede:
             )
 
     @staticmethod
-    def _cholesky_solve(L, rhs):
+    def cholesky_solve(L, rhs):
         temp = np.linalg.solve(L, rhs)
-        return np.linalg.solve(L.conj().T, rhs)
+        return np.linalg.solve(L.conj().T, temp)
+
+    def _log_matrix_dimension(self, name: str, mat: np.ndarray):
+        self._logger.debug(f"Creating {name} with dimension: {mat.shape}")
 
     def analyze(self, event_num: int = -1):
         with open(self._data_filename, "rb") as file:
@@ -115,10 +130,11 @@ class Centipede:
             with logging_redirect_tqdm(
                 loggers=[self._logger], tqdm_class=tqdm
             ):
-                for event_idx, entry in enumerate(tqdm(reader)):
+                n_loops = event_num if event_num >= 0 else None
+                for event_idx, entry in enumerate(
+                    tqdm(islice(reader, n_loops), total=n_loops)
+                ):
                     self._buffer.event_idx = event_idx
-                    if (event_num >= 0) and event_idx > event_num:
-                        break
 
                     self._buffer.entrypoints = entry.entrypoint
                     self._buffer.n_locals = self._scan_entry(
@@ -128,6 +144,7 @@ class Centipede:
                         entrypoints=entry.entrypoint,
                         n_locals=self._buffer.n_locals,
                     )
+                    self._logger.debug(f"Local fits: {self._buffer.beta}")
                     self._buffer.loss = self._calculate_loss(
                         entrypoints=entry.entrypoint,
                         local_inits=self._buffer.beta,
@@ -137,14 +154,27 @@ class Centipede:
                         self._analyze_entry(entry.entrypoint)
                     except np.linalg.LinAlgError as err:
                         eigen_values = np.linalg.eigvals(
-                            self._buffer.mat_lambda
+                            self._buffer.mat_gamma
                         )
-                        self._logger.error(
-                            f"Cholesky failed: {err}. Eigen values: {eigen_values}"
-                        )
+                        with np.printoptions(precision=2, floatmode="fixed"):
+                            self._logger.error(
+                                f"Cholesky failed: {err}. Eigen values: {eigen_values}"
+                            )
 
             self._losses = pd.DataFrame({"losses": losses})
             self._logger.info(f"{len(losses)} events analyzed")
+
+    def solve(self):
+        try:
+            mat_factor_l = np.linalg.cholesky(self._factor_mat)
+            par_results = Centipede.cholesky_solve(mat_factor_l, self._rhs)
+            self._set_par_results(par_results)
+        except np.linalg.LinAlgError as err:
+            eigen_values = np.linalg.eigvals(self._factor_mat)
+            with np.printoptions(precision=2, floatmode="fixed"):
+                self._logger.error(
+                    f"Cholesky failed: {err}. Eigen values: {eigen_values}"
+                )
 
     def _local_fit(self, entrypoints: Any, n_locals: int) -> np.ndarray:
         n_points = len(entrypoints)
@@ -188,35 +218,53 @@ class Centipede:
 
     def _analyze_entry(self, entrypoints: Any):
         self._buffer.mat_c_1 = self._calculate_mat_c_1(entrypoints)
-        self._buffer.mat_lambda = self._calculate_mat_gamma(entrypoints)
+        self._buffer.mat_gamma = self._calculate_mat_gamma(entrypoints)
         self._buffer.mat_g = self._calculate_mat_g(entrypoints)
 
-        self._buffer.mat_gamma_l = np.linalg.cholesky(self._buffer.mat_lambda)
+        self._buffer.mat_gamma_l = np.linalg.cholesky(self._buffer.mat_gamma)
         self._factor_mat += (
             self._buffer.mat_c_1
             - self._buffer.mat_g
-            @ Centipede._cholesky_solve(
+            @ Centipede.cholesky_solve(
                 self._buffer.mat_gamma_l, self._buffer.mat_g.T
             )
         )
         self._rhs += self._calculate_rhs(entrypoints)
+
         pass
+
+    def _set_par_results(self, par_results: np.ndarray):
+        par_results = par_results.ravel()
+        for id in range(0, self._n_globals):
+            if (mat_id := self._global_id_convert_map.get(id)) is not None:
+                self._par_results[id] = par_results[mat_id]
+            else:
+                self._par_results[id] = self._global_init_pars[id]
 
     def _calculate_rhs(self, entrypoints: Any):
         mat_g1 = np.array(
             [
                 self._lambda * self._global_init_pars[idx]
                 for idx in range(0, self._n_globals)
+                if idx in self._global_id_convert_map
             ]
         ).reshape(-1, 1)
+        self._log_matrix_dimension("mat_g1", mat_g1)
+
         mat_d1 = np.array(
             [
                 self._lambda * self._buffer.beta[idx]
                 for idx in range(0, self._buffer.n_locals)
             ]
         ).reshape(-1, 1)
+        self._log_matrix_dimension("mat_d1", mat_d1)
+
         mat_d2 = np.zeros(shape=(len(self._buffer.global_point_map), 1))
+        self._log_matrix_dimension("mat_d2", mat_d2)
+
         mat_d3 = np.zeros(shape=(len(self._buffer.local_point_map), 1))
+        self._log_matrix_dimension("mat_d3", mat_d3)
+
         for point_idx, entrypoint in enumerate(entrypoints):
             entry_sum = sum(
                 [
@@ -232,37 +280,50 @@ class Centipede:
             locals = entrypoint.localDerivs
 
             for par in globals:
-                mat_g1[par.id, 0] += self._eta * entry_sum * par.value
-                if (par.id, point_idx) in self._buffer.global_point_map:
-                    map_idx = self._buffer.global_point_map[par.id, point_idx]
+                if (
+                    global_mat_id := self._global_id_convert_map.get(par.id)
+                ) is not None:
+                    mat_g1[global_mat_id, 0] += (
+                        self._eta * entry_sum * par.value
+                    )
+
+                if (
+                    map_idx := self._buffer.global_point_map.get(
+                        (par.id, point_idx)
+                    )
+                ) is not None:
                     mat_d2[map_idx] += (
                         self._eta * entry_sum * self._global_init_pars[par.id]
                     )
 
             for par in locals:
                 mat_d1[par.id, 0] += self._eta * entry_sum * par.value
-                if (par.id, point_idx) in self._buffer.local_point_map:
-                    map_idx = self._buffer.local_point_map[par.id, point_idx]
+                if (
+                    map_idx := self._buffer.local_point_map.get(
+                        (par.id, point_idx)
+                    )
+                ) is not None:
                     mat_d3[map_idx] += (
                         self._eta * entry_sum * self._buffer.beta[par.id]
                     )
+
         mat_g2 = np.block([[mat_d1], [mat_d2], [mat_d3]])
-        return mat_g1 - self._buffer.mat_g @ Centipede._cholesky_solve(
+        return mat_g1 - self._buffer.mat_g @ Centipede.cholesky_solve(
             self._buffer.mat_gamma_l, mat_g2
         )
 
     def _calculate_mat_g(self, entrypoints: Any):
         mat_g_1 = np.zeros(
-            shape=(self._n_globals, self._buffer.n_locals), dtype=float
+            shape=(self._n_fit_globals, self._buffer.n_locals), dtype=float
         )
         self._logger.debug(f"Creating mat_g_1 with dimension: {mat_g_1.shape}")
         mat_g_2 = np.zeros(
-            shape=(self._n_globals, len(self._buffer.global_point_map)),
+            shape=(self._n_fit_globals, len(self._buffer.global_point_map)),
             dtype=float,
         )
         self._logger.debug(f"Creating mat_g_2 with dimension: {mat_g_2.shape}")
         mat_g_3 = np.zeros(
-            shape=(self._n_globals, len(self._buffer.local_point_map)),
+            shape=(self._n_fit_globals, len(self._buffer.local_point_map)),
             dtype=float,
         )
         self._logger.debug(f"Creating mat_g_3 with dimension: {mat_g_3.shape}")
@@ -273,14 +334,21 @@ class Centipede:
 
             # zip between locals and globals
             for global_left, local_right in zip(globals, locals):
-                mat_g_1[global_left.id, local_right.id] += self._eta * (
+                if (
+                    global_left_mat_id := self._global_id_convert_map.get(
+                        global_left.id
+                    )
+                ) is None:
+                    continue
+                mat_g_1[global_left_mat_id, local_right.id] += self._eta * (
                     global_left.value * self._buffer.beta[local_right.id]
                 )
-                if (local_right.id, point_idx) in self._buffer.local_point_map:
-                    map_idx = self._buffer.local_point_map[
-                        local_right.id, point_idx
-                    ]
-                    mat_g_3[global_left.id, map_idx] += (
+                if (
+                    right_map_idx := self._buffer.local_point_map.get(
+                        (local_right.id, point_idx)
+                    )
+                ) is not None:
+                    mat_g_3[global_left_mat_id, right_map_idx] += (
                         self._eta
                         * self._buffer.beta[local_right.id]
                         * global_left.value
@@ -289,21 +357,33 @@ class Centipede:
             # zip between globals and globals
             for global_left, global_right in zip(globals, globals):
                 if (
-                    global_right.id,
-                    point_idx,
-                ) in self._buffer.global_point_map:
-                    map_idx = self._buffer.global_point_map[
-                        global_right.id, point_idx
-                    ]
-                    if global_right.id == global_left.id:
-                        mat_g_2[global_left.id, map_idx] += (
-                            self._eta * self._buffer.global_sum
+                    (
+                        global_left_mat_id := self._global_id_convert_map.get(
+                            global_left.id
                         )
-                    mat_g_2[global_left.id, map_idx] += (
-                        self._eta
-                        * self._global_init_pars[global_right.id]
-                        * global_right.value
                     )
+                    is None
+                ) or (
+                    (
+                        right_map_idx := self._buffer.global_point_map.get(
+                            (global_right.id, point_idx)
+                        )
+                    )
+                    is None
+                ):
+                    continue
+                right_map_idx = self._buffer.global_point_map[
+                    global_right.id, point_idx
+                ]
+                if global_right.id == global_left.id:
+                    mat_g_2[global_left_mat_id, right_map_idx] += (
+                        self._eta * self._buffer.global_sum
+                    )
+                mat_g_2[global_left_mat_id, right_map_idx] += (
+                    self._eta
+                    * self._global_init_pars[global_right.id]
+                    * global_right.value
+                )
         return np.block(
             [
                 [mat_g_1, mat_g_2, mat_g_3],
@@ -312,59 +392,63 @@ class Centipede:
 
     def _calculate_mat_c_1(self, entrypoints: Any):
         mat_c_1 = np.zeros(
-            shape=(self._n_globals, self._n_globals), dtype=float
+            shape=(self._n_fit_globals, self._n_fit_globals), dtype=float
         )
         np.fill_diagonal(mat_c_1, self._lambda)
         for point_idx, entrypoint in enumerate(entrypoints):
             globals = entrypoint.globalDerivs
             for par_left, par_right in zip(globals, globals):
-                mat_c_1[par_left.id, par_right.id] += (
-                    par_left.value * par_right.value
-                )
+                if (
+                    (left_id := self._global_id_convert_map.get(par_left.id))
+                    is None
+                ) or (
+                    (right_id := self._global_id_convert_map.get(par_right.id))
+                    is None
+                ):
+                    continue
+
+                mat_c_1[left_id, right_id] += par_left.value * par_right.value
         return mat_c_1
 
     def _calculate_mat_gamma(self, entrypoints: Any):
-        mat_gamma = np.zeros(
-            shape=(
-                self._buffer.n_locals
-                + len(self._buffer.global_point_map)
-                + self._buffer.n_locals * len(entrypoints)
-            )
-        )
-        mat_c_2_11 = np.zeros(
+        mat_gamma_11 = np.zeros(
             shape=(self._buffer.n_locals, self._buffer.n_locals)
         )
-        np.fill_diagonal(mat_c_2_11, self._lambda)
-        mat_c_2_22 = np.zeros(
+        np.fill_diagonal(mat_gamma_11, self._lambda)
+        self._log_matrix_dimension("mat_gamma_11", mat_gamma_11)
+        mat_gamma_22 = np.zeros(
             shape=(
                 len(self._buffer.global_point_map),
                 len(self._buffer.global_point_map),
             )
         )
-        mat_c_2_33 = np.zeros(
+        self._log_matrix_dimension("mat_gamma_22", mat_gamma_22)
+
+        mat_gamma_33 = np.zeros(
             shape=(
                 len(self._buffer.local_point_map),
                 len(self._buffer.local_point_map),
             )
         )
-        mat_c_2_12 = np.zeros(
+        self._log_matrix_dimension("mat_gamma_33", mat_gamma_33)
+
+        mat_gamma_12 = np.zeros(
             shape=(self._buffer.n_locals, len(self._buffer.global_point_map))
         )
-        self._logger.debug(
-            f"Creating c_2_12 with dimension: ({self._buffer.n_locals}, {len(self._buffer.global_point_map)})"
-        )
-        mat_c_2_13 = np.zeros(
+        self._log_matrix_dimension("mat_gamma_12", mat_gamma_12)
+
+        mat_gamma_13 = np.zeros(
             shape=(self._buffer.n_locals, len(self._buffer.local_point_map))
         )
-        self._logger.debug(
-            f"Creating c_2_13 with dimension: ({self._buffer.n_locals}, {len(self._buffer.local_point_map)})"
-        )
-        mat_c_2_23 = np.zeros(
+        self._log_matrix_dimension("mat_gamma_13", mat_gamma_13)
+
+        mat_gamma_23 = np.zeros(
             shape=(
                 len(self._buffer.global_point_map),
                 len(self._buffer.local_point_map),
             )
         )
+        self._log_matrix_dimension("mat_gamma_23", mat_gamma_23)
 
         for point_idx, entrypoint in enumerate(entrypoints):
             locals = entrypoint.localDerivs
@@ -375,7 +459,7 @@ class Centipede:
 
             # zip between locals and locals
             for local_left, local_right in zip(locals, locals):
-                mat_c_2_11[local_left.id, local_right.id] += (
+                mat_gamma_11[local_left.id, local_right.id] += (
                     self._eta * local_left.id * local_right.id
                 )
 
@@ -394,10 +478,11 @@ class Centipede:
                     ]
                     if local_left.id == local_right.id:
                         # TODO: error may be zero
-                        mat_c_2_33[map_idx_left, map_idx_right] += (
+                        mat_gamma_33[map_idx_left, map_idx_right] += (
                             self._lambda + 1 / local_left.error**2
                         )
-                    mat_c_2_33[map_idx_left, map_idx_right] += (
+
+                    mat_gamma_33[map_idx_left, map_idx_right] += (
                         self._eta
                         * self._buffer.beta[local_left.id]
                         * self._buffer.beta[local_right.id]
@@ -411,10 +496,10 @@ class Centipede:
                         local_right.id, point_idx
                     ]
                     if local_left.id == local_right.id:
-                        mat_c_2_13[local_left.id, map_idx] += (
+                        mat_gamma_13[local_left.id, map_idx] += (
                             self._eta * local_sum
                         )
-                    mat_c_2_13[local_left.id, map_idx] += (
+                    mat_gamma_13[local_left.id, map_idx] += (
                         self._eta
                         * self._buffer.beta[local_right.id]
                         * local_left.value
@@ -429,7 +514,7 @@ class Centipede:
                     map_idx = self._buffer.global_point_map[
                         global_left.id, point_idx
                     ]
-                    mat_c_2_12[local_right.id, map_idx] += (
+                    mat_gamma_12[local_right.id, map_idx] += (
                         self._eta
                         * local_right.value
                         * self._global_init_pars[global_left.id]
@@ -448,7 +533,7 @@ class Centipede:
                     map_idx_local = self._buffer.local_point_map[
                         local_right.id, point_idx
                     ]
-                    mat_c_2_23[map_idx_global, map_idx_local] += (
+                    mat_gamma_23[map_idx_global, map_idx_local] += (
                         self._eta
                         * self._global_init_pars[global_left.id]
                         * self._buffer.beta[local_right.id]
@@ -473,22 +558,26 @@ class Centipede:
                     ]
                     if global_left.id == global_right.id:
                         # TODO: error may be zero
-                        mat_c_2_22[map_idx_left, map_idx_right] += (
+                        mat_gamma_22[map_idx_left, map_idx_right] += (
                             self._lambda + 1 / global_left.error**2
                         )
 
-                    mat_c_2_22[map_idx_left, map_idx_right] += (
+                    mat_gamma_22[map_idx_left, map_idx_right] += (
                         self._eta
                         * self._global_init_pars[global_left.id]
                         * self._global_init_pars[global_right.id]
                     )
         mat_gamma = np.block(
             [
-                [mat_c_2_11, mat_c_2_12, mat_c_2_13],
-                [mat_c_2_12.T, mat_c_2_22, mat_c_2_23],
-                [mat_c_2_13.T, mat_c_2_23.T, mat_c_2_33],
+                [mat_gamma_11, mat_gamma_12, mat_gamma_13],
+                [mat_gamma_12.T, mat_gamma_22, mat_gamma_23],
+                [mat_gamma_13.T, mat_gamma_23.T, mat_gamma_33],
             ]
         )
+        self._log_matrix_dimension("mat_gamma", mat_gamma)
+        # with np.printoptions(precision=2, floatmode="fixed"):
+        #     self._logger.debug(f"mat_gamma: \n{mat_gamma}")
+
         return mat_gamma
 
     def _scan_entry(self, entrypoints: Any, event_idx: int):
@@ -554,10 +643,6 @@ class Centipede:
         """The buffer property."""
         return self._buffer
 
-    @buffer.setter
-    def buffer(self, value):
-        self._buffer = value
-
     @property
     def entry_reader(self):
         return self._entry_reader
@@ -567,27 +652,15 @@ class Centipede:
         """The data_filename property."""
         return self._data_filename
 
-    @data_filename.setter
-    def data_filename(self, value):
-        self._data_filename = value
-
     @property
     def global_init_pars(self):
         """The global_init_pars property."""
         return self._global_init_pars
 
-    @global_init_pars.setter
-    def global_init_pars(self, value):
-        self._global_init_pars = value
-
     @property
     def losses(self):
         """The losses property."""
         return self._losses
-
-    @losses.setter
-    def losses(self, value):
-        self._losses = value
 
     @property
     def n_globals(self):
@@ -603,3 +676,39 @@ class Centipede:
     def rhs(self):
         """The rhs property."""
         return self._rhs
+
+    @property
+    def fixed_globals(self):
+        """The fixed_globals property."""
+        return self._fixed_globals
+
+    @data_filename.setter
+    def data_filename(self, value: str):
+        self._data_filename = value
+
+    @global_init_pars.setter
+    def global_init_pars(self, value: dict[int, float]):
+        self._global_init_pars = value
+
+    @fixed_globals.setter
+    def fixed_globals(self, value: list[int]):
+        self._fixed_globals = value
+        self._n_fit_globals = self._n_globals - len(value)
+        fit_parameters = [
+            x for x in range(0, self._n_globals) if x not in value
+        ]
+        self._global_id_convert_map = {
+            global_id: par_id
+            for par_id, global_id in enumerate(fit_parameters)
+        }
+        self._logger.info(
+            f"Fixed parameter IDs: {value}. Current number of fit parameters: {self._n_fit_globals}"
+        )
+        self._logger.info(
+            f"Global parameter ID to matrix index: {self._global_id_convert_map}"
+        )
+
+    @property
+    def par_results(self):
+        """The par_results property."""
+        return self._par_results
