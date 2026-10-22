@@ -282,6 +282,18 @@ Here the square matrix is partitioned into three rows and columns of block matri
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
+Define the summation term @f$\mathcal{S}@f$ for each entry point:
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{equation}{
+
+    \mathcal{S}^k = \sum^{n_p}_{i'} p_{i'} (\hat{x}^k_{i'} + x^k_{i'}) + \sum^{n_q}_{j'} q_{j'} (\hat{y}^k_{j'} + y^k_{j'})
+    
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
+
 The off-diagonal matrix blocks in @f$\mathcal{\Gamma}@f$ can be expressed as
 
 <!-- prettier-ignore-start -->
@@ -294,7 +306,7 @@ The off-diagonal matrix blocks in @f$\mathcal{\Gamma}@f$ can be expressed as
     \end{bmatrix}_{j(i',k')} \notag \\
     \mathcal{M}_{13} &= 
     \begin{bmatrix}
-        \delta_{jj'} \eta \left( \sum^{n_l}_{j''} q_{j''} (\hat{y}_{j''}^{k'} + y_{j''}^{k'}) \right) + \eta q_{j'} (\hat{y}_j^{k'} + y_j^{k'})
+        \delta_{jj'} \eta \mathcal{S}^{k'} + \eta q_{j'} (\hat{y}_j^{k'} + y_j^{k'})
     \end{bmatrix}_{j(j', k')} \notag \\
     \mathcal{M}_{23} &= 
     \begin{bmatrix}
@@ -332,7 +344,7 @@ Those matrix blocks relate to the second-order derivative between the global par
     \end{bmatrix}_{ij} \notag \\
     \mathcal{G}_2 &= 
     \begin{bmatrix}
-        \delta_{ii'} \eta \left( \sum^{n_g}_{i''} p_{i''} (\hat{x}_{i''}^{k'} + x_{i''}^{k'}) \right) + \eta p_{i'} (\hat{x}_i^{k'} + x_i^{k'})
+        \delta_{ii'} \eta \mathcal{S}^{k'} + \eta p_{i'} (\hat{x}_i^{k'} + x_i^{k'})
     \end{bmatrix}_{i(i', k')} \notag \\
     \mathcal{G}_3 &= 
     \begin{bmatrix}
@@ -369,7 +381,6 @@ where
 <!-- LTeX: enabled=false -->
 \f{align*}{
 
-    \mathcal{S}^k &= \sum^{n_p}_{i'} p_{i'} (\hat{x}^k_{i'} + x^k_{i'}) + \sum^{n_q}_{j'} q_{j'} (\hat{y}^k_{j'} + y^k_{j'})\\
     \mathbf{d}_1 &=
     \begin{bmatrix}
         \lambda q_j + \eta \sum^m_k \mathcal{S}^k (\hat{y}^k_j + y^k_j)

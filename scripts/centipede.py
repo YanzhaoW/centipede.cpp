@@ -36,6 +36,7 @@ class Buffer:
     )
     global_point_map: dict[tuple[int, int], int] = field(default_factory=dict)
     local_point_map: dict[tuple[int, int], int] = field(default_factory=dict)
+    event_sum_map: dict[int, float] = field(default_factory=dict)
     mat_c_1: np.ndarray = field(
         default_factory=lambda: np.array([], dtype=np.float64)
     )
@@ -50,7 +51,6 @@ class Buffer:
         default_factory=lambda: np.array([], dtype=np.float64)
     )
 
-    global_sum: float = 0.0
     n_locals = 0
     event_idx: int = 0
 
@@ -82,12 +82,12 @@ class Centipede:
         self._global_init_pars: dict[int, float] = {
             par_id: 0.0 for par_id in range(0, n_globals)
         }
+        self._par_results: dict[int, float] = {}
         self._lambda = v_lambda
         self._eta = v_eta
         self._buffer = Buffer()
         self._losses = pd.DataFrame()
         self._rhs = np.zeros(shape=(self._n_fit_globals, 1))
-        self._par_results: dict[int, float] = {}
         self._factor_mat = np.zeros(
             shape=(self._n_fit_globals, self._n_fit_globals)
         )
@@ -163,6 +163,7 @@ class Centipede:
 
             self._losses = pd.DataFrame({"losses": losses})
             self._logger.info(f"{len(losses)} events analyzed")
+            self._logger.info(f"total loss value: {sum(losses)}")
 
     def solve(self):
         try:
@@ -237,7 +238,7 @@ class Centipede:
         par_results = par_results.ravel()
         for id in range(0, self._n_globals):
             if (mat_id := self._global_id_convert_map.get(id)) is not None:
-                self._par_results[id] = par_results[mat_id]
+                self._par_results[id] = self._global_init_pars[id] - par_results[mat_id]
             else:
                 self._par_results[id] = self._global_init_pars[id]
 
@@ -266,15 +267,7 @@ class Centipede:
         self._log_matrix_dimension("mat_d3", mat_d3)
 
         for point_idx, entrypoint in enumerate(entrypoints):
-            entry_sum = sum(
-                [
-                    global_par.value * self._global_init_pars[global_par.id]
-                    + local_par.value * self._buffer.beta[local_par.id]
-                    for global_par, local_par in zip(
-                        entrypoint.globalDerivs, entrypoint.localDerivs
-                    )
-                ]
-            )
+            entry_sum = self._buffer.event_sum_map[point_idx]
 
             globals = entrypoint.globalDerivs
             locals = entrypoint.localDerivs
@@ -377,7 +370,7 @@ class Centipede:
                 ]
                 if global_right.id == global_left.id:
                     mat_g_2[global_left_mat_id, right_map_idx] += (
-                        self._eta * self._buffer.global_sum
+                        self._eta * self._buffer.event_sum_map[point_idx]
                     )
                 mat_g_2[global_left_mat_id, right_map_idx] += (
                     self._eta
@@ -453,9 +446,6 @@ class Centipede:
         for point_idx, entrypoint in enumerate(entrypoints):
             locals = entrypoint.localDerivs
             globals = entrypoint.globalDerivs
-            local_sum = sum(
-                [self._buffer.beta[par.id] * par.value for par in locals]
-            )
 
             # zip between locals and locals
             for local_left, local_right in zip(locals, locals):
@@ -497,7 +487,7 @@ class Centipede:
                     ]
                     if local_left.id == local_right.id:
                         mat_gamma_13[local_left.id, map_idx] += (
-                            self._eta * local_sum
+                            self._eta * self._buffer.event_sum_map[point_idx]
                         )
                     mat_gamma_13[local_left.id, map_idx] += (
                         self._eta
@@ -582,6 +572,7 @@ class Centipede:
 
     def _scan_entry(self, entrypoints: Any, event_idx: int):
         n_local_max_id = 0
+        n_points = len(entrypoints)
         self._buffer.global_point_map.clear()
         self._buffer.local_point_map.clear()
         self._buffer.n_locals = 0
@@ -589,7 +580,7 @@ class Centipede:
         global_map_idx = 0
         local_map_idx = 0
         self._logger.debug(
-            f"entry num: {event_idx}, num of points: {len(entrypoints)}"
+            f"entry num: {event_idx}, num of points: {n_points}"
         )
         for point_idx, entrypoint in enumerate(entrypoints):
             globals = entrypoint.globalDerivs
@@ -604,7 +595,7 @@ class Centipede:
             self._buffer.local_point_map.update(
                 {
                     (par.id, point_idx): global_map_idx
-                    for par in entrypoint.localDerivs
+                    for par in locals
                     if par.error > 0
                 }
             )
@@ -623,20 +614,21 @@ class Centipede:
 
     def _calculate_loss(self, entrypoints: Any, local_inits: np.ndarray):
         loss = 0.0
-        for entrypoint in entrypoints:
-            point_diff = sum(
+        self._buffer.event_sum_map = {
+            point_num: 0.0 for point_num in range(0, len(entrypoints))
+        }
+        for point_idx, entrypoint in enumerate(entrypoints):
+            globals = entrypoint.globalDerivs
+            locals = entrypoint.localDerivs
+
+            self._buffer.event_sum_map[point_idx] = sum(
                 [
-                    self._global_init_pars[par.id] * par.value
-                    for par in entrypoint.globalDerivs
-                ]
-            ) + sum(
-                [
-                    local_inits[par.id] * par.value
-                    for par in entrypoint.localDerivs
+                    global_par.value * self._global_init_pars[global_par.id]
+                    + local_par.value * self._buffer.beta[local_par.id]
+                    for global_par, local_par in zip(globals, locals)
                 ]
             )
-            loss += point_diff**2
-        return loss
+        return sum(v**2 for v in self._buffer.event_sum_map.values())
 
     @property
     def buffer(self):
