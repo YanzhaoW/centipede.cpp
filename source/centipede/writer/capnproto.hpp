@@ -16,6 +16,9 @@ namespace centipede::writer
     class Capnproto
     {
       public:
+        /**
+         * @brief Configuration struct for Capnproto class
+         */
         struct Config
         {
             std::string out_filename = "output.proto"; //!< Output binary filename.
@@ -25,7 +28,7 @@ namespace centipede::writer
          * @brief Constructor with configuration
          * @param config Configuration struct
          */
-        Capnproto(const Config& config)
+        explicit Capnproto(const Config& config)
             : config_{ config }
         {
         }
@@ -33,7 +36,7 @@ namespace centipede::writer
         [[nodiscard]] auto init() -> VoidError;
 
         template <std::size_t NLocals, std::size_t NGlobals>
-        auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError;
+        auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entrypoint) -> VoidError;
 
         /**
          * @brief Getter of the configuration.

@@ -8,6 +8,13 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+/** @namespace spdlog
+ *  @brief spdlog library
+ */
+
+/**
+ * @brief formatter for parsing library
+ */
 namespace spdlog::level
 {
     inline auto operator>>(std::istream& in_stream, level_enum& level) -> std::istream&
@@ -33,7 +40,7 @@ namespace spdlog::level
 
 namespace centipede::common
 {
-    inline auto operator>>(std::istream& in_stream, IO& io) -> std::istream&
+    inline auto operator>>(std::istream& in_stream, IO& io_type) -> std::istream&
     {
         std::string io_str{};
         in_stream >> io_str;
@@ -46,7 +53,7 @@ namespace centipede::common
         }
         else
         {
-            io = input_level_enum.value();
+            io_type = input_level_enum.value();
         }
 
         return in_stream;

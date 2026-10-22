@@ -48,14 +48,15 @@ If @ref list_pre_req "prerequisites" are met, it's possible to transform equatio
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-The _factor matrix_ @f$\mathcal{C}@f$ is a summation of two factor matrices:
+The _factor matrix_ @f$\mathcal{C}@f$ and the right-hand side vector @f$\mathbf{g}@f$ are expressed as a summation over all events:
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
-\f{equation}{
+\f{align}{
 
-    \mathcal{C} :=  \sum^l_k \mathcal{C}_k^1 + G_k \mathcal{C}_k^2 G_k^{\dagger}
-    \label{eq:factorMat}
+    \mathcal{C} &:=  \sum^l_k \mathcal{C}_k^1 - G_k \mathcal{\Gamma}_k^{-1} G_k^{\dagger} \label{eq:factorMat}\\
+    \mathbf{g} &:= \sum^l_k (\mathbf{g_1} - G_k \mathcal{\Gamma}_k^{-1} \mathbf{g_2} )
+    \label{eq:rhsVec}
 
 \f}
 <!-- LTeX: enabled=true -->
@@ -71,15 +72,21 @@ where the three matrices can be expressed
     \begin{bmatrix}\dfrac{\partial^2\mathcal{F}^k}{\partial p_i \partial p_{i'}}
     \end{bmatrix}_{ii',\,n_p \times n_p}
     \\
-    \mathcal{C}_k^2 &= - 
+    \mathcal{\Gamma}_k &=
     \begin{bmatrix}
     \dfrac{\partial^2\mathcal{F}^k}{\partial q_j \partial q_{j'}}
-    \end{bmatrix}^{-1}_{jj',\,n_q \times n_q}
+    \end{bmatrix}_{jj',\,n_q \times n_q}
     \\
     G_k &=
     \begin{bmatrix}
     \dfrac{\partial^2\mathcal{F}^k}{\partial p_i \partial q_j}
-    \end{bmatrix}_{ij,\,n_p \times n_q}
+    \end{bmatrix}_{ij,\,n_p \times n_q} \\
+    \mathbf{g_1} &=\begin{bmatrix}
+    \dfrac{\partial \mathcal{F}}{\partial p_i}
+    \end{bmatrix}_{i,\,n_p \times 1} \\
+    \mathbf{g_2} &=\begin{bmatrix}
+    \dfrac{\partial \mathcal{F}}{\partial q_j}
+    \end{bmatrix}_{j,\,n_q \times 1}
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
@@ -94,7 +101,7 @@ Thus, the factor matrix @f$\mathcal{C}@f$ needed to be inverted in the end is co
 
 If the calibration equation can be expressed in an explicit form, as is shown in equation @f$\eqref{eq:cal}@f$, the local parameters would just be the track related parameters representing its orientation and offset. Thus, all track have a fixed number of local parameters, @f$n_q@f$.
 
-The total objective function would be the summation of the objective functions defined in equation @f$\eqref{eq:basic_obj}@f$ for each track. 
+The total objective function would be the summation of the objective functions defined in equation @f$\eqref{eq:basic_obj}@f$ for each track.
 
 #### Factor matrices and RHS vector
 
@@ -109,11 +116,11 @@ By using the first-order and the second-order derivatives of such objective func
     \begin{bmatrix}
     \dfrac{x^{k'k}_i x^{k'k}_{i'}}{(\sigma^{k'k})^2}
     \end{bmatrix}_{ii',\,n_p \times n_p}\\
-    \mathcal{C}_k^2 &=
-    \left( \sum_{k'}^m
+    \mathcal{\Gamma}_k &=
+    \sum_{k'}^m
     \begin{bmatrix}
     \dfrac{x^{k'k}_j x^{k'k}_{j'}}{(\sigma^{k'k})^2}
-    \end{bmatrix}_{jj',\,n_q \times n_q} \right)^{-1}\\
+    \end{bmatrix}_{jj',\,n_q \times n_q}\\
     G_k &=
     -\sum_{k'}^m
     \begin{bmatrix}
@@ -241,7 +248,7 @@ The expression of @f$\mathcal{C}^2@f$ is more complicated as the distances to tr
 <!-- LTeX: enabled=false -->
 \f{equation}{
 
-    \mathcal{C}^2 = 
+    \mathcal{\Gamma} = 
     \begin{bmatrix}
         \mathcal{M}_{11} & \mathcal{M}_{12} & \mathcal{M}_{13} \\
         \mathcal{M}_{12} & \mathcal{M}_{22} & \mathcal{M}_{23} \\
@@ -275,7 +282,7 @@ Here the square matrix is partitioned into three rows and columns of block matri
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-The off-diagonal matrix blocks in @f$\mathcal{C}^2@f$ can be expressed as
+The off-diagonal matrix blocks in @f$\mathcal{\Gamma}@f$ can be expressed as
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
@@ -325,7 +332,7 @@ Those matrix blocks relate to the second-order derivative between the global par
     \end{bmatrix}_{ij} \notag \\
     \mathcal{G}_2 &= 
     \begin{bmatrix}
-        \delta_{ii'} \eta \left( \sum^n_{i'} p_{i'} (\hat{x}_{i'}^{k'} + x_{i'}^{k'}) \right) + \eta p_{i'} (\hat{x}_i^{k'} + x_i^{k'})
+        \delta_{ii'} \eta \left( \sum^{n_g}_{i''} p_{i''} (\hat{x}_{i''}^{k'} + x_{i''}^{k'}) \right) + \eta p_{i'} (\hat{x}_i^{k'} + x_i^{k'})
     \end{bmatrix}_{i(i', k')} \notag \\
     \mathcal{G}_3 &= 
     \begin{bmatrix}
@@ -336,17 +343,45 @@ Those matrix blocks relate to the second-order derivative between the global par
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->
 
-The RHS vector, relating to the first-order derivative with respect to global parameters, can be expressed as:
+The @f$\mathbf{g}_1@f$ and @f$\mathbf{g}_2@f$ in the RHS vector of equation @f$\eqref{eq:rhsVec}@f$, relating to the first-order derivatives, can be expressed as:
 
 <!-- prettier-ignore-start -->
 <!-- LTeX: enabled=false -->
-\f{equation}{
+\f{align*}{
 
-    \mathbf{g} = 
+    \mathbf{g_1} &= 
     \begin{bmatrix}
-        \lambda p_i + \eta \sum^m_k \left( \sum^n_{i'} p_{i'} (\hat{x}^k_{i'} + x^k_{i'}) \right) (\hat{x}^k_i + x^k_i)
-    \end{bmatrix}_{i}
+        \lambda p_i + \eta \sum^m_k \mathcal{S}^k (\hat{x}^k_i + x^k_i)
+    \end{bmatrix}_{i} \\
+    \mathbf{g_2} &= 
+    \begin{bmatrix}
+        \mathbf{d}_1 \\
+        \mathbf{d}_2 \\
+        \mathbf{d}_3
+    \end{bmatrix}
+\f}
+<!-- LTeX: enabled=true -->
+<!-- prettier-ignore-end -->
 
+where
+
+<!-- prettier-ignore-start -->
+<!-- LTeX: enabled=false -->
+\f{align*}{
+
+    \mathcal{S}^k &= \sum^{n_p}_{i'} p_{i'} (\hat{x}^k_{i'} + x^k_{i'}) + \sum^{n_q}_{j'} q_{j'} (\hat{y}^k_{j'} + y^k_{j'})\\
+    \mathbf{d}_1 &=
+    \begin{bmatrix}
+        \lambda q_j + \eta \sum^m_k \mathcal{S}^k (\hat{y}^k_j + y^k_j)
+    \end{bmatrix}_{j} \\
+    \mathbf{d}_2 &=
+    \begin{bmatrix}
+        \lambda \hat{x}^k_i + \dfrac{\hat{x}^k_i}{(\sigma^k_i)^2} + \eta \mathcal{S}^k p_i
+    \end{bmatrix}_{(i, k)} \\
+    \mathbf{d}_3 &=
+    \begin{bmatrix}
+        \lambda \hat{y}^k_j + \dfrac{\hat{y}^k_j}{(\sigma^k_j)^2} + \eta \mathcal{S}^k q_j
+    \end{bmatrix}_{(j, k)}
 \f}
 <!-- LTeX: enabled=true -->
 <!-- prettier-ignore-end -->

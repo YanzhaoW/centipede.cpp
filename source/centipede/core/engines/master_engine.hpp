@@ -77,8 +77,6 @@ namespace centipede::core::engine
          * The global derivative values are sorted in ascending order by global parameter indicies.
          * @param entry_point Current entrypoint to be filled.
          * @return An expected value. True when the filling is successful.
-         * #centipede::ErrorCode::handler_incomp_n_locals if local parameter numbers are changed during the current
-         * entry.
          */
         template <std::size_t NLocals, std::size_t NGlobals>
         [[nodiscard]] auto add_entrypoint(const EntryPoint<NLocals, NGlobals>& entry_point) -> VoidError

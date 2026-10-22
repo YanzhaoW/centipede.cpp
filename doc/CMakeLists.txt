@@ -28,7 +28,9 @@ set(DOXYGEN_LATEX_OUTPUT pdf)
 set(DOXYGEN_PDF_HYPERLINKS YES)
 set(DOXYGEN_LATEX_BATCHMODE YES)
 set(DOXYGEN_EXTRA_PACKAGES amsmath)
-set(DOXYGEN_LATEX_EXTRA_FILES "${PROJECT_SOURCE_DIR}/doc/pics/track_detector.pdf")
+set(DOXYGEN_LATEX_EXTRA_FILES
+    "${PROJECT_SOURCE_DIR}/doc/pics/track_detector.pdf"
+)
 
 # set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_SOURCE_BROWSER YES)
@@ -79,6 +81,7 @@ set(DOXYGEN_HIDE_UNDOC_NAMESPACES NO)
 set(DOXYGEN_HTML_EXTRA_FILES
     "${AWESOME_CSS_DIR}/doxygen-awesome-darkmode-toggle.js"
     "${AWESOME_CSS_DIR}/doxygen-awesome-interactive-toc.js"
+    "${PROJECT_SOURCE_DIR}/doc/pics/track_detector.svg"
 )
 set(DOXYGEN_HTML_EXTRA_STYLESHEET
     "${AWESOME_CSS_DIR}/doxygen-awesome.css"
