@@ -15,7 +15,7 @@ namespace centipede::core::engine
     template <typename DataType>
     struct Result
     {
-        ErrorCode error_status = ErrorCode::invalid;          //!< Error enum if existed.
+        ErrorType error_status = ErrorType::invalid;          //!< Error enum if existed.
         std::size_t rank_deficit = 0;                         //!< Rank deficit value.
         uint64_t n_entries = 0;                               //!< Total number of entries read.
         uint64_t n_entries_rejected = 0;                      //!< Total number of entries rejected.
@@ -50,7 +50,7 @@ struct std::formatter<centipede::Result<DataType>>
         const auto percentage = (result.n_entries == 0) ? 0.
                                                         : static_cast<double>(result.n_entries_rejected) /
                                                               static_cast<double>(result.n_entries) * 100.;
-        if (result.error_status == centipede::ErrorCode::success)
+        if (result.error_status == centipede::ErrorType::success)
         {
             return std::format_to(ctx.out(),
                                   "Total entries: {}\t Rejected entries: {}\t Rejected rate: {:.2}%",

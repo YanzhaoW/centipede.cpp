@@ -10,9 +10,9 @@ target_sources(
             FILES
                 application.hpp
                 config.hpp
+                cxxopts_formatter.hpp
                 location_identifier.hpp
                 lua_connector.hpp
-                spdlog_stream.hpp
     PRIVATE application.cpp lua_connector.cpp
 )
 

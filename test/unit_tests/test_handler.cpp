@@ -15,7 +15,7 @@ namespace centipede::test
 
     TEST(handler, constructor_double_eigen)
     {
-        auto handler = centipede::create<double>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
+        auto handler = centipede::create<float>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
         ASSERT_TRUE(handler);
     }
 
@@ -39,23 +39,22 @@ namespace centipede::test
         EXPECT_EQ(current_entry.local_derivs.size(), DEFAULT_N_LOCALS * n_points);
         EXPECT_EQ(current_entry.global_derivs.size(), DEFAULT_N_GLOBALS * n_points);
         EXPECT_EQ(current_entry.measurements.size(), n_points);
-        EXPECT_EQ(current_entry.sigmas.size(), n_points);
     }
     // NOLINTEND(readability-function-cognitive-complexity)
 
     TEST(handler, empty_entry)
     {
-        auto handler = centipede::create<double>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
+        auto handler = centipede::create<float>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
 
         ASSERT_TRUE(handler);
         auto res = handler.value().analyze_current_entry();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_empty_entry);
+        EXPECT_EQ(res.error(), ErrorType::analysis_empty_entry);
     }
 
     TEST(handler, local_derivs_incomp_numbers)
     {
-        auto handler = centipede::create<double>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
+        auto handler = centipede::create<float>({ .n_globals = DEFAULT_MAX_GLOBAL_ID });
 
         ASSERT_TRUE(handler);
         constexpr auto n_points = 10;
@@ -70,13 +69,13 @@ namespace centipede::test
         {
             auto err = handler.value().add_entrypoint(entry_point);
             ASSERT_FALSE(err.has_value());
-            EXPECT_EQ(err.error(), centipede::ErrorCode::handler_incomp_n_locals);
+            EXPECT_EQ(err.error(), centipede::ErrorType::handler_incomp_n_locals);
         }
     }
 
     TEST(handler, n_globals_too_small)
     {
-        auto handler = centipede::create<double>({ .n_globals = 3, .fixed_parameter_ids = { 1, 2, 3 } });
+        auto handler = centipede::create<float>({ .n_globals = 3, .fixed_parameter_ids = { 1, 2, 3 } });
 
         ASSERT_FALSE(handler);
     }

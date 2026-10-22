@@ -27,7 +27,7 @@ namespace centipede
         Application(const Application&) = delete;
         Application(Application&&) = default;
         auto operator=(const Application&) -> Application& = delete;
-        auto operator=(Application&&) -> Application& = default;
+        auto operator=(Application&&) noexcept -> Application& = default;
 
         /**
          * @brief Constructor with configurations
@@ -44,7 +44,7 @@ namespace centipede
          *
          * @return Status of the result
          */
-        auto init() -> VoidStr;
+        auto init() -> VoidError;
 
         /**
          * @brief Set the configurations from the lua file
@@ -52,29 +52,29 @@ namespace centipede
          * @param filename Lua file name
          * @return Status of the result
          */
-        auto use_config(const std::string& filename) -> VoidStr;
+        auto use_config(const std::string& filename) -> VoidError;
 
         /**
          * @brief Start reading the data and analysis. This method should only be called after init().
          *
          * @return Status of the result
          */
-        auto run() -> VoidStr;
+        auto run() -> VoidError;
 
-        auto save_output() -> VoidStr;
+        auto save_output() -> VoidError;
 
       private:
         using Reader = std::variant<reader::Binary>;
         using Handlers = std::variant<Handler<float, { .engine_type = MatrixEngine::eigen }>>;
-        cli::LuaConnector lua_connector_{};
+        cli::LuaConnector lua_connector_;
         Config config_;
         Reader reader_;
         std::vector<Result<float>> results_;
         std::unique_ptr<Handlers> handle_;
 
-        auto run_once(std::size_t run_idx, auto& reader, auto& handle) -> VoidStr;
+        auto run_once(std::size_t run_idx, auto& reader, auto& handle) -> VoidError;
 
-        auto set_global_initial_values_from_file(const cli::Config::Input::InitPar& init_config) -> VoidStr;
+        auto set_global_initial_values_from_file(const cli::Config::Input::InitPar& init_config) -> VoidError;
 
         void set_global_initial_values(auto& handle);
     };

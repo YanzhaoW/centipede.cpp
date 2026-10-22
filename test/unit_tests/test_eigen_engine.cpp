@@ -40,7 +40,7 @@ namespace centipede::test
             return globals_tmp;
         }();
         EngineClass::solve(globals, result, core::ParIdMap{ 3 });
-        EXPECT_NE(result.error_status, ErrorCode::success);
+        EXPECT_NE(result.error_status, ErrorType::success);
 
         EXPECT_EQ(result.rank_deficit, 1);
 
@@ -65,7 +65,7 @@ namespace centipede::test
         }();
         [[maybe_unused]] auto solution = globals.factor_matrix.inverse() * globals.rhs_vec;
         EngineClass::solve(globals, result, core::ParIdMap{ 3 });
-        EXPECT_EQ(result.error_status, ErrorCode::analysis_global_negative_definite)
+        EXPECT_EQ(result.error_status, ErrorType::analysis_global_negative_definite)
             << std::format("Error: {}. \n result: {}", result.error_status, result);
     }
 
@@ -86,7 +86,7 @@ namespace centipede::test
         }();
         [[maybe_unused]] auto solution = globals.factor_matrix.inverse() * globals.rhs_vec;
         EngineClass::solve(globals, result, core::ParIdMap{ 3 });
-        EXPECT_EQ(result.error_status, ErrorCode::analysis_factor_matrix_zero)
+        EXPECT_EQ(result.error_status, ErrorType::analysis_factor_matrix_zero)
             << std::format("Error: {}.", result.error_status);
     }
 
@@ -107,7 +107,7 @@ namespace centipede::test
         }();
         [[maybe_unused]] auto solution = globals.factor_matrix.inverse() * globals.rhs_vec;
         EngineClass::solve(globals, result, core::ParIdMap{ 3 });
-        EXPECT_EQ(result.error_status, ErrorCode::analysis_rhs_vector_zero)
+        EXPECT_EQ(result.error_status, ErrorType::analysis_rhs_vector_zero)
             << std::format("Error: {}.", result.error_status);
     }
 
@@ -128,7 +128,7 @@ namespace centipede::test
         }();
         auto solution = globals.factor_matrix.inverse() * globals.rhs_vec;
         EngineClass::solve(globals, result, core::ParIdMap{ 3 });
-        EXPECT_EQ(result.error_status, ErrorCode::success)
+        EXPECT_EQ(result.error_status, ErrorType::success)
             << std::format("Error: {}. \n result: {}", result.error_status, result);
 
         const auto& parameters = result.parameters;

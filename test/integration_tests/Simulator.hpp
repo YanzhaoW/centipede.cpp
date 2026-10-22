@@ -1,10 +1,14 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include "centipede/data/entrypoint.hpp"
+#include "centipede/util/common_definitions.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 #include "centipede/writer/binary.hpp"
+#include "centipede/writer/capnproto.hpp"
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <glaze/core/opts.hpp>
 #include <glaze/json/write.hpp>
@@ -20,6 +24,7 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace centipede::test
@@ -38,22 +43,41 @@ namespace centipede::test
         std::vector<Pars> others;
     };
 
+    using OutputTypes = std::variant<std::monostate, writer::Binary, writer::Capnproto>;
+
     class Simulator
     {
       public:
         struct Config
         {
             bool has_json_output = false;
-            bool has_mille_output = false;
+            common::IO output_format = common::IO::binary;
             std::string_view par_filename;
             std::string_view output_data_filename;
             std::size_t n_events = 0;
         };
 
-        Simulator(const Config& config)
+        explicit Simulator(const Config& config)
             : config_{ config }
-            , binary_writer_{ { .out_filename = std::string{ config.output_data_filename } } }
         {
+            switch (config.output_format)
+            {
+                using enum common::IO;
+                case proto:
+                {
+                    binary_writer_.emplace<writer::Capnproto>(
+                        writer::Capnproto::Config{ .out_filename = std::string{ config.output_data_filename } });
+                    break;
+                }
+                case binary:
+                {
+                    binary_writer_.emplace<writer::Binary>(
+                        writer::Binary::Config{ .out_filename = std::string{ config.output_data_filename } });
+                    break;
+                }
+                case none:
+                default:
+            }
         }
 
         auto init(auto& mps) -> VoidError
@@ -61,13 +85,19 @@ namespace centipede::test
             output_pars_.true_pars_t = mps.get_true_pars_t();
             output_pars_.true_pars = mps.get_true_pars();
 
-            if (config_.has_mille_output)
-            {
-                auto is_ok = binary_writer_.init();
-                if (not is_ok)
+            auto is_ok = binary_writer_.visit(
+                []<typename T>(T& writer) -> VoidError
                 {
-                    return is_ok;
-                }
+                    if constexpr (not std::same_as<T, std::monostate>)
+                    {
+                        return writer.init();
+                    }
+                    return {};
+                });
+
+            if (not is_ok)
+            {
+                return is_ok;
             }
             return {};
         }
@@ -110,18 +140,24 @@ namespace centipede::test
                 for (const auto& entrypoint : entry_span)
                 {
                     entry_point_input.reset();
-                    entry_point_input
-                        .set_measurement(entrypoint.measurement)
-                        // entry_point_input.set_measurement(0.)
-                        .set_sigma(entrypoint.sigma)
+                    entry_point_input.set_measurement(ValueError<float>{ entrypoint.measurement, entrypoint.sigma })
                         .set_globals(entrypoint.globals |
                                      std::views::transform([](const auto& globals)
                                                            { return std::pair{ globals.first - 1, globals.second }; }))
                         .set_locals(entrypoint.locals);
 
-                    if (run_idx == 0 and config_.has_mille_output)
+                    if (run_idx == 0)
                     {
-                        [[maybe_unused]] auto is_ok = binary_writer_.add_entrypoint(entry_point_input);
+                        // [[maybe_unused]] auto is_ok = binary_writer_.add_entrypoint(entry_point_input);
+                        [[maybe_unused]] auto is_ok = binary_writer_.visit(
+                            [&entry_point_input]<typename T>(T& writer) -> VoidError
+                            {
+                                if constexpr (not std::same_as<T, std::monostate>)
+                                {
+                                    return writer.add_entrypoint(entry_point_input);
+                                }
+                                return {};
+                            });
                     }
 
                     auto res = handler.add_entrypoint(entry_point_input);
@@ -130,9 +166,17 @@ namespace centipede::test
                         spdlog::error("Error from adding the current point: {}", res.error());
                     }
                 }
-                if (run_idx == 0 and config_.has_mille_output)
+                if (run_idx == 0)
                 {
-                    [[maybe_unused]] auto is_ok = binary_writer_.write_current_entry();
+                    [[maybe_unused]] auto is_ok = binary_writer_.visit(
+                        []<typename T>(T& writer) -> ResultError<std::size_t>
+                        {
+                            if constexpr (not std::same_as<T, std::monostate>)
+                            {
+                                return writer.write_current_entry();
+                            }
+                            return 0;
+                        });
                 }
                 auto res = handler.analyze_current_entry();
                 const auto& state = handler.get_slave_entry_state();
@@ -150,7 +194,7 @@ namespace centipede::test
 
                 if (not res)
                 {
-                    if (res.error() != centipede::ErrorCode::analysis_empty_entry)
+                    if (res.error() != centipede::ErrorType::analysis_empty_entry)
                     {
                         spdlog::error("Error from analyzing the current entry: {}", res.error());
                         spdlog::info("p-value: {}, chi2: {}", state.p_value, state.chi2);
@@ -168,7 +212,6 @@ namespace centipede::test
         }
 
         void set_json_output(bool val = true) { config_.has_json_output = val; }
-        void set_mille_output(bool val = true) { config_.has_mille_output = val; }
 
         void reset()
         {
@@ -188,7 +231,7 @@ namespace centipede::test
             }
             spdlog::info("Fitting processes finished. Parameters are written to the file {:?}.", config_.par_filename);
 
-            [[maybe_unused]] auto ec = glz::write_file_json(output_pars_, config_.par_filename, std::string{});
+            [[maybe_unused]] auto has_error = glz::write_file_json(output_pars_, config_.par_filename, std::string{});
         }
 
         void print_result(const auto& handler)
@@ -253,11 +296,11 @@ namespace centipede::test
 
         std::string par_filename_;
         OutputPars output_pars_;
-        writer::Binary binary_writer_;
+        OutputTypes binary_writer_;
 
-        std::vector<mps::Data> sim_data{};
-        std::vector<EntryData> entries{};
-        std::vector<mps::MillePedeAdaptor::FitInput> local_fit_data{};
+        std::vector<mps::Data> sim_data;
+        std::vector<EntryData> entries;
+        std::vector<mps::MillePedeAdaptor::FitInput> local_fit_data;
 
         void add_pars(const auto& mps, const auto& handler)
         {
@@ -278,7 +321,7 @@ namespace centipede::test
                 errs.resize(key_val.second.size());
                 for (const auto [par_idx, par_val] : std::views::zip(std::views::iota(0UZ), key_val.second))
                 {
-                    auto iter = result.parameters.find(idx + par_idx * 2);
+                    auto iter = result.parameters.find(idx + (par_idx * 2));
                     if (iter == result.parameters.end())
                     {
                         val.push_back(par_val);
@@ -308,13 +351,13 @@ namespace centipede::test
         template <typename T>
         void save_data_to_file(const std::vector<T>& data, std::string_view filename)
         {
-            [[maybe_unused]] auto ec =
+            [[maybe_unused]] auto has_error =
                 glz::write_file_json<glz::opts{ .minified = true }>(data, filename, std::string{});
         }
 
         void save_config_to_file(const auto& data, std::string_view filename)
         {
-            [[maybe_unused]] auto ec =
+            [[maybe_unused]] auto has_error =
                 glz::write_file_json<glz::opts{ .minified = true }>(data, filename, std::string{});
         }
     };

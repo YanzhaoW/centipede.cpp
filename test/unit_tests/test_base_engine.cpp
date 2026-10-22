@@ -2,6 +2,7 @@
 #include "centipede/core/config.hpp"
 #include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "shared.hpp"
 #include <cstddef>
 #include <expected>
@@ -29,7 +30,7 @@ namespace centipede::test
 
             // Called in fill_data method.
             MOCK_METHOD(void, resize_buffers, (), ());
-            MOCK_METHOD(void, fill_measurements, (const std::vector<DataType>&), ());
+            MOCK_METHOD(void, fill_measurements, (const std::vector<ValueError<DataType>>&), ());
             MOCK_METHOD(void, fill_sigmas, (const std::vector<DataType>&), ());
             MOCK_METHOD(void, fill_local_derivs, (const std::vector<typename Entry<DataType>::Deriv>&), ());
             MOCK_METHOD(VoidError,
@@ -71,20 +72,22 @@ namespace centipede::test
             auto entry_tmp = Entry<float>{};
             using Deriv = Entry<float>::Deriv;
             entry_tmp.n_locals = 3;
-            entry_tmp.measurements = std::vector{ 11.F, 12.F, 13.F };
-            entry_tmp.sigmas = std::vector{ 1.F, 2.F, 3.F };
-            entry_tmp.local_derivs = std::vector{ Deriv{ 0, std::pair{ 0, 1.F } }, Deriv{ 0, std::pair{ 1, 1.F } },
-                                                  Deriv{ 1, std::pair{ 0, 1.F } }, Deriv{ 1, std::pair{ 1, 1.F } },
-                                                  Deriv{ 2, std::pair{ 0, 1.F } }, Deriv{ 2, std::pair{ 1, 1.F } } };
-            entry_tmp.global_derivs = std::vector{ Deriv{ 0, std::pair{ 0, 1.F } }, Deriv{ 0, std::pair{ 1, 1.F } },
-                                                   Deriv{ 1, std::pair{ 2, 1.F } }, Deriv{ 1, std::pair{ 3, 1.F } },
-                                                   Deriv{ 2, std::pair{ 7, 1.F } }, Deriv{ 2, std::pair{ 4, 1.F } } };
+            entry_tmp.measurements = std::vector{ ValueError{ 11.F }, ValueError{ 12.F }, ValueError{ 13.F } };
+            entry_tmp.local_derivs = std::vector{
+                Deriv{ 0, std::pair{ 0, ValueError{ 1.F } } }, Deriv{ 0, std::pair{ 1, ValueError{ 1.F } } },
+                Deriv{ 1, std::pair{ 0, ValueError{ 1.F } } }, Deriv{ 1, std::pair{ 1, ValueError{ 1.F } } },
+                Deriv{ 2, std::pair{ 0, ValueError{ 1.F } } }, Deriv{ 2, std::pair{ 1, ValueError{ 1.F } } }
+            };
+            entry_tmp.global_derivs = std::vector{
+                Deriv{ 0, std::pair{ 0, ValueError{ 1.F } } }, Deriv{ 0, std::pair{ 1, ValueError{ 1.F } } },
+                Deriv{ 1, std::pair{ 2, ValueError{ 1.F } } }, Deriv{ 1, std::pair{ 3, ValueError{ 1.F } } },
+                Deriv{ 2, std::pair{ 7, ValueError{ 1.F } } }, Deriv{ 2, std::pair{ 4, ValueError{ 1.F } } }
+            };
             return entry_tmp;
         }();
 
         EXPECT_CALL(engine, resize_buffers()).Times(1);
         EXPECT_CALL(engine, fill_measurements(entry.measurements)).Times(1);
-        EXPECT_CALL(engine, fill_sigmas(entry.sigmas)).Times(1);
         EXPECT_CALL(engine, fill_local_derivs(entry.local_derivs)).Times(1);
         EXPECT_CALL(engine, fill_global_derivs(entry.global_derivs, testing::_)).Times(1);
 
@@ -100,7 +103,6 @@ namespace centipede::test
         const auto entry = Entry<float>{};
         EXPECT_CALL(engine, resize_buffers()).Times(0);
         EXPECT_CALL(engine, fill_measurements(entry.measurements)).Times(0);
-        EXPECT_CALL(engine, fill_sigmas(entry.sigmas)).Times(0);
         EXPECT_CALL(engine, fill_local_derivs(entry.local_derivs)).Times(0);
         EXPECT_CALL(engine, fill_global_derivs(entry.global_derivs, testing::_)).Times(0);
 
@@ -113,7 +115,7 @@ namespace centipede::test
         const auto config = Config<float>{ .n_globals = 10UZ };
         auto engine = DerivedBaseEngine<float>{ config };
 
-        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, calculate_local_fit_chi_square())
             .Times(1)
             .WillOnce(testing::Return(std::pair<std::size_t, double>{ 1.F, 0.999 }));
@@ -132,7 +134,7 @@ namespace centipede::test
 
         EXPECT_CALL(engine, fit_local_pars())
             .Times(1)
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_local_fit_rank_deficit }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_local_fit_rank_deficit )));
         EXPECT_CALL(engine, calculate_local_fit_chi_square()).Times(0);
         EXPECT_CALL(engine, update_global_factor_matrix()).Times(0);
         EXPECT_CALL(engine, update_global_rhs_vector()).Times(0);
@@ -141,7 +143,7 @@ namespace centipede::test
         auto res = engine.analyze(alpha);
         ASSERT_FALSE(res);
         EXPECT_EQ(engine.get_log().n_entries_local_rank_deficit, 1);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_local_fit_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_local_fit_rank_deficit);
     }
 
     TEST(base_engine, analyze_low_state)
@@ -151,7 +153,7 @@ namespace centipede::test
 
         EXPECT_CALL(engine, fit_local_pars())
             .Times(1)
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_local_fit_low_stat }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_local_fit_low_stat )));
         EXPECT_CALL(engine, calculate_local_fit_chi_square()).Times(0);
         EXPECT_CALL(engine, update_global_factor_matrix()).Times(0);
         EXPECT_CALL(engine, update_global_rhs_vector()).Times(0);
@@ -160,7 +162,7 @@ namespace centipede::test
         auto res = engine.analyze(alpha);
         ASSERT_FALSE(res);
         EXPECT_EQ(engine.get_log().n_entries_low_stat, 1);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_local_fit_low_stat);
+        EXPECT_EQ(res.error(), ErrorType::analysis_local_fit_low_stat);
     }
 
     TEST(base_engine, analyze_reject)
@@ -168,7 +170,7 @@ namespace centipede::test
         const auto config = Config<float>{ .n_globals = 10UZ };
         auto engine = DerivedBaseEngine<float>{ config };
 
-        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, fit_local_pars()).Times(1).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, calculate_local_fit_chi_square())
             .Times(1)
             .WillOnce(testing::Return(std::pair<std::size_t, double>{ 10, 1000000 }));
@@ -178,7 +180,7 @@ namespace centipede::test
         const auto alpha = 0.0001;
         auto err = engine.analyze(alpha);
         ASSERT_FALSE(err);
-        EXPECT_EQ(err.error(), ErrorCode::analysis_local_fit_rejected);
+        EXPECT_EQ(err.error(), ErrorType::analysis_local_fit_rejected);
         EXPECT_EQ(engine.get_log().n_entries_rejected, 1);
     }
     // NOLINTEND (cppcoreguidelines-avoid-magic-numbers)

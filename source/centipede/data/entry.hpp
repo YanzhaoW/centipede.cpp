@@ -1,5 +1,6 @@
 #pragma once
 
+#include "centipede/data/ValueError.hpp"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -21,14 +22,15 @@ namespace centipede
     template <typename DataType>
     struct Entry
     {
-        using Deriv = std::pair<uint32_t, std::pair<uint32_t, DataType>>; //!< The key of the outer pair is the
-                                                                          //!< entrypoint ID and the key of the inner
-                                                                          //!< pair is the index of the parameter.
-        std::optional<std::size_t> n_locals; //!< Cache to store the temporary local parameter size
-        std::vector<DataType> measurements;  //!< Measurements from all entrypoints.
-        std::vector<DataType> sigmas;        //!< Sigmas from all entrypoints.
-        std::vector<Deriv> local_derivs;     //!< Local derivatives.
-        std::vector<Deriv> global_derivs;    //!< Global derivatives.
+        using Deriv =
+            std::pair<uint32_t, std::pair<uint32_t, ValueError<DataType>>>; //!< The key of the outer pair is the
+                                                                            //!< entrypoint ID and the key of the inner
+                                                                            //!< pair is the index of the parameter.
+        std::optional<std::size_t> n_locals;            //!< Cache to store the temporary local parameter size
+        std::vector<ValueError<DataType>> measurements; //!< Measurements from all entrypoints.
+        // std::vector<DataType> sigmas;        //!< Sigmas from all entrypoints.
+        std::vector<Deriv> local_derivs;  //!< Local derivatives.
+        std::vector<Deriv> global_derivs; //!< Global derivatives.
     };
 
 }; // namespace centipede

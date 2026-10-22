@@ -1,6 +1,7 @@
 #include "centipede/centipede.hpp"
 #include "centipede/core/engines/engine_log.hpp"
 #include "centipede/core/engines/par_id_map.hpp"
+#include "centipede/data/ValueError.hpp"
 #include "shared.hpp"
 #include <cstddef>
 #include <expected>
@@ -55,7 +56,7 @@ namespace centipede::core::engine
         MOCK_METHOD(void, add_to_globals, (Globals & globals), (const));
         MOCK_METHOD((VoidError), fill_data, (const Entry<DataType>& entry, const core::ParIdMap&), (const));
         MOCK_METHOD((void), add_to_result, (Result<DataType> & result), (const));
-        MOCK_METHOD((EnumError<>), analyze, (double alpha), (const));
+        MOCK_METHOD((ResultError<>), analyze, (double alpha), (const));
         MOCK_METHOD((const core::engine::Log&), get_log, (), (const));
 
         static MockHelper<DataType>* mock_helper;
@@ -105,15 +106,13 @@ namespace centipede::test
     TEST_F(master_engine, add_entrypoint_dynamic)
     {
         const auto entrypoint = EntryPoint<>{}
-                                    .set_measurement(3.F)
-                                    .set_sigma(2.F)
+                                    .set_measurement(ValueError{ 3.F, 0.1F })
                                     .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                     .set_locals(1.5F, 2.5F);
         const auto& state = master_->get_current_state();
         EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
-        EXPECT_EQ(state.entry.sigmas.size(), 0);
         EXPECT_EQ(state.entry.local_derivs.size(), 0);
         EXPECT_EQ(state.entry.global_derivs.size(), 0);
 
@@ -123,64 +122,60 @@ namespace centipede::test
         ASSERT_TRUE(state.entry.n_locals);
         EXPECT_EQ(state.entry.n_locals.value(), 2);
         EXPECT_EQ(state.entry.measurements.size(), 1);
-        EXPECT_EQ(state.entry.sigmas.size(), 1);
         EXPECT_EQ(state.entry.local_derivs.size(), 2);
 
         EXPECT_EQ(state.entry.local_derivs.at(0).first, 0);
         EXPECT_EQ(state.entry.local_derivs.at(0).second.first, 0);
-        EXPECT_EQ(state.entry.local_derivs.at(0).second.second, 1.5F);
+        EXPECT_EQ(state.entry.local_derivs.at(0).second.second.value, 1.5F);
 
         EXPECT_EQ(state.entry.local_derivs.at(1).first, 0);
         EXPECT_EQ(state.entry.local_derivs.at(1).second.first, 1);
-        EXPECT_EQ(state.entry.local_derivs.at(1).second.second, 2.5F);
+        EXPECT_EQ(state.entry.local_derivs.at(1).second.second.value, 2.5F);
 
         EXPECT_EQ(state.entry.global_derivs.size(), 2);
 
         EXPECT_EQ(state.entry.global_derivs.at(0).first, 0);
         EXPECT_EQ(state.entry.global_derivs.at(0).second.first, 2);
-        EXPECT_EQ(state.entry.global_derivs.at(0).second.second, 3.F);
+        EXPECT_EQ(state.entry.global_derivs.at(0).second.second.value, 3.F);
 
         EXPECT_EQ(state.entry.global_derivs.at(1).first, 0);
         EXPECT_EQ(state.entry.global_derivs.at(1).second.first, 9);
-        EXPECT_EQ(state.entry.global_derivs.at(1).second.second, 2.F);
+        EXPECT_EQ(state.entry.global_derivs.at(1).second.second.value, 2.F);
     }
 
     TEST_F(master_engine, add_entrypoint_incomp_n_locals)
     {
         const auto first_entrypoint = EntryPoint<>{}
-                                          .set_measurement(3.F)
-                                          .set_sigma(2.F)
+                                          .set_measurement(ValueError{ 3.F, 0.1F })
                                           .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                           .set_locals(1.5F, 2.5F);
         const auto second_entrypoint = EntryPoint<>{}
-                                           .set_measurement(3.F)
-                                           .set_sigma(2.F)
+                                           .set_measurement(ValueError{ 3.F, 0.1F })
                                            .set_globals(std::pair{ 9, 2.F }, std::pair{ 2, 3.F })
                                            .set_locals(1.5F, 2.5F, 3.4F);
 
         EXPECT_TRUE_RES(master_->add_entrypoint(first_entrypoint));
         auto res = master_->add_entrypoint(second_entrypoint);
         ASSERT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::handler_incomp_n_locals);
+        EXPECT_EQ(res.error(), ErrorType::handler_incomp_n_locals);
     }
 
     TEST_F(master_engine, add_entrypoint_global_idx_too_large)
     {
         const auto first_entrypoint = EntryPoint<>{}
                                           .set_measurement(3.F)
-                                          .set_sigma(2.F)
                                           .set_globals(std::pair{ 9, 2.F }, std::pair{ DEFAULT_MAX_GLOBAL_ID + 1, 3.F })
                                           .set_locals(1.5F, 2.5F);
 
         auto res = master_->add_entrypoint(first_entrypoint);
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_global_idx_too_large);
+        EXPECT_EQ(res.error(), ErrorType::analysis_global_idx_too_large);
     }
 
     TEST_F(master_engine, analyze)
     {
         const auto& engine = master_->get_engine();
-        EXPECT_CALL(engine, analyze(testing::_)).WillOnce(testing::Return(EnumError<>{}));
+        EXPECT_CALL(engine, analyze(testing::_)).WillOnce(testing::Return(ResultError<>{}));
         EXPECT_CALL(engine, fill_data(testing::_, testing::_));
 
         EXPECT_TRUE_RES(master_->analyze());
@@ -189,7 +184,6 @@ namespace centipede::test
         EXPECT_EQ(state.next_point_index, 0);
         EXPECT_FALSE(state.entry.n_locals);
         EXPECT_EQ(state.entry.measurements.size(), 0);
-        EXPECT_EQ(state.entry.sigmas.size(), 0);
         EXPECT_EQ(state.entry.local_derivs.size(), 0);
         EXPECT_EQ(state.entry.global_derivs.size(), 0);
     }
@@ -198,12 +192,12 @@ namespace centipede::test
     {
         const auto& engine = master_->get_engine();
         EXPECT_CALL(engine, analyze(testing::_))
-            .WillOnce(testing::Return(std::unexpected{ ErrorCode::analysis_rank_deficit }));
+            .WillOnce(testing::Return(ErrorCode::Error( ErrorType::analysis_rank_deficit )));
         EXPECT_CALL(engine, fill_data(testing::_, testing::_));
 
         auto res = master_->analyze();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_rank_deficit);
     }
 
     TEST_F(master_engine, solve)
@@ -214,7 +208,7 @@ namespace centipede::test
         EXPECT_CALL(*engine_class_, get_log()).WillOnce(::testing::ReturnRef(default_log));
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
-            .WillOnce([](const auto&, ResultType& result, const auto&) { result.error_status = ErrorCode::success; });
+            .WillOnce([](const auto&, ResultType& result, const auto&) { result.error_status = ErrorType::success; });
 
         EXPECT_TRUE_RES(master_->solve());
     }
@@ -228,10 +222,10 @@ namespace centipede::test
         EXPECT_CALL(*mock_helper_, solve(testing::_, testing::_, testing::_))
             .Times(1)
             .WillOnce([](const auto&, ResultType& result, const auto&)
-                      { result.error_status = ErrorCode::analysis_rank_deficit; });
+                      { result.error_status = ErrorType::analysis_rank_deficit; });
 
         auto res = master_->solve();
         EXPECT_FALSE(res);
-        EXPECT_EQ(res.error(), ErrorCode::analysis_rank_deficit);
+        EXPECT_EQ(res.error(), ErrorType::analysis_rank_deficit);
     }
 } // namespace centipede::test

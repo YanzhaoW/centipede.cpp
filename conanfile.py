@@ -19,6 +19,7 @@ class CompressorRecipe(ConanFile):
         self.requires("libassert/2.2.1")  # type: ignore
         self.requires("glaze/7.8.4")  # type: ignore
         self.requires("sol2/3.5.0")  # type: ignore
+        self.requires("capnproto/1.5.0", options={"with_openssl": False}) #type: ignore
 
         # Conditions on cmake variables set from cmake/project_options
         if os.environ["CMAKE_ENABLE_TEST"] == "ON":

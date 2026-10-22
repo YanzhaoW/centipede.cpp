@@ -1,11 +1,11 @@
 #include "binary.hpp"
-#include "centipede/util/error_types.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/return_types.hpp"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <expected>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <vector>
@@ -55,17 +55,17 @@ namespace centipede::writer
         output_file_.open(config_.out_filename, std::ios::binary | std::ios::out | std::ios::trunc);
         if (!output_file_.is_open())
         {
-            return std::unexpected{ ErrorCode::writer_file_fail_to_open };
+            return ErrorCode::Error(std::format("Failed to open the binary file {:?}", config_.out_filename));
         }
         return {};
     }
 
-    auto Binary::write_current_entry() -> EnumError<std::size_t>
+    auto Binary::write_current_entry() -> ResultError<std::size_t>
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
         if (data_buffer_.first.empty())
         {
-            return std::unexpected{ ErrorCode::writer_uninitialized };
+            return ErrorCode::Error("Binary writer is not initialized.");
         }
         if (not has_entry_)
         {
@@ -79,7 +79,7 @@ namespace centipede::writer
     auto Binary::write_to_binary() -> std::size_t
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
-        const auto data_size = static_cast<uint32_t>((data_buffer_.first.size()) + (data_buffer_.second.size()));
+        const auto data_size = static_cast<uint32_t>(data_buffer_.first.size() + data_buffer_.second.size());
         auto total_written_size = std::size_t{ 0 };
         total_written_size += write_to_file(output_file_, data_size);
         total_written_size += write_to_file(output_file_, data_buffer_.second);

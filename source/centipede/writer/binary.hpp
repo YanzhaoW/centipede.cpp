@@ -2,13 +2,13 @@
 
 #include "centipede/data/entrypoint.hpp"
 #include "centipede/util/common_definitions.hpp"
+#include "centipede/util/error_code.hpp"
 #include "centipede/util/error_types.hpp"
 #include "centipede/util/return_types.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <fstream>
 #include <ranges>
 #include <string>
@@ -141,7 +141,7 @@ namespace centipede::writer
          *
          * @return Number of bytes written to the binary file.
          */
-        auto write_current_entry() -> EnumError<std::size_t>;
+        auto write_current_entry() -> ResultError<std::size_t>;
 
         /**
          * @brief Manually close the output file handler.
@@ -154,7 +154,6 @@ namespace centipede::writer
          * @brief Getter of the configuration.
          *
          * @return Returns a const reference to the member variable #config_.
-         * @see ref
          */
         constexpr auto get_config() const -> const Config& { return config_; }
 
@@ -184,43 +183,43 @@ namespace centipede::writer
     {
         assert(data_buffer_.first.size() == data_buffer_.second.size());
 
-        if (entry_point.get_sigma() <= 0.)
+        if (entry_point.get_measurement().error <= 0.)
         {
-            return std::unexpected{ ErrorCode::writer_neg_or_zero_sigma };
+            return ErrorCode::Error(ErrorType::writer_neg_or_zero_sigma);
         }
         if (data_buffer_.first.empty())
         {
-            return std::unexpected{ ErrorCode::writer_uninitialized };
+            return ErrorCode::Error(ErrorType::writer_uninitialized);
         }
         if (not check_buffer_size(NLocals + NGlobals + 2))
         {
-            return std::unexpected{ ErrorCode::writer_buffer_overflow };
+            return ErrorCode::Error(ErrorType::writer_buffer_overflow);
         }
 
         auto old_size = data_buffer_.first.size();
         auto has_entry = false;
 
-        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_measurement() });
+        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_measurement().value });
 
         // NOTE: Can be changed to concat in C++26
 
         for (const auto& [idx, local_deriv] : std::views::zip(std::views::iota(0), entry_point.get_locals()))
         {
-            fill_entrypoint_to_buffer(BufferPoint{ idx + 1, local_deriv }, false);
+            fill_entrypoint_to_buffer(BufferPoint{ idx + 1, local_deriv.value }, false);
         }
 
-        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_sigma() });
+        fill_entrypoint_to_buffer(BufferPoint{ 0, entry_point.get_measurement().error });
 
         for (const auto& [idx, global_deriv] : entry_point.get_globals())
         {
-            has_entry |= fill_entrypoint_to_buffer(BufferPoint{ idx + 1, global_deriv }, true);
+            has_entry |= fill_entrypoint_to_buffer(BufferPoint{ idx + 1, global_deriv.value }, true);
         }
 
         has_entry_ |= has_entry;
         if (not has_entry)
         {
             resize_data_buffer(old_size);
-            return std::unexpected{ ErrorCode::writer_entrypoint_rejected };
+            return ErrorCode::Error(ErrorType::writer_entrypoint_rejected);
         }
         return {};
     }
